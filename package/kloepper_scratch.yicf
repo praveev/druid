@@ -3,7 +3,9 @@ YINST bug-component General
 
 SRCDIRS = .
 PRODUCT_NAME = kloepper_scratch2
-VERSION = 1
+
+EPOCH_SECONDS = `date +%s`
+VERSION = 1_$(EPOCH_SECONDS)
 CUSTODIAN = kloepper@yahoo-inc.com yo/kloepper
 
 SHORT_DESC = kloepper hello world
