@@ -24,7 +24,7 @@
         "extest": {
           "task": "script",
           "command": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:kloepper/druid.git$' > /dev/null",
-          "copy_files_from": ".\/test_results"
+          "copy_files_from": ".\/screwdriver\/test_results"
         },
         "promote": {
           "task": "dist-setbranch",
