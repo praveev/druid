@@ -1,0 +1,18 @@
+YINST bug-product druid
+YINST bug-component General
+
+SRCDIRS = .
+PRODUCT_NAME = kloepper_scratch2
+VERSION = 1
+CUSTODIAN = kloepper@yahoo-inc.com yo/kloepper
+
+SHORT_DESC = kloepper hello world
+LONG_DESC = Scratch package to hello world package and publish workflow.
+
+PERM = 555
+OWNER = root
+GROUP = wheel
+
+d 777 - - logs/$(PRODUCT_NAME)
+
+f - - - logs/$(PRODUCT_NAME)/hello.log hello.log
