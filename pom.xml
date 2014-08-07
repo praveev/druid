@@ -561,6 +561,7 @@
                         <systemPropertyVariables>
                             <user.timezone>UTC</user.timezone>
                         </systemPropertyVariables>
+                        <reportsDirectory>${env.TEST_RESULTS_DIR}</reportsDirectory>
                     </configuration>
                 </plugin>
                 <plugin>
