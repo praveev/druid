@@ -1,0 +1,3 @@
+#!/bin/bash
+source common_start
+start_node realtime -Ddruid.realtime.specFile=examples/wikipedia/wikipedia_realtime.spec

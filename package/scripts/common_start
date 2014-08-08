@@ -1,0 +1,8 @@
+#!/bin/bash
+
+function start_node {
+    local NODE_TYPE=$1
+    shift 1
+    local EXTRA_ARGS=$@
+    java -Xmx256m -Duser.timezone=UTC -Dfile.encoding=UTF-8 $EXTRA_ARGS -classpath lib/*:config/$NODE_TYPE io.druid.cli.Main server $NODE_TYPE
+}
