@@ -1,0 +1,10 @@
+#!/bin/bash
+SCRIPT_DIR="$(dirname "$0")"
+cd $SCRIPT_DIR
+echo $SCRIPT_DIR
+
+for NODE in broker coordinator historical overlord realtime
+do
+    #echo ${NODE}_start ${NODE}.log
+    nohup ./${NODE}_start > ${NODE}.log &
+done

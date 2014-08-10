@@ -1,3 +1,4 @@
 #!/bin/bash
+echo $0
 source common_start
-start_node broker
+start_node broker 8080
