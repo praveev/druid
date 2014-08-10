@@ -1,3 +1,3 @@
 #!/bin/bash
 source common_start
-start_node overlord -Xmx2g
+start_node overlord 8087 -Xmx2g
