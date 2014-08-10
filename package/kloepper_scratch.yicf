@@ -5,7 +5,7 @@ SRCDIRS = .
 PRODUCT_NAME = kloepper_scratch2
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 1_$(EPOCH_SECONDS)
+VERSION = 2_$(EPOCH_SECONDS)
 CUSTODIAN = kloepper@yahoo-inc.com yo/kloepper
 
 SHORT_DESC = kloepper hello world
@@ -17,4 +17,14 @@ GROUP = wheel
 
 d 777 - - logs/$(PRODUCT_NAME)
 
-f - - - logs/$(PRODUCT_NAME)/hello.log hello.log
+# Include druid Java libraries and dependencies.
+g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
+
+# Include druid runtime configuration.
+f - - - conf/$(PRODUCT_NAME)/runtime.properties    package/conf/runtime.properties
+
+# Include startup scripts.
+g - - - share/$(PRODUCT_NAME)/scripts/    package/scripts/*
+
+YINST start 1 $ROOT/share/$(PRODUCT_NAME)/scripts/start_all
+YINST stop 1 $ROOT/share/$(PRODUCT_NAME)/scripts/stop_all
