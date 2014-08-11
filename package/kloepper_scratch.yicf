@@ -15,6 +15,12 @@ PERM = 555
 OWNER = root
 GROUP = wheel
 
+YINST requires pkg yjava_jdk 1.7.0 *
+YINST requires pkg zookeeper_server 3.4.5 *
+# mysql_user sets up the proper user accounts for mysql_server to be installed.
+YINST requires pkg mysql_user * *
+YINST requires pkg mysql_server * *
+
 d 777 - - logs/$(PRODUCT_NAME)
 
 # Include druid Java libraries and dependencies.
