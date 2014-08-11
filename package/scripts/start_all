@@ -3,6 +3,8 @@ SCRIPT_DIR="$(dirname "$0")"
 cd $SCRIPT_DIR
 echo $SCRIPT_DIR
 
+./setup_mysql
+
 for NODE in broker coordinator historical overlord realtime
 do
     nohup ./${NODE}_start >> $ROOT/logs/$YINST_PKGNAME/${NODE}.log &
