@@ -1,0 +1,6 @@
+#!/bin/bash
+mysql -u root << EOF
+SET GLOBAL read_only=0;
+GRANT ALL ON druid.* TO 'druid'@'localhost' IDENTIFIED BY 'diurd';
+CREATE DATABASE IF NOT EXISTS druid;
+EOF
