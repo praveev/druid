@@ -5,5 +5,5 @@ echo $SCRIPT_DIR
 
 for NODE in broker coordinator historical overlord realtime
 do
-    nohup ./${NODE}_start >> $ROOT/logs/kloepper_scratch2/${NODE}.log &
+    nohup ./${NODE}_start >> $ROOT/logs/$YINST_PKGNAME/${NODE}.log &
 done

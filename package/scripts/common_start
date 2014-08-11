@@ -5,5 +5,5 @@ function start_node {
     local SERVICE_PORT=$2
     shift 2
     local EXTRA_ARGS=$@
-    java -Xmx256m -Duser.timezone=UTC -Dfile.encoding=UTF-8 -Ddruid.service=$NODE_TYPE -Ddruid.port=$SERVICE_PORT $EXTRA_ARGS -classpath lib/*:$ROOT/conf/kloepper_scratch2 io.druid.cli.Main server $NODE_TYPE
+    java -Xmx256m -Duser.timezone=UTC -Dfile.encoding=UTF-8 -Ddruid.service=$NODE_TYPE -Ddruid.port=$SERVICE_PORT $EXTRA_ARGS -classpath $ROOT/libexec/$YINST_PKGNAME/*:$ROOT/conf/$YINST_PKGNAME io.druid.cli.Main server $NODE_TYPE
 }
