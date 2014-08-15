@@ -14,20 +14,7 @@
           ]
         }
       },
-      "triggers": [ "sanity-check" ]
-    },
-    "sanity-check": {
-      "triggers": [ "promote-build" ],
-      "build": {
-        "clean": {
-          "task": "none"
-        },
-        "extest": {
-          "task": "script",
-          "command": "echo Hello sanity-check",
-          "copy_files_from": ".\/test_results"
-        }
-      }
+      "triggers": [ "promote-build" ]
     },
     "promote-build": {
       "build": {
@@ -35,44 +22,15 @@
           "task": "none"
         },
         "extest": {
-          "task": "none"
+          "task": "script",
+          "command": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:kloepper/druid.git$' > /dev/null",
+          "copy_files_from": ".\/test_results"
         },
         "promote": {
           "task": "dist-setbranch",
           "package": "kloepper_scratch2",
           "from": "test",
           "to": "current"
-        }
-      }
-    },
-    "component-no-site": {
-      "build": {
-        "system-clean": {
-          "task": "system-clean"
-        },
-        "system-init": {
-          "task": "system-init"
-        },
-        "clean": {
-          "task": "mvn",
-          "target": "clean",
-          "mvn_properties": {
-            "screwdriver": "",
-            "java.awt.headless": "true",
-            "java_version": "1.x",
-            "classifier": "jdk1.x"
-          }
-        },
-        "extest": {
-          "task": "mvn",
-          "target": "verify",
-          "mvn_arguments": [ "-B" ],
-          "mvn_properties": {
-            "screwdriver": "",
-            "java.awt.headless": "true",
-            "java_version": "1.x",
-            "classifier": "jdk1.x"
-          }
         }
       }
     }
