@@ -1,0 +1,80 @@
+{
+  "version": 2,
+  "shared": {},
+  "jobs": {
+    "component": {
+      "build": {
+        "publish": {
+          "task": "dist-install",
+          "branch": "test",
+          "required": true,
+          "dir": ".",
+          "yicf": [
+            "package/kloepper_scratch.yicf"
+          ]
+        }
+      },
+      "triggers": [ "sanity-check" ]
+    },
+    "sanity-check": {
+      "triggers": [ "promote-build" ],
+      "build": {
+        "clean": {
+          "task": "none"
+        },
+        "extest": {
+          "task": "script",
+          "command": "echo Hello sanity-check",
+          "copy_files_from": ".\/test_results"
+        }
+      }
+    },
+    "promote-build": {
+      "build": {
+        "clean": {
+          "task": "none"
+        },
+        "extest": {
+          "task": "none"
+        },
+        "promote": {
+          "task": "dist-setbranch",
+          "package": "kloepper_scratch2",
+          "from": "test",
+          "to": "current"
+        }
+      }
+    },
+    "component-no-site": {
+      "build": {
+        "system-clean": {
+          "task": "system-clean"
+        },
+        "system-init": {
+          "task": "system-init"
+        },
+        "clean": {
+          "task": "mvn",
+          "target": "clean",
+          "mvn_properties": {
+            "screwdriver": "",
+            "java.awt.headless": "true",
+            "java_version": "1.x",
+            "classifier": "jdk1.x"
+          }
+        },
+        "extest": {
+          "task": "mvn",
+          "target": "verify",
+          "mvn_arguments": [ "-B" ],
+          "mvn_properties": {
+            "screwdriver": "",
+            "java.awt.headless": "true",
+            "java_version": "1.x",
+            "classifier": "jdk1.x"
+          }
+        }
+      }
+    }
+  }
+}
