@@ -10,8 +10,9 @@
           "required": true,
           "dir": ".",
           "yicf": [
-            "screwdriver/package/kloepper_scratch.yicf"
-          ]
+            "screwdriver/package/druid_inabox.yicf"
+          ],
+          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
         }
       },
       "triggers": [ "promote-build" ]
@@ -23,12 +24,12 @@
         },
         "extest": {
           "task": "script",
-          "command": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:kloepper/druid.git$' > /dev/null",
+          "command": "echo sanity checks do not yet exist",
           "copy_files_from": ".\/screwdriver\/test_results"
         },
         "promote": {
           "task": "dist-setbranch",
-          "package": "kloepper_scratch2",
+          "package": "druid_inabox",
           "from": "test",
           "to": "current"
         }
