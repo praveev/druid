@@ -10,7 +10,7 @@
           "required": true,
           "dir": ".",
           "yicf": [
-            "package/kloepper_scratch.yicf"
+            "screwdriver/package/kloepper_scratch.yicf"
           ]
         }
       },
