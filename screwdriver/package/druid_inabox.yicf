@@ -2,14 +2,14 @@ YINST bug-product druid
 YINST bug-component General
 
 SRCDIRS = .
-PRODUCT_NAME = kloepper_scratch2
+PRODUCT_NAME = druid_inabox
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 2_$(EPOCH_SECONDS)
+VERSION = 0_$(EPOCH_SECONDS)
 CUSTODIAN = kloepper@yahoo-inc.com yo/kloepper
 
-SHORT_DESC = kloepper hello world
-LONG_DESC = Scratch package to hello world package and publish workflow.
+SHORT_DESC = Real-time Exploratory Analytics on Large Datasets
+LONG_DESC = An open-source, real-time data store designed to power interactive applications at scale.
 
 PERM = 555
 OWNER = root
@@ -17,8 +17,6 @@ GROUP = wheel
 
 YINST requires pkg yjava_jdk 1.7.0 *
 YINST requires pkg zookeeper_server 3.4.5 *
-# mysql_user sets up the proper user accounts for mysql_server to be installed.
-YINST requires pkg mysql_user * *
 YINST requires pkg mysql_server * *
 
 d 777 - - logs/$(PRODUCT_NAME)
