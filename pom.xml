@@ -55,6 +55,7 @@
         <module>processing</module>
         <module>server</module>
         <module>services</module>
+        <module>digits-package</module>
         <!-- Non-default modules -->
         <module>cassandra-storage</module>
         <module>hdfs-storage</module>
