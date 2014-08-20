@@ -1,7 +1,7 @@
 YINST bug-product Yahoo! druid
 YINST bug-component DRUID 
 
-SRCDIRS = ..
+SRCDIRS = .
 PRODUCT_NAME = himanshg_edigits_druid_coordinator
 
 EPOCH_SECONDS = `date +%s`

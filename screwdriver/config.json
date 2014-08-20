@@ -16,7 +16,7 @@
             "digits-package/src/main/yinst/druid_coordinator.yicf",
             "digits-package/src/main/yinst/druid_historical.yicf",
             "digits-package/src/main/yinst/druid_indexer.yicf",
-            "digits-package/src/main/yinst/druid_realtime.yicf",
+            "digits-package/src/main/yinst/druid_realtime.yicf"
           ],
           "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
         }

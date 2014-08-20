@@ -31,19 +31,18 @@ d 777 - - var/$(PRODUCT_NAME)
 g - - - libexec/$(PRODUCT_NAME)/    digits-package/target/*.jar
 g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
 
-c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties		src/main/config/broker/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties			src/main/config/broker/broker.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/coordinator/runtime.properties	src/main/config/coordinator/runtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/coordinator/coordinator.properties	src/main/config/coordinator/coordinator.properties	expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/historical/runtime.properties	src/main/config/historical/runtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/historical/historical.properties	src/main/config/historical/historical.properties	expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/realtime/runtime.properties		src/main/config/realtime/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties		src/main/config/realtime/realtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties		src/main/config/indexer/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties		src/main/config/indexer/indexer.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties		digits-package/src/main/config/broker/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties			digits-package/src/main/config/broker/broker.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/runtime.properties	digits-package/src/main/config/coordinator/runtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/coordinator.properties	digits-package/src/main/config/coordinator/coordinator.properties	expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/runtime.properties	digits-package/src/main/config/historical/runtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/historical.properties	digits-package/src/main/config/historical/historical.properties	expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/runtime.properties		digits-package/src/main/config/realtime/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties		digits-package/src/main/config/realtime/realtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties		digits-package/src/main/config/indexer/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties		digits-package/src/main/config/indexer/indexer.properties			expand overwrite
 
-g - - - share/$(PRODUCT_NAME)/scripts/					src/main/scripts/*
-f - - - libexec/$(PRODUCT_NAME)/druid-daemon.jar target/$(POM_ARTIFACT_ID)-$(POM_VERSION).jar
+g - - - share/$(PRODUCT_NAME)/scripts/					digits-package/src/main/scripts/*
 
 YINST conflicts pkg miners_druid
 
