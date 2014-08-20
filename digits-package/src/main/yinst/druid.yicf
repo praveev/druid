@@ -1,0 +1,108 @@
+YINST bug-product Yahoo! druid
+YINST bug-component DRUID 
+
+SRCDIRS = .
+PRODUCT_NAME = himanshg_edigits_druid
+
+EPOCH_SECONDS = `date +%s`
+VERSION = 0_$(EPOCH_SECONDS)
+
+SHORT_DESC = Yahoo! druid base package
+LONG_DESC = Yahoo! druid package for real time reporting on big data 
+
+CUSTODIAN = greyhawk@yahoo-inc.com 
+
+PERM = 555
+OWNER = root 
+GROUP = wheel
+
+PACKAGE_OS_VERSIONED = no
+PACKAGE_OS_SPECIFIC = no
+
+YINST requires pkg yjava_jdk 1.7.0_40.80 *
+#YINST requires pkg ypan/perl-Config-General
+YINST requires pkg hadoopcoretree 0.23.8 *
+YINST requires pkg yjava_daemon 2.25 *
+
+d 777 - - logs/$(PRODUCT_NAME)
+d 777 - - tmp/$(PRODUCT_NAME)
+d 777 - - var/$(PRODUCT_NAME)
+
+g - - - libexec/$(PRODUCT_NAME)/    digits-package/target/*.jar
+g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
+
+c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties		src/main/config/broker/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties			src/main/config/broker/broker.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/runtime.properties	src/main/config/coordinator/runtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/coordinator.properties	src/main/config/coordinator/coordinator.properties	expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/runtime.properties	src/main/config/historical/runtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/historical.properties	src/main/config/historical/historical.properties	expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/runtime.properties		src/main/config/realtime/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties		src/main/config/realtime/realtime.properties		expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties		src/main/config/indexer/runtime.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties		src/main/config/indexer/indexer.properties			expand overwrite
+
+g - - - share/$(PRODUCT_NAME)/scripts/					src/main/scripts/*
+f - - - libexec/$(PRODUCT_NAME)/druid-daemon.jar target/$(POM_ARTIFACT_ID)-$(POM_VERSION).jar
+
+YINST conflicts pkg miners_druid
+
+# default values template
+
+YINST set zk_hosts ToBeSet
+YINST set zk_basePath /druid
+YINST set zk_discoveryPath /druid/discoveryPath
+YINST set queryProcessingBuffer 1073741824
+YINST set queryProcessingThreads 1
+YINST set brokerPort 8080
+YINST set coordinatorPort 8082
+YINST set historicalPort 8081
+YINST set realtimePort 8083
+YINST set indexerPort 8084
+YINST set segmentCacheLocation $(ROOT)/var/$(PRODUCT_NAME)/segmentCache
+YINST set segmentCacheInfoDir $(ROOT)/var/$(PRODUCT_NAME)/segmentCache/info_dir
+YINST set storageType hdfs
+YINST set storageDirectory hdfs:/To/Be/Set
+YINST set maxServerSize 169651208192
+YINST set serverTier _default_tier
+YINST set dbConnectUri jdbc:mysql://HostToBeSet:3306/druid
+YINST set dbUser druid
+YINST set dbPassword diurd
+YINST set maxHttpConnections 27
+YINST set logLevel info
+YINST set coordinatorStartDelay PT1M
+YINST set realtimeSpecFile /To/Be/Set
+YINST set maxIndexerTasks ToBeSet
+YINST set indexerTaskDir $(ROOT)/tmp/$(PRODUCT_NAME)/persistent
+YINST set peonJavaOpts -Xmx3g
+YINST set peonStartPort 8085
+YINST set indexerBaseWorkingDir $(ROOT)/tmp/$(PRODUCT_NAME)
+YINST set indexerBaseTaskDir $(ROOT)/tmp/$(PRODUCT_NAME)/persistent/tasks
+YINST set indexerHadoopWorkingPath $(ROOT)/tmp/$(PRODUCT_NAME)/druid-indexing
+
+YINST set queueName audience_dna
+YINST set indexerReducerMem 8192
+YINST set indexerReducerJavaOpts -Xmx2048m
+
+YINST set brokerJavaOpts
+YINST set brokerMaxMem 2g
+YINST set coordinatorJavaOpts
+YINST set coordinatorMaxMem 256m
+YINST set indexerJavaOpts
+YINST set indexerMaxMem 256m
+YINST set historicalJavaOpts
+YINST set historicalMaxMem 2g
+YINST set historicalDirectMem 16g
+YINST set realtimeJavaOpts
+YINST set realtimeMaxMem 256m
+
+YINST set headlessUser dna_dp
+YINST set keydbFile /home/dna_dp/dna_dp.prod.headless.keytab
+
+
+YINST set crontab off
+crontab MAILTO=greyhawk@yahoo-inc.com
+crontab PATH="$(ROOT)/bin64:$(ROOT)/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:$(ROOT)/share/gridjdk-current/bin:$(ROOT)/share/hadoop/bin:$(ROOT)/bin/pig/bin:$(ROOT)/share/pig/bin"
+
+crontab 40 01,13 * * * $(headlessUser) /usr/bin/kinit -k -t $(keydbFile) $(headlessUser)\@YGRID.YAHOO.COM && /usr/bin/kinit -R
+
