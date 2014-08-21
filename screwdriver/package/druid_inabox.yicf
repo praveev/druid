@@ -6,7 +6,7 @@ PRODUCT_NAME = druid_inabox
 
 EPOCH_SECONDS = `date +%s`
 VERSION = 0_$(EPOCH_SECONDS)
-CUSTODIAN = kloepper@yahoo-inc.com yo/kloepper
+CUSTODIAN = greyhawk@yahoo-inc.com yo/greyhawk
 
 SHORT_DESC = Real-time Exploratory Analytics on Large Datasets
 LONG_DESC = An open-source, real-time data store designed to power interactive applications at scale.
