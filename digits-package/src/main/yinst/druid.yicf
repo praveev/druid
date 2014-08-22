@@ -2,10 +2,10 @@ YINST bug-product Yahoo! druid
 YINST bug-component DRUID 
 
 SRCDIRS = .
-PRODUCT_NAME = himanshg_edigits_druid
+PRODUCT_NAME = greyhawk_edigits_druid
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 0_$(EPOCH_SECONDS)
+VERSION = 0_6_146_$(EPOCH_SECONDS)
 
 SHORT_DESC = Yahoo! druid base package
 LONG_DESC = Yahoo! druid package for real time reporting on big data 
@@ -20,7 +20,6 @@ PACKAGE_OS_VERSIONED = no
 PACKAGE_OS_SPECIFIC = no
 
 YINST requires pkg yjava_jdk 1.7.0_40.80 *
-#YINST requires pkg ypan/perl-Config-General
 YINST requires pkg hadoopcoretree 0.23.8 *
 YINST requires pkg yjava_daemon 2.25 *
 
@@ -31,16 +30,16 @@ d 777 - - var/$(PRODUCT_NAME)
 g - - - libexec/$(PRODUCT_NAME)/    digits-package/target/*.jar
 g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
 
-c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties		digits-package/src/main/config/broker/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties			digits-package/src/main/config/broker/broker.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/coordinator/runtime.properties	digits-package/src/main/config/coordinator/runtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/coordinator/coordinator.properties	digits-package/src/main/config/coordinator/coordinator.properties	expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/historical/runtime.properties	digits-package/src/main/config/historical/runtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/historical/historical.properties	digits-package/src/main/config/historical/historical.properties	expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/realtime/runtime.properties		digits-package/src/main/config/realtime/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties		digits-package/src/main/config/realtime/realtime.properties		expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties		digits-package/src/main/config/indexer/runtime.properties			expand overwrite
-c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties		digits-package/src/main/config/indexer/indexer.properties			expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties    digits-package/src/main/config/broker/runtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties	   digits-package/src/main/config/broker/broker.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/runtime.properties    digits-package/src/main/config/coordinator/runtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/coordinator/coordinator.properties    digits-package/src/main/config/coordinator/coordinator.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/runtime.properties    digits-package/src/main/config/historical/runtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/historical/historical.properties    digits-package/src/main/config/historical/historical.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/runtime.properties    digits-package/src/main/config/realtime/runtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties    digits-package/src/main/config/realtime/realtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties    digits-package/src/main/config/indexer/runtime.properties    expand overwrite
+c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties    digits-package/src/main/config/indexer/indexer.properties    expand overwrite
 
 g - - - share/$(PRODUCT_NAME)/scripts/					digits-package/src/main/scripts/*
 

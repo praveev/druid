@@ -7,22 +7,18 @@
     <version>0.6.136</version>
   </parent>
 
-  <groupId>io.druid</groupId>	
-  <artifactId>edigits_druid</artifactId>
+  <groupId>com.yahoo</groupId>	
+  <artifactId>digits-packages</artifactId>
   <name>Druid packaging</name>
-  <description>Maven package druid classes for digits</description>
+  <description>Create druid packages for digits</description>
 
   <dependencies>
     <dependency>
       <groupId>io.druid</groupId>
       <artifactId>druid-services</artifactId>
       <version>${version}</version>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.3.2</version>
-    </dependency>    
     <dependency>
       <groupId>yahoo.yinst.yjava_daemon</groupId>
       <artifactId>yjava_daemon</artifactId>
@@ -30,5 +26,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
 </project>
