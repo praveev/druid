@@ -5,7 +5,7 @@ echo $SCRIPT_DIR
 
 ./stop_all
 
-for NODE in broker coordinator historical overlord realtime
+for NODE in broker coordinator historical overlord
 do
     nohup ./${NODE}_start >> $ROOT/logs/$YINST_PKGNAME/${NODE}.log &
 done
