@@ -1,0 +1,9 @@
+#!/bin/bash
+
+function start_node {
+    local NODE_TYPE=$1
+    local SERVICE_PORT=$2
+    shift 2
+    local EXTRA_ARGS=$@
+    java -Xmx256m -Duser.timezone=UTC -Dfile.encoding=UTF-8 -Ddruid.service=$NODE_TYPE -Ddruid.port=$SERVICE_PORT $EXTRA_ARGS -classpath $ROOT/libexec/$YINST_PKGNAME/*:$ROOT/conf/$YINST_PKGNAME io.druid.cli.Main server $NODE_TYPE
+}

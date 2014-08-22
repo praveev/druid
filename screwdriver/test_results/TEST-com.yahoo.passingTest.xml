@@ -1,0 +1,4 @@
+<testsuite name="com.yahoo.passingTest" time="0.005" tests="1" errors="0" skipped="0" failures="0">
+    <properties />
+    <testcase name="passCheck" classname="io.druid.examples.web.InputSupplierUpdateStreamTest" time="0.002"/>
+</testsuite>

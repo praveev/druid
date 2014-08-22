@@ -1,0 +1,37 @@
+YINST bug-product druid
+YINST bug-component General
+
+SRCDIRS = .
+PRODUCT_NAME = druid_inabox
+
+EPOCH_SECONDS = `date +%s`
+VERSION = 0_$(EPOCH_SECONDS)
+CUSTODIAN = greyhawk@yahoo-inc.com yo/greyhawk
+
+SHORT_DESC = Real-time Exploratory Analytics on Large Datasets
+LONG_DESC = An open-source, real-time data store designed to power interactive applications at scale.
+
+PERM = 555
+OWNER = root
+GROUP = wheel
+
+YINST requires pkg yjava_jdk 1.7.0 *
+YINST requires pkg zookeeper_server 3.4.5 *
+YINST requires pkg mysql_server * *
+
+YINST set autostart on
+
+d 777 - - logs/$(PRODUCT_NAME)
+
+# Include druid Java libraries and dependencies.
+g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
+
+# Include druid runtime configuration.
+f - - - conf/$(PRODUCT_NAME)/runtime.properties    screwdriver/package/conf/runtime.properties
+
+# Include startup scripts.
+g - - - share/$(PRODUCT_NAME)/scripts/    screwdriver/package/scripts/*
+
+YINST post-install $ROOT/share/$(PRODUCT_NAME)/scripts/setup_mysql
+YINST start 1 $ROOT/share/$(PRODUCT_NAME)/scripts/start_all
+YINST stop 1 $ROOT/share/$(PRODUCT_NAME)/scripts/stop_all

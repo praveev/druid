@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "shared": {},
+  "jobs": {
+    "component": {
+      "build": {
+        "publish": {
+          "task": "dist-install",
+          "branch": "test",
+          "required": true,
+          "dir": ".",
+          "yicf": [
+            "screwdriver/package/druid_inabox.yicf"
+          ],
+          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
+        }
+      },
+      "triggers": [ "promote-build" ]
+    },
+    "promote-build": {
+      "build": {
+        "clean": {
+          "task": "none"
+        },
+        "extest": {
+          "task": "script",
+          "command": "echo sanity checks do not yet exist",
+          "copy_files_from": ".\/screwdriver\/test_results"
+        },
+        "promote": {
+          "task": "dist-setbranch",
+          "package": "druid_inabox",
+          "from": "test",
+          "to": "current"
+        }
+      }
+    }
+  }
+}
