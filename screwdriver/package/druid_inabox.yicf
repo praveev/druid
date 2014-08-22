@@ -19,6 +19,8 @@ YINST requires pkg yjava_jdk 1.7.0 *
 YINST requires pkg zookeeper_server 3.4.5 *
 YINST requires pkg mysql_server * *
 
+YINST set autostart on
+
 d 777 - - logs/$(PRODUCT_NAME)
 
 # Include druid Java libraries and dependencies.
