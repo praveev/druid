@@ -2,10 +2,10 @@ YINST bug-product Yahoo! druid
 YINST bug-component DRUID 
 
 SRCDIRS = .
-PRODUCT_NAME = himanshg_edigits_druid_coordinator
+PRODUCT_NAME = greyhawk_edigits_druid_coordinator
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 0_$(EPOCH_SECONDS)
+VERSION = 0_6_146_$(EPOCH_SECONDS)
 
 SHORT_DESC = Yahoo! druid coordinator node
 LONG_DESC = Yahoo! druid package for real time reporting on big data 
@@ -16,7 +16,7 @@ PERM = 555
 OWNER = root 
 GROUP = wheel
 
-BASEPKG = himanshg_edigits_druid
+BASEPKG = greyhawk_edigits_druid
 
 PACKAGE_OS_VERSIONED = no
 PACKAGE_OS_SPECIFIC = no
@@ -25,6 +25,6 @@ YINST set basePkg $(BASEPKG)
 
 YINST requires pkg $(BASEPKG) * *
 
-YINST start 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/start_coordinator.bash"
-YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/stop.bash digits_druid_coordinator com.yahoo.digits.druid.daemon.CoordinatorDaemon"
+YINST start 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/start_coordinator.sh"
+YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/yjava_daemon_stop.sh digits_druid_coordinator"
 

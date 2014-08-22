@@ -3,10 +3,10 @@ YINST bug-component DRUID
 
 SRCDIRS = .
 
-PRODUCT_NAME = himanshg_edigits_druid_realtime
+PRODUCT_NAME = greyhawk_edigits_druid_realtime
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 0_$(EPOCH_SECONDS)
+VERSION = 0_6_146_$(EPOCH_SECONDS)
 
 SHORT_DESC = Yahoo! druid realtime node
 LONG_DESC = Yahoo! druid package for real time reporting on big data 
@@ -17,7 +17,7 @@ PERM = 555
 OWNER = root 
 GROUP = wheel
 
-BASEPKG = himanshg_edigits_druid
+BASEPKG = greyhawk_edigits_druid
 
 PACKAGE_OS_VERSIONED = no
 PACKAGE_OS_SPECIFIC = no
@@ -26,6 +26,6 @@ YINST set basePkg $(BASEPKG)
 
 YINST requires pkg $(BASEPKG) * *
 
-YINST start 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/start_realtime.bash"
-YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/stop.bash digits_druid_realtime com.yahoo.digits.druid.daemon.RealtimeDaemon"
+YINST start 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/start_realtime.sh"
+YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/yjava_daemon_stop.sh druid_realtime"
 
