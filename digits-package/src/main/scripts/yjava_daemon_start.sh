@@ -22,7 +22,6 @@ CLASSPATH=${CLASSPATH}:$(JARS=("$YINST_ROOT/libexec/$YINST_VAR_basePkg"/*.jar); 
 CLASSPATH=${CLASSPATH}:$YINST_ROOT/conf/hadoop
 CLASSPATH=${CLASSPATH}:$(JARS=($YINST_ROOT/share/hadoop/share/hadoop/common/lib/*.jar); IFS=:; echo "${JARS[*]}")
 CLASSPATH=${CLASSPATH}:$(JARS=($YINST_ROOT/share/hadoop/share/hadoop/common/*.jar); IFS=:; echo "${JARS[*]}")
-CLASSPATH=${CLASSPATH}:$(JARS=($YINST_ROOT/share/hadoop/hadoop-*-capacity-scheduler.jar); IFS=:; echo "${JARS[*]}")
 CLASSPATH=${CLASSPATH}:$YINST_ROOT/share/hadoop/share/hadoop/hdfs
 CLASSPATH=${CLASSPATH}:$(JARS=($YINST_ROOT/share/hadoop/share/hadoop/hdfs/lib/*.jar); IFS=:; echo "${JARS[*]}")
 CLASSPATH=${CLASSPATH}:$(JARS=($YINST_ROOT/share/hadoop/share/hadoop/hdfs/*.jar); IFS=:; echo "${JARS[*]}")

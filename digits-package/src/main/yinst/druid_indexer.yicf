@@ -27,5 +27,5 @@ YINST set basePkg $(BASEPKG)
 YINST requires pkg $(BASEPKG) * *
 
 YINST start 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/start_indexer.sh"
-YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/yjava_daemon_stop.sh digits_druid_indexer"
+YINST stop 1 su -m $$(BASEPKG)__headlessUser -c "$ROOT/share/$(BASEPKG)/scripts/yjava_daemon_stop.sh druid_indexer"
 

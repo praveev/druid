@@ -20,7 +20,7 @@ PACKAGE_OS_VERSIONED = no
 PACKAGE_OS_SPECIFIC = no
 
 YINST requires pkg yjava_jdk 1.7.0_40.80 *
-YINST requires pkg hadoopcoretree 0.23.8 *
+YINST requires pkg hadoopcoretree 2.5 *
 YINST requires pkg yjava_daemon 2.25 *
 
 d 777 - - logs/$(PRODUCT_NAME)
@@ -41,7 +41,7 @@ c 644 - - conf/$(PRODUCT_NAME)/realtime/realtime.properties    digits-package/sr
 c 644 - - conf/$(PRODUCT_NAME)/indexer/runtime.properties    digits-package/src/main/config/indexer/runtime.properties    expand overwrite
 c 644 - - conf/$(PRODUCT_NAME)/indexer/indexer.properties    digits-package/src/main/config/indexer/indexer.properties    expand overwrite
 
-g - - - share/$(PRODUCT_NAME)/scripts/					digits-package/src/main/scripts/*
+g - - - share/$(PRODUCT_NAME)/scripts/    digits-package/src/main/scripts/*
 
 YINST conflicts pkg miners_druid
 
