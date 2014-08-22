@@ -15,6 +15,7 @@ APPLICATION_MAIN_CLASS=com.yahoo.druid.DruidDaemon
 PID_FILE=${YINST_ROOT}/var/run/${COMPONENT_NAME}.pid
 OUTFILE=${YINST_ROOT}/logs/${YINST_VAR_basePkg}/${COMPONENT_NAME}.out
 ERRFILE=${YINST_ROOT}/logs/${YINST_VAR_basePkg}/${COMPONENT_NAME}.err
+YJAVA_DAEMON_OUTFILE=${YINST_ROOT}/logs/${YINST_VAR_basePkg}/${COMPONENT_NAME}_start.log
 
 # include base package , hadoop, yjava_daemon jar in the classpath
 CLASSPATH=${CLASSPATH}:$(JARS=("$YINST_ROOT/libexec/$YINST_VAR_basePkg"/*.jar); IFS=:; echo "${JARS[*]}")
@@ -92,4 +93,6 @@ else
   PRELOAD="${ARCH_LIBEXEC_DIR}/yjava_daemon_preload.so"
 fi
 
-env LD_PRELOAD=${PRELOAD} ${ARCH_BIN_DIR}/yjava_daemon -jvm server -pidfile ${PID_FILE} -ynet FILTER_YAHOO -procs 1 -user ${USER} -outfile ${OUT_FILE} -errfile ${ERR_FILE} -cp ${CLASSPATH} -home ${JAVA_HOME} -Djava.library.path=${ARCH_LIB_DIR} ${JVM_ARGS}  ${APPLICATION_MAIN_CLASS} ${APPLICATION_ARGS}
+START_CMD="env LD_PRELOAD=${PRELOAD} ${ARCH_BIN_DIR}/yjava_daemon -jvm server -pidfile ${PID_FILE} -ynet FILTER_YAHOO -procs 1 -user ${USER} -outfile ${OUTFILE} -errfile ${ERRFILE} -cp ${CLASSPATH} -home ${JAVA_HOME} -Djava.library.path=${ARCH_LIB_DIR} ${JVM_ARGS}  ${APPLICATION_MAIN_CLASS} ${APPLICATION_ARGS}"
+echo ${START_CMD} | tee -a ${YJAVA_DAEMON_OUTFILE}
+eval "${START_CMD} >> ${YJAVA_DAEMON_OUTFILE} 2>&1"
