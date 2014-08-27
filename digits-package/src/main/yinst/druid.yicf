@@ -29,6 +29,7 @@ d 777 - - var/$(PRODUCT_NAME)
 
 g - - - libexec/$(PRODUCT_NAME)/    digits-package/target/*.jar
 g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
+g - - - libexec/$(PRODUCT_NAME)/    hdfs-storage/target/*.jar
 
 c 644 - - conf/$(PRODUCT_NAME)/broker/runtime.properties    digits-package/src/main/config/broker/runtime.properties    expand overwrite
 c 644 - - conf/$(PRODUCT_NAME)/broker/broker.properties	   digits-package/src/main/config/broker/broker.properties    expand overwrite
