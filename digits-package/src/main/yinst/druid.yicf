@@ -95,11 +95,13 @@ YINST set historicalDirectMem 16g
 YINST set realtimeJavaOpts
 YINST set realtimeMaxMem 256m
 
+# Following broker config values are chosen to be same as
+# community druid defaults 
 YINST set broker_cache_sizeInBytes 0
 YINST set broker_cache_initialSize 500000
 YINST set broker_cache_logEvictionCount 0
 YINST set broker_cache_unCacheable ["groupBy","select"]
-YINST set broker_http_readTimeOut PT5m
+YINST set broker_http_readTimeOut PT15m
 
 YINST set headlessUser dna_dp
 YINST set keydbFile /home/dna_dp/dna_dp.prod.headless.keytab
