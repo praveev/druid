@@ -95,6 +95,11 @@ YINST set historicalDirectMem 16g
 YINST set realtimeJavaOpts
 YINST set realtimeMaxMem 256m
 
+YINST set broker_cache_sizeInBytes 0
+YINST set broker_cache_initialSize 500000
+YINST set broker_cache_logEvictionCount 0
+YINST set broker_cache_unCacheable ["groupBy","select"]
+
 YINST set headlessUser dna_dp
 YINST set keydbFile /home/dna_dp/dna_dp.prod.headless.keytab
 
