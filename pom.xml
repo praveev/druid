@@ -592,8 +592,33 @@
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <artifactId>maven-clover2-plugin</artifactId>
+                    <version>4.0.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.atlassian.maven.plugins</groupId>
+                <artifactId>maven-clover2-plugin</artifactId>
+                <configuration>
+                    <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>clover</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>instrument</goal>
+                            <goal>check</goal>
+                            <goal>clover</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 
     <repositories>
