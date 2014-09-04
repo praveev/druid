@@ -606,17 +606,6 @@
                 <configuration>
                     <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>clover</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>instrument</goal>
-                            <goal>check</goal>
-                            <goal>clover</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
