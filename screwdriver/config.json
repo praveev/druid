@@ -4,6 +4,9 @@
   "jobs": {
     "component": {
       "build": {
+        "test": {
+          "target": ["verify", "clover2:instrument", "clover2:aggregate", "clover2:clover"]
+        },
         "publish": {
           "task": "dist-install",
           "branch": "test",
