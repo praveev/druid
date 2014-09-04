@@ -577,8 +577,22 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <artifactId>maven-clover2-plugin</artifactId>
+                    <version>4.0.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.atlassian.maven.plugins</groupId>
+                <artifactId>maven-clover2-plugin</artifactId>
+                <configuration>
+                    <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <repositories>
