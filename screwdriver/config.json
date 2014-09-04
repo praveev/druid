@@ -5,7 +5,7 @@
     "component": {
       "build": {
         "test": {
-          "target": ["verify", "clover2:instrument", "clover2:aggregate", "clover2:clover"]
+          "target": ["clover2:instrument", "clover2:aggregate", "clover2:clover", "verify"]
         },
         "publish": {
           "task": "dist-install",
