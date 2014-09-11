@@ -3,6 +3,7 @@
 COMPONENT_NAME=druid_realtime
 APPLICATION_ARGS="server realtime"
 USER=${greyhawk_edigits_druid__headlessUser}
+KEYDB_FILE=${greyhawk_edigits_druid__keydbFile}
 
 # put broker config in class path
 CLASSPATH=$YINST_ROOT/conf/${YINST_VAR_basePkg}/realtime

@@ -106,10 +106,3 @@ YINST set broker_http_readTimeOut PT15m
 YINST set headlessUser dna_dp
 YINST set keydbFile /home/dna_dp/dna_dp.prod.headless.keytab
 
-
-YINST set crontab off
-crontab MAILTO=greyhawk@yahoo-inc.com
-crontab PATH="$(ROOT)/bin64:$(ROOT)/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:$(ROOT)/share/gridjdk-current/bin:$(ROOT)/share/hadoop/bin:$(ROOT)/bin/pig/bin:$(ROOT)/share/pig/bin"
-
-crontab 40 01,13 * * * $(headlessUser) /usr/bin/kinit -k -t $(keydbFile) $(headlessUser)\@YGRID.YAHOO.COM && /usr/bin/kinit -R
-
