@@ -92,6 +92,10 @@ else
   PRELOAD="${ARCH_LIBEXEC_DIR}/yjava_daemon_preload.so"
 fi
 
+# export kinit authentication credential information to be used by hadoop libs
+export KRB5KEYTAB=${KEYDB_FILE}
+export KRB5PRINCIPAL=${USER}@YGRID.YAHOO.COM
+
 START_CMD="env LD_PRELOAD=${PRELOAD} ${ARCH_BIN_DIR}/yjava_daemon -jvm server -pidfile ${PID_FILE} -ynet FILTER_YAHOO -procs 1 -user ${USER} -outfile ${OUTFILE} -errfile ${ERRFILE} -cp ${CLASSPATH} -home ${JAVA_HOME} -Djava.library.path=${ARCH_LIB_DIR} ${JVM_ARGS}  ${APPLICATION_MAIN_CLASS} ${APPLICATION_ARGS}"
 echo ${START_CMD} | tee -a ${YJAVA_DAEMON_OUTFILE}
 eval "${START_CMD} >> ${YJAVA_DAEMON_OUTFILE} 2>&1"
