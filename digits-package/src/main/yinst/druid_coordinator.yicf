@@ -5,7 +5,7 @@ SRCDIRS = .
 PRODUCT_NAME = greyhawk_edigits_druid_coordinator
 
 EPOCH_SECONDS = `date +%s`
-VERSION = 0_6_146_$(EPOCH_SECONDS)
+VERSION = 0.6.147_$(EPOCH_SECONDS)
 
 SHORT_DESC = Yahoo! druid coordinator node
 LONG_DESC = Yahoo! druid package for real time reporting on big data 
