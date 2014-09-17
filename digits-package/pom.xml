@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.druid</groupId>
     <artifactId>druid</artifactId>
-    <version>0.6.146</version>
+    <version>0.6.147</version>
   </parent>
 
   <groupId>com.yahoo</groupId>	
