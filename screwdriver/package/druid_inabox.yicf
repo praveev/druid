@@ -32,6 +32,6 @@ f - - - conf/$(PRODUCT_NAME)/runtime.properties    screwdriver/package/conf/runt
 # Include startup scripts.
 g - - - share/$(PRODUCT_NAME)/scripts/    screwdriver/package/scripts/*
 
-YINST post-install $ROOT/share/$(PRODUCT_NAME)/scripts/setup_mysql
+YINST post-activate $ROOT/share/$(PRODUCT_NAME)/scripts/setup_mysql
 YINST start 1 $ROOT/share/$(PRODUCT_NAME)/scripts/start_all
 YINST stop 1 $ROOT/share/$(PRODUCT_NAME)/scripts/stop_all
