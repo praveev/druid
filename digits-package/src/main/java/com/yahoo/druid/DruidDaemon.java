@@ -16,13 +16,6 @@ public class DruidDaemon implements Daemon {
     @Override
     public void init(DaemonContext context) throws Exception {
         System.out.println("Druid Daemon Initializing...");
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                e.printStackTrace();
-                System.exit(123); //123 is the magic code defined by yjava_daemon process restart
-            }
-        });
         args = context.getArguments();
         System.out.println("Druid Daemon Initialization done.");
     }
