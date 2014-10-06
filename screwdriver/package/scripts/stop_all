@@ -1,8 +1,3 @@
 #!/bin/bash
 
-pids_to_kill=`pgrep -f io.druid.cli.Main`
-
-if [ "x$pids_to_kill" != "x" ]; then
-  echo "Killing all druid processes..."  
-  kill $pids_to_kill
-fi
+pkill -f io.druid.cli.Main
