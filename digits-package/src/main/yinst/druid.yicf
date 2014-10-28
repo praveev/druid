@@ -79,6 +79,8 @@ YINST set peonStartPort 8085
 YINST set indexerBaseWorkingDir $(ROOT)/tmp/$(PRODUCT_NAME)
 YINST set indexerBaseTaskDir $(ROOT)/tmp/$(PRODUCT_NAME)/persistent/tasks
 YINST set indexerHadoopWorkingPath $(ROOT)/tmp/$(PRODUCT_NAME)/druid-indexing
+YINST set coordinatorMergeSegments true
+YINST set coordinatorConvertSegments false
 
 YINST set queueName audience_dna
 YINST set indexerReducerMem 8192
