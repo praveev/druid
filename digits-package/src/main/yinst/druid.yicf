@@ -67,6 +67,7 @@ YINST set serverTier _default_tier
 YINST set dbConnectUri jdbc:mysql://HostToBeSet:3306/druid
 YINST set dbUser druid
 YINST set dbPassword diurd
+YINST set indexerStorageType local
 YINST set maxHttpConnections 27
 YINST set logLevel info
 YINST set coordinatorStartDelay PT1M
