@@ -27,7 +27,7 @@ d 777 - - logs/$(PRODUCT_NAME)
 g - - - libexec/$(PRODUCT_NAME)/    services/target/druid-services-*/druid-services-*/lib/*.jar
 
 # Include druid runtime configuration.
-f - - - conf/$(PRODUCT_NAME)/runtime.properties    screwdriver/package/conf/runtime.properties
+c - - - conf/$(PRODUCT_NAME)/runtime.properties    screwdriver/package/conf/runtime.properties  expand  overwrite
 
 # Include startup scripts.
 g - - - share/$(PRODUCT_NAME)/scripts/    screwdriver/package/scripts/*
