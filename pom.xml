@@ -20,17 +20,16 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.druid</groupId>
+    <groupId>com.yahoo.kloepper</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
     <version>0.6.147</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
-        <connection>scm:git:ssh://git@github.com/metamx/druid.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/metamx/druid.git</developerConnection>
-        <url>http://www.github.com/metamx/druid</url>
-        <tag>druid-0.6.147</tag>
+        <connection>scm:git:ssh://git@git.corp.yahoo.com/kloepper/druid.git</connection>
+        <developerConnection>scm:git:ssh://git@git.corp.yahoo.com/kloepper/druid.git</developerConnection>
+        <tag>HEAD</tag>
     </scm>
 
     <prerequisites>
@@ -42,7 +41,6 @@
         <metamx.java-util.version>0.26.6</metamx.java-util.version>
         <apache.curator.version>2.6.0</apache.curator.version>
         <druid.api.version>0.2.7</druid.api.version>
-        <maven.deploy.skip>true</maven.deploy.skip>
         <enforcer.skip>true</enforcer.skip>
     </properties>
 
@@ -592,7 +590,19 @@
                     <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
         </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
     </build>
 
     <repositories>
@@ -609,9 +619,9 @@
     </repositories>
     <distributionManagement>
         <repository>
-            <id>central-local</id>
-            <name>Central</name>
-            <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
+            <id>artifactory.ops.yahoo.com-releases</id>
+            <name>artifactory.ops.yahoo.com-releases</name>
+            <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-release/</url>
         </repository>
     </distributionManagement>
 </project>
