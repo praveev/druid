@@ -20,7 +20,7 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.yahoo.kloepper</groupId>
+    <groupId>com.yahoo.kloepper.druid</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
     <version>0.6.171</version>
@@ -48,21 +48,13 @@
 
     <modules>
         <module>common</module>
-        <module>examples</module>
         <module>indexing-hadoop</module>
         <module>indexing-service</module>
         <module>processing</module>
         <module>server</module>
         <module>services</module>
-        <module>digits-package</module>
         <!-- Non-default modules -->
-        <module>cassandra-storage</module>
         <module>hdfs-storage</module>
-        <module>s3-extensions</module>
-        <module>kafka-seven</module>
-        <module>kafka-eight</module>
-        <module>rabbitmq</module>
-        <module>histogram</module>
     </modules>
 
     <dependencyManagement>
