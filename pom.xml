@@ -20,17 +20,16 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.druid</groupId>
+    <groupId>com.yahoo.kloepper</groupId>
     <artifactId>druid</artifactId>
     <packaging>pom</packaging>
     <version>0.6.171</version>
     <name>druid</name>
     <description>druid</description>
     <scm>
-        <connection>scm:git:ssh://git@github.com/druid-io/druid.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/druid-io/druid.git</developerConnection>
-        <url>https://github.com/druid-io/druid</url>
-        <tag>druid-0.6.171</tag>
+        <connection>scm:git:ssh://git@git.corp.yahoo.com/kloepper/druid.git</connection>
+        <developerConnection>scm:git:ssh://git@git.corp.yahoo.com/kloepper/druid.git</developerConnection>
+        <tag>HEAD</tag>
     </scm>
 
     <prerequisites>
@@ -607,7 +606,19 @@
                     <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
         </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
     </build>
 
     <repositories>
@@ -624,9 +635,9 @@
     </repositories>
     <distributionManagement>
         <repository>
-            <id>central-local</id>
-            <name>Central</name>
-            <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
+            <id>artifactory.ops.yahoo.com-releases</id>
+            <name>artifactory.ops.yahoo.com-releases</name>
+            <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-release/</url>
         </repository>
     </distributionManagement>
 </project>

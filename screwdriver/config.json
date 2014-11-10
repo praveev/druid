@@ -6,41 +6,6 @@
       "build": {
         "test": {
           "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"]
-        },
-        "publish": {
-          "task": "dist-install",
-          "branch": "test",
-          "required": true,
-          "dir": ".",
-          "yicf": [
-            "screwdriver/package/druid_inabox.yicf",
-            "digits-package/src/main/yinst/druid.yicf",
-            "digits-package/src/main/yinst/druid_broker.yicf",
-            "digits-package/src/main/yinst/druid_coordinator.yicf",
-            "digits-package/src/main/yinst/druid_historical.yicf",
-            "digits-package/src/main/yinst/druid_indexer.yicf",
-            "digits-package/src/main/yinst/druid_realtime.yicf"
-          ],
-          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
-        }
-      },
-      "triggers": [ "promote-build" ]
-    },
-    "promote-build": {
-      "build": {
-        "clean": {
-          "task": "none"
-        },
-        "extest": {
-          "task": "script",
-          "command": "echo sanity checks do not yet exist",
-          "copy_files_from": ".\/screwdriver\/test_results"
-        },
-        "promote": {
-          "task": "dist-setbranch",
-          "package": "druid_inabox",
-          "from": "test",
-          "to": "current"
         }
       }
     }
