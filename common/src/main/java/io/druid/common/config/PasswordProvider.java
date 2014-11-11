@@ -24,7 +24,8 @@ import java.util.Map;
  * Implement this for different ways to (optionally securely) access passwords.
  * @author srikalyan
  */
-public interface PasswordProvider {
+public interface PasswordProvider 
+{
   public void init(Map<String, String> configProperties);
   public String getPassword();
 }
