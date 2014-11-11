@@ -64,8 +64,7 @@ public class DbConnectorConfig
   @JsonProperty
   private String validationQuery = "SELECT 1";
 
-  public DbConnectorConfig() 
-  { }
+  public DbConnectorConfig() { }
 
   public DbConnectorConfig(String passwordKey, String passwordProvider) {
     this.passwordKey = passwordKey;
@@ -99,7 +98,7 @@ public class DbConnectorConfig
           securePasswordProvider.init(config);
           finalPassword = securePasswordProvider.getPassword();
         } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-          log.error(String.format("Could not initialize PasswordProvider with class %s, exception caught: %s", passwordProvider, e));
+          log.error(e, "Could not initialize PasswordProvider with class %s", passwordProvider);
         }
       }
     }
