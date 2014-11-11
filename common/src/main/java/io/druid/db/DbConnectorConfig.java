@@ -20,8 +20,14 @@
 package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.common.collect.Maps;
+import com.metamx.common.logger.Logger;
+import io.druid.common.config.PasswordProvider;
+ 
 import javax.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  */
