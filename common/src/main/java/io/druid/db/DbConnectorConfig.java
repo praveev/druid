@@ -58,7 +58,8 @@ public class DbConnectorConfig
   @JsonProperty
   private String validationQuery = "SELECT 1";
 
-  public DbConnectorConfig() { }
+  public DbConnectorConfig() 
+  { }
 
   public DbConnectorConfig(String passwordKey, String passwordProvider) {
     this.passwordKey = passwordKey;
