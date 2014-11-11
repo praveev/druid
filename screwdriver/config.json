@@ -5,7 +5,8 @@
     "component": {
       "build": {
         "test": {
-          "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"]
+          "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"],
+          "before": "mvn versions:set -DnewVersion=1.`date +%s`"
         }
       }
     }
