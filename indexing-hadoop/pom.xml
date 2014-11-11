@@ -103,22 +103,6 @@
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
             </plugin>
-            <plugin>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <outputFile>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-selfcontained.jar
-                            </outputFile>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>
