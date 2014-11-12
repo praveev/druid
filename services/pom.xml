@@ -19,13 +19,12 @@
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.druid</groupId>
     <artifactId>druid-services</artifactId>
     <name>druid-services</name>
     <description>druid-services</description>
 
     <parent>
-        <groupId>io.druid</groupId>
+        <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
         <version>0.6.147</version>
     </parent>
@@ -36,17 +35,17 @@
             <artifactId>airline</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-indexing-hadoop</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-indexing-service</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -56,62 +55,6 @@
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <outputFile>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-selfcontained.jar
-                            </outputFile>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>distro-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assembly</goal>
-                        </goals>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
