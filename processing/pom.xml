@@ -25,14 +25,14 @@
     <description>A module that is everything required to understands Druid Segments</description>
 
     <parent>
-        <groupId>com.yahoo.kloepper.druid</groupId>
+        <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
         <version>0.6.171</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>com.yahoo.kloepper.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

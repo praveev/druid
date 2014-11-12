@@ -25,14 +25,14 @@
     <description>Druid Server</description>
 
     <parent>
-        <groupId>com.yahoo.kloepper.druid</groupId>
+        <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
         <version>0.6.171</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>com.yahoo.kloepper.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-processing</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -161,7 +161,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.yahoo.kloepper.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-processing</artifactId>
             <version>${project.parent.version}</version>
             <type>test-jar</type>
