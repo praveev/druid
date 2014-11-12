@@ -6,7 +6,7 @@
       "build": {
         "test": {
           "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"],
-          "before": "mvn versions:set -DnewVersion=1.`date +%s`"
+          "before": "mvn versions:set -DnewVersion=`git describe`"
         },
         "remote_trigger": {
           "url": "http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/27297-kloepper-druid_package-trunk-component",
