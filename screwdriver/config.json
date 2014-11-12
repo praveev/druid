@@ -9,10 +9,10 @@
           "before": "mvn versions:set -DnewVersion=`git describe`"
         },
         "publish": {
-          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:kloepper/druid.git$' > /dev/null"
+          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
         },
         "remote_trigger": {
-          "url": "http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/27297-kloepper-druid_package-trunk-component",
+          "url": "http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/27295-greyhawk-druid_package-trunk-component",
           "params": {}
         }
       }
