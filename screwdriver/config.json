@@ -8,6 +8,9 @@
           "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"],
           "before": "mvn versions:set -DnewVersion=`git describe`"
         },
+        "publish": {
+          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:kloepper/druid.git$' > /dev/null"
+        },
         "remote_trigger": {
           "url": "http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/27297-kloepper-druid_package-trunk-component",
           "params": {}
