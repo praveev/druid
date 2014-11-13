@@ -1,6 +1,5 @@
 package io.druid.common.utils;
 
-
 import org.junit.Assert;
 import org.junit.Test;
 
