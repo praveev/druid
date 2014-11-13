@@ -20,20 +20,19 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.druid</groupId>
     <artifactId>druid-indexing-hadoop</artifactId>
     <name>druid-indexing-hadoop</name>
     <description>Druid Indexing Hadoop</description>
 
     <parent>
-        <groupId>io.druid</groupId>
+        <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
         <version>0.6.147</version>
     </parent>
 
     <dependencies>
          <dependency>
-            <groupId>io.druid</groupId>
+            <groupId>com.yahoo.druid</groupId>
             <artifactId>druid-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -103,30 +102,6 @@
         <plugins>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <outputFile>
-                                ${project.build.directory}/${project.artifactId}-${project.version}-selfcontained.jar
-                            </outputFile>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
