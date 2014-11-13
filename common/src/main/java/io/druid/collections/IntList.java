@@ -114,7 +114,7 @@ public class IntList
     final IntBuffer retVal = IntBuffer.wrap(array);
 
     if (index + 1 == baseListCount()) {
-      retVal.limit(maxIndex - (index * allocateSize));
+      retVal.limit(maxIndex - (index * allocateSize) + 1);
     }
 
     return retVal.asReadOnlyBuffer();
