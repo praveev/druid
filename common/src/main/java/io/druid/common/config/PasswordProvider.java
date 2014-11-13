@@ -1,6 +1,6 @@
 /*
  * Druid - a distributed column store.
- * Copyright (C) 2012, 2013  Metamarkets Group Inc.
+ * Copyright 2014 Yahoo Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * Implement this for different ways to (optionally securely) access passwords.
- * @author srikalyan
  */
 public interface PasswordProvider 
 {
