@@ -23,7 +23,6 @@ import io.druid.common.config.PasswordProvider;
 import java.util.Map;
 
 /**
- * @author srikalyan
  */
 public class DummyPasswordProvider implements PasswordProvider
 {
