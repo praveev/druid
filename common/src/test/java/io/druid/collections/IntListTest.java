@@ -73,7 +73,7 @@ public class IntListTest
     Assert.assertEquals(23, list.get(7));
   }
   
-  @Test(expected=ArrayIndexOutOfBoundsException.class)
+  @Test(expected = ArrayIndexOutOfBoundsException.class)
   public void testExceptionInGet()
   {
     IntList list = new IntList();
@@ -85,7 +85,7 @@ public class IntListTest
   {
     int[] inputArray = {1,3,4};
     IntList list = new IntList();
-    for (int i=0; i<inputArray.length; i++) {
+    for (int i = 0; i < inputArray.length; i++) {
       list.add(inputArray[i]);
     }
     int[] outputArray = list.toArray();
@@ -95,20 +95,20 @@ public class IntListTest
   @Test
   public void testNullCaseGetBaseList()
   {
-    final int intSize=2;
-    IntList list =new IntList(intSize);
-    list.set(2*intSize,100);
+    final int intSize = 2;
+    IntList list = new IntList(intSize);
+    list.set(2 * intSize,100);
     IntBuffer outBuffer;
-    outBuffer=list.getBaseList(0);
+    outBuffer = list.getBaseList(0);
     Assert.assertNull("Should be Null",outBuffer);
   }
   
   @Test
   public void testGetBaseList()
   {
-    int listSize=2;
-    IntList list=new IntList(listSize);
-    int[] expectedArray ={1,2};
+    int listSize = 2;
+    IntList list = new IntList(listSize);
+    int[] expectedArray = {1,2};
     list.add(expectedArray[0]);
     list.add(expectedArray[1]);
     IntBuffer outputBuffer = list.getBaseList(0);
