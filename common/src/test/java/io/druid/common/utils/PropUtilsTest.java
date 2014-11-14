@@ -6,18 +6,16 @@ import org.junit.Test;
 import com.metamx.common.ISE;
 
 import java.util.Properties;
-/**
-Testing PropUtils */
 
 public class PropUtilsTest
-{  
+{
   @Test(expected = ISE.class)
   public void testNotSpecifiedGetProperty()
   {
     Properties prop = new Properties();
     PropUtils.getProperty(prop,"");
   }
-  
+
   @Test
   public void testGetProperty()
   {
@@ -25,32 +23,34 @@ public class PropUtilsTest
     prop.setProperty("key","value");
     Assert.assertEquals("value", PropUtils.getProperty(prop,"key"));
   }
-  
+
   @Test(expected = ISE.class)
   public void testNotSpecifiedGetPropertyAsInt()
   {
     Properties prop = new Properties();
     PropUtils.getPropertyAsInt(prop,"",null);
   }
-  
+
   @Test
-  public void testGetPropertyAsInt()
+  public void testDefaultValueGetPropertyAsInt()
   {
     Properties prop = new Properties();
-    Integer expcected = new Integer(1);
-    Integer result = PropUtils.getPropertyAsInt(prop,"",expcected);
-    Assert.assertEquals(expcected, result);
+    int defaultValue = 1;
+    int result = PropUtils.getPropertyAsInt(prop,"",defaultValue);
+    Assert.assertEquals(defaultValue, result);
   }
-  
+
   @Test
   public void testParseGetPropertyAsInt()
   {
     Properties prop = new Properties();
-    prop.setProperty("key","1");
-    Assert.assertEquals(1, PropUtils.getPropertyAsInt(prop,"key"));
+    int expectedValue = 1;
+    prop.setProperty("key", Integer.toString(expectedValue));
+    int result = PropUtils.getPropertyAsInt(prop,"key");
+    Assert.assertEquals(expectedValue, result);
   }
-  
-  @Test(expected = ISE.class) 
+
+  @Test(expected = ISE.class)
   public void testFormatExceptionGetPropertyAsInt()
   {
     Properties prop = new Properties();
