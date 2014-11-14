@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import io.druid.data.input.InputRow;
 
 import java.util.List;
-import java.util.Set;
 
 public class NumberedShardSpec implements ShardSpec
 {
@@ -61,7 +60,7 @@ public class NumberedShardSpec implements ShardSpec
     return new ShardSpecLookup()
     {
       @Override
-      public ShardSpec getShardSpec(InputRow row)
+      public ShardSpec getShardSpec(long timestamp, InputRow row)
       {
         return shardSpecs.get(0);
       }
@@ -81,7 +80,7 @@ public class NumberedShardSpec implements ShardSpec
   }
 
   @Override
-  public boolean isInChunk(InputRow inputRow)
+  public boolean isInChunk(long timestamp, InputRow inputRow)
   {
     return true;
   }

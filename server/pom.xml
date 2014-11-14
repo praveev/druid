@@ -27,7 +27,7 @@
     <parent>
         <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.6.147</version>
+        <version>0.6.160</version>
     </parent>
 
     <dependencies>
@@ -75,6 +75,10 @@
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-smile-provider</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>

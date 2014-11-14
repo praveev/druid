@@ -23,13 +23,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.guava.Sequences;
 import io.druid.query.Druids;
-import io.druid.query.Query;
 import io.druid.query.QueryRunner;
 import io.druid.query.QueryRunnerTestHelper;
-import io.druid.query.QueryWatcher;
 import io.druid.query.Result;
 import io.druid.query.filter.DimFilter;
 import io.druid.query.search.search.FragmentSearchQuerySpec;
@@ -118,10 +115,10 @@ public class SearchQueryRunnerTest
     Map<String, Set<String>> expectedResults = new HashMap<String, Set<String>>();
     expectedResults.put(
         QueryRunnerTestHelper.qualityDimension, new HashSet<String>(
-        Arrays.asList(
-            "automotive", "mezzanine", "travel", "health", "entertainment"
+            Arrays.asList(
+                "automotive", "mezzanine", "travel", "health", "entertainment"
+            )
         )
-    )
     );
 
     checkSearchQuery(
@@ -363,6 +360,24 @@ public class SearchQueryRunnerTest
               .granularity(QueryRunnerTestHelper.allGran)
               .filters(filter)
               .intervals(QueryRunnerTestHelper.fullOnInterval)
+              .query("a")
+              .build(),
+        expectedResults
+    );
+  }
+
+
+  @Test
+  public void testSearchNonExistingDimension()
+  {
+    Map<String, Set<String>> expectedResults = Maps.newTreeMap(String.CASE_INSENSITIVE_ORDER);
+
+    checkSearchQuery(
+        Druids.newSearchQueryBuilder()
+              .dataSource(QueryRunnerTestHelper.dataSource)
+              .granularity(QueryRunnerTestHelper.allGran)
+              .intervals(QueryRunnerTestHelper.fullOnInterval)
+              .dimensions("does_not_exist")
               .query("a")
               .build(),
         expectedResults

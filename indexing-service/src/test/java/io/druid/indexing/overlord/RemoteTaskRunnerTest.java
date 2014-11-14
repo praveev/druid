@@ -39,6 +39,8 @@ import io.druid.indexing.common.TestRealtimeTask;
 import io.druid.indexing.common.TestUtils;
 import io.druid.indexing.common.task.Task;
 import io.druid.indexing.common.task.TaskResource;
+import io.druid.indexing.overlord.config.RemoteTaskRunnerConfig;
+import io.druid.indexing.overlord.setup.FillCapacityWorkerSelectStrategy;
 import io.druid.indexing.overlord.setup.WorkerSetupData;
 import io.druid.indexing.worker.TaskAnnouncement;
 import io.druid.indexing.worker.Worker;
@@ -359,6 +361,29 @@ public class RemoteTaskRunnerTest
     Assert.assertEquals(TaskStatus.Status.FAILED, status.getStatusCode());
   }
 
+  @Test
+  public void testWorkerDisabled() throws Exception
+  {
+    doSetup();
+    final ListenableFuture<TaskStatus> result = remoteTaskRunner.run(task);
+
+    Assert.assertTrue(taskAnnounced(task.getId()));
+    mockWorkerRunningTask(task);
+    Assert.assertTrue(workerRunningTask(task.getId()));
+
+    // Disable while task running
+    disableWorker();
+
+    // Continue test
+    mockWorkerCompleteSuccessfulTask(task);
+    Assert.assertTrue(workerCompletedTask(result));
+    Assert.assertEquals(task.getId(), result.get().getId());
+    Assert.assertEquals(TaskStatus.Status.SUCCESS, result.get().getStatusCode());
+
+    // Confirm RTR thinks the worker is disabled.
+    Assert.assertEquals("", Iterables.getOnlyElement(remoteTaskRunner.getWorkers()).getWorker().getVersion());
+  }
+
   private void doSetup() throws Exception
   {
     makeWorker();
@@ -367,9 +392,10 @@ public class RemoteTaskRunnerTest
 
   private void makeRemoteTaskRunner() throws Exception
   {
+    RemoteTaskRunnerConfig config = new TestRemoteTaskRunnerConfig();
     remoteTaskRunner = new RemoteTaskRunner(
         jsonMapper,
-        new TestRemoteTaskRunnerConfig(),
+        config,
         new ZkPathsConfig()
         {
           @Override
@@ -380,8 +406,8 @@ public class RemoteTaskRunnerTest
         },
         cf,
         new SimplePathChildrenCacheFactory.Builder().build(),
-        DSuppliers.of(new AtomicReference<WorkerSetupData>(new WorkerSetupData(0, 1, null, null, null))),
-        null
+        null,
+        new FillCapacityWorkerSelectStrategy(config)
     );
 
     remoteTaskRunner.start();
@@ -399,6 +425,14 @@ public class RemoteTaskRunnerTest
     cf.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(
         announcementsPath,
         jsonMapper.writeValueAsBytes(worker)
+    );
+  }
+
+  private void disableWorker() throws Exception
+  {
+    cf.setData().forPath(
+        announcementsPath,
+        jsonMapper.writeValueAsBytes(new Worker(worker.getHost(), worker.getIp(), worker.getCapacity(), ""))
     );
   }
 

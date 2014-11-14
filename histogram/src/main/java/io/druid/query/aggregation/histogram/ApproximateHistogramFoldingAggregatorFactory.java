@@ -76,7 +76,8 @@ public class ApproximateHistogramFoldingAggregatorFactory extends ApproximateHis
       };
     }
 
-    if (ApproximateHistogram.class.isAssignableFrom(selector.classOfObject())) {
+    final Class cls = selector.classOfObject();
+    if (cls.equals(Object.class) || ApproximateHistogram.class.isAssignableFrom(cls)) {
       return new ApproximateHistogramFoldingAggregator(
           name,
           selector,
@@ -89,7 +90,7 @@ public class ApproximateHistogramFoldingAggregatorFactory extends ApproximateHis
     throw new IAE(
         "Incompatible type for metric[%s], expected a ApproximateHistogram, got a %s",
         fieldName,
-        selector.classOfObject()
+        cls
     );
   }
 
@@ -117,14 +118,15 @@ public class ApproximateHistogramFoldingAggregatorFactory extends ApproximateHis
       };
     }
 
-    if (ApproximateHistogram.class.isAssignableFrom(selector.classOfObject())) {
+    final Class cls = selector.classOfObject();
+    if (cls.equals(Object.class) || ApproximateHistogram.class.isAssignableFrom(cls)) {
       return new ApproximateHistogramFoldingBufferAggregator(selector, resolution, lowerLimit, upperLimit);
     }
 
     throw new IAE(
         "Incompatible type for metric[%s], expected a ApproximateHistogram, got a %s",
         fieldName,
-        selector.classOfObject()
+        cls
     );
   }
 
@@ -146,6 +148,52 @@ public class ApproximateHistogramFoldingAggregatorFactory extends ApproximateHis
                      .putFloat(lowerLimit)
                      .putFloat(upperLimit)
                      .array();
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ApproximateHistogramAggregatorFactory that = (ApproximateHistogramAggregatorFactory) o;
+
+    if (Float.compare(that.lowerLimit, lowerLimit) != 0) {
+      return false;
+    }
+    if (numBuckets != that.numBuckets) {
+      return false;
+    }
+    if (resolution != that.resolution) {
+      return false;
+    }
+    if (Float.compare(that.upperLimit, upperLimit) != 0) {
+      return false;
+    }
+    if (fieldName != null ? !fieldName.equals(that.fieldName) : that.fieldName != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(that.name) : that.name != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (fieldName != null ? fieldName.hashCode() : 0);
+    result = 31 * result + resolution;
+    result = 31 * result + numBuckets;
+    result = 31 * result + (lowerLimit != +0.0f ? Float.floatToIntBits(lowerLimit) : 0);
+    result = 31 * result + (upperLimit != +0.0f ? Float.floatToIntBits(upperLimit) : 0);
+    return result;
   }
 
   @Override

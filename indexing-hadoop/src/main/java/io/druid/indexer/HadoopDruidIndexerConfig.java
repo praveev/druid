@@ -41,6 +41,7 @@ import com.metamx.common.logger.Logger;
 import io.druid.common.utils.JodaUtils;
 import io.druid.data.input.InputRow;
 import io.druid.data.input.impl.StringInputRowParser;
+import io.druid.granularity.QueryGranularity;
 import io.druid.guice.GuiceInjectors;
 import io.druid.guice.JsonConfigProvider;
 import io.druid.guice.annotations.Self;
@@ -170,16 +171,15 @@ public class HadoopDruidIndexerConfig
 
   private volatile HadoopIngestionSpec schema;
   private volatile PathSpec pathSpec;
-  private volatile ColumnConfig columnConfig;
   private volatile Map<DateTime,ShardSpecLookup> shardSpecLookups = Maps.newHashMap();
   private volatile Map<ShardSpec, HadoopyShardSpec> hadoopShardSpecLookup = Maps.newHashMap();
+  private final QueryGranularity rollupGran;
 
   @JsonCreator
   public HadoopDruidIndexerConfig(
       final @JsonProperty("schema") HadoopIngestionSpec schema
   )
   {
-    this.columnConfig = columnConfig;
     this.schema = schema;
     this.pathSpec = jsonMapper.convertValue(schema.getIOConfig().getPathSpec(), PathSpec.class);
     for (Map.Entry<DateTime, List<HadoopyShardSpec>> entry : schema.getTuningConfig().getShardSpecs().entrySet()) {
@@ -205,17 +205,13 @@ public class HadoopDruidIndexerConfig
         hadoopShardSpecLookup.put(hadoopyShardSpec.getActualSpec(), hadoopyShardSpec);
       }
     }
+    this.rollupGran = schema.getDataSchema().getGranularitySpec().getQueryGranularity();
   }
 
   @JsonProperty
   public HadoopIngestionSpec getSchema()
   {
     return schema;
-  }
-
-  public ColumnConfig getColumnConfig()
-  {
-    return columnConfig;
   }
 
   public String getDataSource()
@@ -333,7 +329,7 @@ public class HadoopDruidIndexerConfig
       return Optional.absent();
     }
 
-    final ShardSpec actualSpec = shardSpecLookups.get(timeBucket.get().getStart()).getShardSpec(inputRow);
+    final ShardSpec actualSpec = shardSpecLookups.get(timeBucket.get().getStart()).getShardSpec(rollupGran.truncate(inputRow.getTimestampFromEpoch()), inputRow);
     final HadoopyShardSpec hadoopyShardSpec = hadoopShardSpecLookup.get(actualSpec);
 
     return Optional.of(

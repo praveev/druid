@@ -29,8 +29,14 @@ import com.google.common.primitives.Floats;
 import com.google.common.primitives.Ints;
 import io.druid.query.aggregation.Aggregator;
 import io.druid.query.aggregation.AggregatorFactory;
+import io.druid.query.aggregation.Aggregators;
 import io.druid.query.aggregation.BufferAggregator;
+import io.druid.query.aggregation.hyperloglog.HyperLogLogCollector;
+import io.druid.query.aggregation.hyperloglog.HyperUniquesAggregator;
+import io.druid.query.aggregation.hyperloglog.HyperUniquesBufferAggregator;
 import io.druid.segment.ColumnSelectorFactory;
+import io.druid.segment.FloatColumnSelector;
+import io.druid.segment.ObjectColumnSelector;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.ByteBuffer;
@@ -113,7 +119,7 @@ public class ApproximateHistogramAggregatorFactory implements AggregatorFactory
   @Override
   public AggregatorFactory getCombiningFactory()
   {
-    return new ApproximateHistogramAggregatorFactory(name, name, resolution, numBuckets, lowerLimit, upperLimit);
+    return new ApproximateHistogramFoldingAggregatorFactory(name, name, resolution, numBuckets, lowerLimit, upperLimit);
   }
 
   @Override
@@ -236,6 +242,52 @@ public class ApproximateHistogramAggregatorFactory implements AggregatorFactory
   public Object getAggregatorStartValue()
   {
     return new ApproximateHistogram(resolution);
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ApproximateHistogramAggregatorFactory that = (ApproximateHistogramAggregatorFactory) o;
+
+    if (Float.compare(that.lowerLimit, lowerLimit) != 0) {
+      return false;
+    }
+    if (numBuckets != that.numBuckets) {
+      return false;
+    }
+    if (resolution != that.resolution) {
+      return false;
+    }
+    if (Float.compare(that.upperLimit, upperLimit) != 0) {
+      return false;
+    }
+    if (fieldName != null ? !fieldName.equals(that.fieldName) : that.fieldName != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(that.name) : that.name != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (fieldName != null ? fieldName.hashCode() : 0);
+    result = 31 * result + resolution;
+    result = 31 * result + numBuckets;
+    result = 31 * result + (lowerLimit != +0.0f ? Float.floatToIntBits(lowerLimit) : 0);
+    result = 31 * result + (upperLimit != +0.0f ? Float.floatToIntBits(upperLimit) : 0);
+    return result;
   }
 
   @Override

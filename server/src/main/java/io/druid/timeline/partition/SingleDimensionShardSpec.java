@@ -24,7 +24,6 @@ import com.metamx.common.ISE;
 import io.druid.data.input.InputRow;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class uses getters/setters to work around http://jira.codehaus.org/browse/MSHADE-92
@@ -101,10 +100,10 @@ public class SingleDimensionShardSpec implements ShardSpec
     return new ShardSpecLookup()
     {
       @Override
-      public ShardSpec getShardSpec(InputRow row)
+      public ShardSpec getShardSpec(long timestamp, InputRow row)
       {
         for (ShardSpec spec : shardSpecs) {
-          if (spec.isInChunk(row)) {
+          if (spec.isInChunk(timestamp, row)) {
             return spec;
           }
         }
@@ -125,7 +124,7 @@ public class SingleDimensionShardSpec implements ShardSpec
   }
 
   @Override
-  public boolean isInChunk(InputRow inputRow)
+  public boolean isInChunk(long timestamp, InputRow inputRow)
   {
     final List<String> values = inputRow.getDimension(dimension);
 

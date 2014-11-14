@@ -21,17 +21,17 @@ package io.druid.firehose.rabbitmq;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Charsets;
 import com.metamx.common.logger.Logger;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.ConsumerCancelledException;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.QueueingConsumer.Delivery;
 import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;
-import com.rabbitmq.client.ConsumerCancelledException;
 import io.druid.data.input.ByteBufferInputRowParser;
 import io.druid.data.input.Firehose;
 import io.druid.data.input.FirehoseFactory;
@@ -104,25 +104,34 @@ public class RabbitMQFirehoseFactory implements FirehoseFactory<StringInputRowPa
 {
   private static final Logger log = new Logger(RabbitMQFirehoseFactory.class);
 
-  @JsonProperty
   private final RabbitMQFirehoseConfig config;
-
-  @JsonProperty
   private final StringInputRowParser parser;
-
-  @JsonProperty
-  private final ConnectionFactory connectionFactory;
+  private final JacksonifiedConnectionFactory connectionFactory;
 
   @JsonCreator
   public RabbitMQFirehoseFactory(
       @JsonProperty("connection") JacksonifiedConnectionFactory connectionFactory,
       @JsonProperty("config") RabbitMQFirehoseConfig config,
       @JsonProperty("parser") StringInputRowParser parser
-  )
+  ) throws Exception
   {
-    this.connectionFactory = connectionFactory;
-    this.config = config;
+    this.connectionFactory = connectionFactory == null
+                             ? JacksonifiedConnectionFactory.makeDefaultConnectionFactory()
+                             : connectionFactory;
+    this.config = config == null ? RabbitMQFirehoseConfig.makeDefaultConfig() : config;
     this.parser = parser;
+  }
+
+  @JsonProperty
+  public RabbitMQFirehoseConfig getConfig()
+  {
+    return config;
+  }
+
+  @JsonProperty
+  public JacksonifiedConnectionFactory getConnectionFactory()
+  {
+    return connectionFactory;
   }
 
   @Override
@@ -227,7 +236,7 @@ public class RabbitMQFirehoseFactory implements FirehoseFactory<StringInputRowPa
           return null;
         }
 
-        return stringParser.parse(new String(delivery.getBody()));
+        return stringParser.parse(new String(delivery.getBody(), Charsets.UTF_8));
       }
 
       @Override
@@ -269,6 +278,7 @@ public class RabbitMQFirehoseFactory implements FirehoseFactory<StringInputRowPa
     };
   }
 
+  @JsonProperty
   @Override
   public ByteBufferInputRowParser getParser()
   {
@@ -279,34 +289,43 @@ public class RabbitMQFirehoseFactory implements FirehoseFactory<StringInputRowPa
   {
     private final BlockingQueue<Delivery> _queue;
 
-    public QueueingConsumer(Channel ch) {
+    public QueueingConsumer(Channel ch)
+    {
       this(ch, new LinkedBlockingQueue<Delivery>());
     }
 
-    public QueueingConsumer(Channel ch, BlockingQueue<Delivery> q) {
+    public QueueingConsumer(Channel ch, BlockingQueue<Delivery> q)
+    {
       super(ch);
       this._queue = q;
     }
 
-    @Override public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
+    @Override
+    public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig)
+    {
       _queue.clear();
     }
 
-    @Override public void handleCancel(String consumerTag) throws IOException {
+    @Override
+    public void handleCancel(String consumerTag) throws IOException
+    {
       _queue.clear();
     }
 
-    @Override public void handleDelivery(String consumerTag,
-                                         Envelope envelope,
-                                         AMQP.BasicProperties properties,
-                                         byte[] body)
-      throws IOException
+    @Override
+    public void handleDelivery(
+        String consumerTag,
+        Envelope envelope,
+        AMQP.BasicProperties properties,
+        byte[] body
+    )
+        throws IOException
     {
       this._queue.add(new Delivery(envelope, properties, body));
     }
 
     public Delivery nextDelivery()
-      throws InterruptedException, ShutdownSignalException, ConsumerCancelledException
+        throws InterruptedException, ShutdownSignalException, ConsumerCancelledException
     {
       return _queue.take();
     }

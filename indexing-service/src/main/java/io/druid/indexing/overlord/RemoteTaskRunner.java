@@ -25,14 +25,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.io.InputSupplier;
-import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,7 +48,7 @@ import io.druid.curator.cache.PathChildrenCacheFactory;
 import io.druid.indexing.common.TaskStatus;
 import io.druid.indexing.common.task.Task;
 import io.druid.indexing.overlord.config.RemoteTaskRunnerConfig;
-import io.druid.indexing.overlord.setup.WorkerSetupData;
+import io.druid.indexing.overlord.setup.WorkerSelectStrategy;
 import io.druid.indexing.worker.TaskAnnouncement;
 import io.druid.indexing.worker.Worker;
 import io.druid.server.initialization.ZkPathsConfig;
@@ -70,10 +69,8 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -109,8 +106,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
   private final CuratorFramework cf;
   private final PathChildrenCacheFactory pathChildrenCacheFactory;
   private final PathChildrenCache workerPathCache;
-  private final Supplier<WorkerSetupData> workerSetupData;
   private final HttpClient httpClient;
+  private final WorkerSelectStrategy strategy;
 
   // all workers that exist in ZK
   private final ConcurrentMap<String, ZkWorker> zkWorkers = new ConcurrentHashMap<>();
@@ -135,8 +132,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
       ZkPathsConfig zkPaths,
       CuratorFramework cf,
       PathChildrenCacheFactory pathChildrenCacheFactory,
-      Supplier<WorkerSetupData> workerSetupData,
-      HttpClient httpClient
+      HttpClient httpClient,
+      WorkerSelectStrategy strategy
   )
   {
     this.jsonMapper = jsonMapper;
@@ -145,8 +142,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
     this.cf = cf;
     this.pathChildrenCacheFactory = pathChildrenCacheFactory;
     this.workerPathCache = pathChildrenCacheFactory.make(cf, zkPaths.getIndexerAnnouncementPath());
-    this.workerSetupData = workerSetupData;
     this.httpClient = httpClient;
+    this.strategy = strategy;
   }
 
   @LifecycleStart
@@ -167,7 +164,7 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
             @Override
             public void childEvent(CuratorFramework client, final PathChildrenCacheEvent event) throws Exception
             {
-              Worker worker;
+              final Worker worker;
               switch (event.getType()) {
                 case CHILD_ADDED:
                   worker = jsonMapper.readValue(
@@ -201,6 +198,14 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
                       }
                   );
                   break;
+                case CHILD_UPDATED:
+                  worker = jsonMapper.readValue(
+                      event.getData().getData(),
+                      Worker.class
+                  );
+                  updateWorker(worker);
+                  break;
+
                 case CHILD_REMOVED:
                   worker = jsonMapper.readValue(
                       event.getData().getData(),
@@ -524,11 +529,30 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
       return true;
     } else {
       // Nothing running this task, announce it in ZK for a worker to run it
-      ZkWorker zkWorker = findWorkerForTask(task);
-      if (zkWorker != null) {
+      final Optional<ImmutableZkWorker> immutableZkWorker = strategy.findWorkerForTask(
+          ImmutableMap.copyOf(
+              Maps.transformEntries(
+                  zkWorkers,
+                  new Maps.EntryTransformer<String, ZkWorker, ImmutableZkWorker>()
+                  {
+                    @Override
+                    public ImmutableZkWorker transformEntry(
+                        String key, ZkWorker value
+                    )
+                    {
+                      return value.toImmutable();
+                    }
+                  }
+              )
+          ),
+          task
+      );
+      if (immutableZkWorker.isPresent()) {
+        final ZkWorker zkWorker = zkWorkers.get(immutableZkWorker.get().getWorker().getHost());
         announceTask(task, zkWorker, taskRunnerWorkItem);
         return true;
       } else {
+        log.debug("Worker nodes %s do not have capacity to run any more tasks!", zkWorkers.values());
         return false;
       }
     }
@@ -730,6 +754,24 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
   }
 
   /**
+   * We allow workers to change their own capacities and versions. They cannot change their own hosts or ips without
+   * dropping themselves and re-announcing.
+   */
+  private void updateWorker(final Worker worker)
+  {
+    final ZkWorker zkWorker = zkWorkers.get(worker.getHost());
+    if (zkWorker != null) {
+      log.info("Worker[%s] updated its announcement from[%s] to[%s].", worker.getHost(), zkWorker.getWorker(), worker);
+      zkWorker.setWorker(worker);
+    } else {
+      log.warn(
+          "WTF, worker[%s] updated its announcement but we didn't have a ZkWorker for it. Ignoring.",
+          worker.getHost()
+      );
+    }
+  }
+
+  /**
    * When a ephemeral worker node disappears from ZK, incomplete running tasks will be retried by
    * the logic in the status listener. We still have to make sure there are no tasks assigned
    * to the worker but not yet running.
@@ -787,37 +829,6 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         zkWorkers.remove(worker.getHost());
       }
     }
-  }
-
-  private ZkWorker findWorkerForTask(final Task task)
-  {
-    TreeSet<ZkWorker> sortedWorkers = Sets.newTreeSet(
-        new Comparator<ZkWorker>()
-        {
-          @Override
-          public int compare(
-              ZkWorker zkWorker, ZkWorker zkWorker2
-          )
-          {
-            int retVal = -Ints.compare(zkWorker.getCurrCapacityUsed(), zkWorker2.getCurrCapacityUsed());
-            if (retVal == 0) {
-              retVal = zkWorker.getWorker().getHost().compareTo(zkWorker2.getWorker().getHost());
-            }
-
-            return retVal;
-          }
-        }
-    );
-    sortedWorkers.addAll(zkWorkers.values());
-    final String minWorkerVer = config.getMinWorkerVersion();
-
-    for (ZkWorker zkWorker : sortedWorkers) {
-      if (zkWorker.canRunTask(task) && zkWorker.isValidVersion(minWorkerVer)) {
-        return zkWorker;
-      }
-    }
-    log.debug("Worker nodes %s do not have capacity to run any more tasks!", zkWorkers.values());
-    return null;
   }
 
   private void taskComplete(
