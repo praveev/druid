@@ -32,20 +32,22 @@ public class PropUtilsTest
   }
 
   @Test
-  public void testGetPropertyAsInt()
+  public void testDefaultValueGetPropertyAsInt()
   {
     Properties prop = new Properties();
-    Integer expcected = new Integer(1);
-    Integer result = PropUtils.getPropertyAsInt(prop,"",expcected);
-    Assert.assertEquals(expcected, result);
+    int defaultValue = 1;
+    int result = PropUtils.getPropertyAsInt(prop,"",defaultValue);
+    Assert.assertEquals(defaultValue, result);
   }
 
   @Test
   public void testParseGetPropertyAsInt()
   {
     Properties prop = new Properties();
-    prop.setProperty("key","1");
-    Assert.assertEquals(1, PropUtils.getPropertyAsInt(prop,"key"));
+    int expectedValue = 1;
+    prop.setProperty("key", Integer.toString(expectedValue));
+    int result = PropUtils.getPropertyAsInt(prop,"key");
+    Assert.assertEquals(expectedValue, result);
   }
 
   @Test(expected = ISE.class)
