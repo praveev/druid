@@ -10,14 +10,14 @@ import java.util.Properties;
 Testing PropUtils */
 
 public class PropUtilsTest
-{  
+{
   @Test(expected = ISE.class)
   public void testNotSpecifiedGetProperty()
   {
     Properties prop = new Properties();
     PropUtils.getProperty(prop,"");
   }
-  
+
   @Test
   public void testGetProperty()
   {
@@ -25,14 +25,14 @@ public class PropUtilsTest
     prop.setProperty("key","value");
     Assert.assertEquals("value", PropUtils.getProperty(prop,"key"));
   }
-  
+
   @Test(expected = ISE.class)
   public void testNotSpecifiedGetPropertyAsInt()
   {
     Properties prop = new Properties();
     PropUtils.getPropertyAsInt(prop,"",null);
   }
-  
+
   @Test
   public void testGetPropertyAsInt()
   {
@@ -41,7 +41,7 @@ public class PropUtilsTest
     Integer result = PropUtils.getPropertyAsInt(prop,"",expcected);
     Assert.assertEquals(expcected, result);
   }
-  
+
   @Test
   public void testParseGetPropertyAsInt()
   {
@@ -49,8 +49,8 @@ public class PropUtilsTest
     prop.setProperty("key","1");
     Assert.assertEquals(1, PropUtils.getPropertyAsInt(prop,"key"));
   }
-  
-  @Test(expected = ISE.class) 
+
+  @Test(expected = ISE.class)
   public void testFormatExceptionGetPropertyAsInt()
   {
     Properties prop = new Properties();
