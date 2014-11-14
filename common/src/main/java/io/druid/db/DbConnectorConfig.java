@@ -20,13 +20,23 @@
 package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.common.collect.Maps;
+import com.metamx.common.logger.Logger;
+import io.druid.common.config.PasswordProvider;
+ 
 import javax.validation.constraints.NotNull;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 /**
  */
 public class DbConnectorConfig
 {
+  private PasswordProvider securePasswordProvider;
+  private final AtomicBoolean passwordProviderInitialized = new AtomicBoolean(false);
+  private static final Logger log = new Logger(DbConnectorConfig.class);
+  
   @JsonProperty
   private boolean createTables = true;
 
@@ -43,10 +53,23 @@ public class DbConnectorConfig
   private String password = null;
 
   @JsonProperty
+  private String passwordKey = null;
+
+  @JsonProperty
+  private String passwordProvider = null;
+
+  @JsonProperty
   private boolean useValidationQuery = false;
 
   @JsonProperty
   private String validationQuery = "SELECT 1";
+
+  public DbConnectorConfig() { }
+
+  public DbConnectorConfig(String passwordKey, String passwordProvider) {
+    this.passwordKey = passwordKey;
+    this.passwordProvider = passwordProvider;
+  }
 
   public boolean isCreateTables()
   {
@@ -63,9 +86,33 @@ public class DbConnectorConfig
     return user;
   }
 
-  public String getPassword()
+  public String getPassword() 
   {
-    return password;
+    String finalPassword = password;
+    if (passwordProvider != null && passwordKey != null) {
+      if (!passwordProviderInitialized.getAndSet(true)) {
+        try {
+          securePasswordProvider = ((PasswordProvider)Class.forName(passwordProvider.trim()).newInstance());
+          Map<String, String> config = Maps.<String, String>newHashMap();
+          config.put("passwordKey", passwordKey);
+          securePasswordProvider.init(config);
+          finalPassword = securePasswordProvider.getPassword();
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+          log.error(e, "Could not initialize PasswordProvider with class %s", passwordProvider);
+        }
+      }
+    }
+    return finalPassword;
+  }
+
+  public String getPasswordKey() 
+  {
+    return passwordKey;
+  }
+
+  public String getPasswordProvider() 
+  {
+    return passwordProvider;
   }
 
   public boolean isUseValidationQuery()
