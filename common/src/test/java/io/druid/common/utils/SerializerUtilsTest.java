@@ -30,7 +30,7 @@ public class SerializerUtilsTest
   private  byte [] floatsByte;
   private  byte [] longsByte;
   private ByteArrayOutputStream outStream;
-  
+
   @Before
   public void setUpByteArrays() throws IOException
   {
@@ -75,7 +75,7 @@ public class SerializerUtilsTest
     serializerUtils = new SerializerUtils();
     outStream = new ByteArrayOutputStream();
   }
-  
+
   @Test
   public void testWriteInts() throws IOException
   {
@@ -83,7 +83,7 @@ public class SerializerUtilsTest
     byte [] actuals = outStream.toByteArray();
     Assert.assertArrayEquals(intsByte, actuals);
   }
-  
+
   @Test
   public void testWriteIntList() throws IOException
   {
@@ -95,7 +95,7 @@ public class SerializerUtilsTest
     byte [] actuals = outStream.toByteArray();
     Assert.assertArrayEquals(intsByte, actuals);
   }
-  
+
   @Test
   public void testWriteFloats() throws IOException
   {
@@ -103,7 +103,7 @@ public class SerializerUtilsTest
     byte [] actuals = outStream.toByteArray();
     Assert.assertArrayEquals(floatsByte, actuals);
   }
-  
+
   @Test
   public void testChannelWritefloat() throws IOException
   {
@@ -118,7 +118,7 @@ public class SerializerUtilsTest
     float actuals = floats[index];
     Assert.assertEquals(expected, actuals,delta);
   }
-  
+
   @Test
   public void testWriteLongs() throws IOException
   {
@@ -126,7 +126,7 @@ public class SerializerUtilsTest
     byte [] actuals = outStream.toByteArray();
     Assert.assertArrayEquals(longsByte,actuals);
   }
-  
+
   @Test
   public void testWriteStrings() throws IOException
   {
@@ -134,7 +134,7 @@ public class SerializerUtilsTest
     byte [] actuals = outStream.toByteArray();
     Assert.assertArrayEquals(stringsByte,actuals);
   }
-  
+
   @Test
   public void testChannelWritelong() throws IOException
   {
@@ -148,7 +148,7 @@ public class SerializerUtilsTest
     long actuals = longs[index];
     Assert.assertEquals(expected, actuals);
   }
-  
+
   @Test
   public void testReadInts() throws IOException
   {
@@ -157,7 +157,7 @@ public class SerializerUtilsTest
     inputstream.close();
     Assert.assertArrayEquals(ints, actuals);
   }
-  
+
   @Test
   public void testReadFloats() throws IOException
   {
@@ -166,7 +166,7 @@ public class SerializerUtilsTest
     inputstream.close();
     Assert.assertArrayEquals(floats, actuals, delta);
   }
-  
+
   @Test
   public void testReadLongs() throws IOException
   {
@@ -175,7 +175,7 @@ public class SerializerUtilsTest
     inputstream.close();
     Assert.assertArrayEquals(longs, actuals);
   }
-  
+
   @Test 
   public void testReadStrings()throws IOException
   {
@@ -184,7 +184,7 @@ public class SerializerUtilsTest
     inputstream.close();
     Assert.assertArrayEquals(strings, actuals);
   }
-  
+
   @Test
   public void testChannelWriteString() throws IOException
   {
@@ -198,7 +198,7 @@ public class SerializerUtilsTest
     String actuals = strings[index];
     Assert.assertEquals(expected, actuals);
   }
-  
+
   @Test 
   public void testByteBufferReadStrings() throws IOException
   {
@@ -208,7 +208,7 @@ public class SerializerUtilsTest
     String  [] actuals = serializerUtils.readStrings(buffer);
     Assert.assertArrayEquals(strings, actuals);
   }
-    
+
   @After
   public void tearDown() throws IOException
   {
