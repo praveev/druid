@@ -6,8 +6,6 @@ import org.junit.Test;
 import com.metamx.common.ISE;
 
 import java.util.Properties;
-/**
-Testing PropUtils */
 
 public class PropUtilsTest
 {
