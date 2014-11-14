@@ -365,6 +365,31 @@ public class HadoopIngestionSpecTest
   }
 
   @Test
+  public void testDbUpdaterJobSpecWithPasswordProvider() throws Exception 
+  {
+    final HadoopIngestionSpec schema;
+    schema = jsonReadWriteRead(
+            "{"
+                    + "\"updaterJobSpec\":{\n"
+                    + "    \"type\" : \"db\",\n"
+                    + "    \"connectURI\" : \"jdbc:mysql://localhost/druid\",\n"
+                    + "    \"user\" : \"rofl\",\n"
+                    + "    \"passwordKey\" : \"doesnotmatter\",\n"
+                    + "    \"passwordProvider\" : \"io.druid.indexer.DummyPasswordProvider\",\n"
+                    + "    \"segmentTable\" : \"segments\"\n"
+                    + "  }"
+                    + "}",
+            HadoopIngestionSpec.class
+    );
+
+    final DbUpdaterJobSpec spec = schema.getIOConfig().getMetadataUpdateSpec();
+    final DbConnectorConfig connectorConfig = spec.get();
+
+    Assert.assertEquals("doesnotmatter", connectorConfig.getPasswordKey());
+    Assert.assertEquals("trulydummy", connectorConfig.getPassword());
+  }
+
+  @Test
   public void testDefaultSettings()
   {
     final HadoopIngestionSpec schema;
