@@ -8,11 +8,11 @@ import com.metamx.common.ISE;
 
 public class SocketUtilTest
 {
-  private final int MAX_PORT=0xffff;
+  private final int MAX_PORT = 0xffff;
   @Test
   public void testSocketUtil()
   {
-    int port=SocketUtil.findOpenPort(0);
+    int port = SocketUtil.findOpenPort(0);
     Assert.assertThat("Port is greater than the maximum port 0xffff",port, OrderingComparison.lessThanOrEqualTo(MAX_PORT));
     Assert.assertThat("Port is less than minimum port 0",port, OrderingComparison.greaterThanOrEqualTo(0));
   }
