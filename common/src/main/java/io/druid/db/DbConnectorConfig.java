@@ -20,22 +20,23 @@
 package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Maps;
+import com.metamx.common.IAE;
 import com.metamx.common.logger.Logger;
-import io.druid.common.config.PasswordProvider;
- 
-import javax.validation.constraints.NotNull;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.druid.common.config.PasswordProvider;
+import io.druid.common.utils.PropUtils;
+
+import javax.validation.constraints.NotNull;
+
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  */
 public class DbConnectorConfig
 {
-  private PasswordProvider securePasswordProvider;
-  private final AtomicBoolean passwordProviderInitialized = new AtomicBoolean(false);
   private static final Logger log = new Logger(DbConnectorConfig.class);
+  private final AtomicBoolean passwordProviderInitialized = new AtomicBoolean(false);
   
   @JsonProperty
   private boolean createTables = true;
@@ -49,11 +50,10 @@ public class DbConnectorConfig
   private String user = null;
 
   @JsonProperty
-  @NotNull
   private String password = null;
 
   @JsonProperty
-  private String passwordKey = null;
+  private String passwordProviderConfig = null;
 
   @JsonProperty
   private String passwordProvider = null;
@@ -66,9 +66,10 @@ public class DbConnectorConfig
 
   public DbConnectorConfig() { }
 
-  public DbConnectorConfig(String passwordKey, String passwordProvider) {
-    this.passwordKey = passwordKey;
+  public DbConnectorConfig(String passwordProvider, String passwordProviderConfig, String password) {
     this.passwordProvider = passwordProvider;
+    this.passwordProviderConfig = passwordProviderConfig;
+    this.password = password;
   }
 
   public boolean isCreateTables()
@@ -88,26 +89,38 @@ public class DbConnectorConfig
 
   public String getPassword() 
   {
-    String finalPassword = password;
-    if (passwordProvider != null && passwordKey != null) {
-      if (!passwordProviderInitialized.getAndSet(true)) {
-        try {
-          securePasswordProvider = ((PasswordProvider)Class.forName(passwordProvider.trim()).newInstance());
-          Map<String, String> config = Maps.<String, String>newHashMap();
-          config.put("passwordKey", passwordKey);
-          securePasswordProvider.init(config);
-          finalPassword = securePasswordProvider.getPassword();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-          log.error(e, "Could not initialize PasswordProvider with class %s", passwordProvider);
+    if(password == null && passwordProvider == null) {
+      throw new IAE("Db config error.Both password and passwordProvider can't be null");
+    }
+
+    if (passwordProvider != null && !passwordProviderInitialized.get()) {
+      synchronized(this) {
+        if(!passwordProviderInitialized.get()) {
+          try {
+            log.info("Initializing password provider %s with config %s", passwordProvider, passwordProviderConfig);
+            
+            PasswordProvider pwdProvider = (PasswordProvider)Class.forName(passwordProvider.trim()).newInstance();
+            if(passwordProviderConfig == null) {
+              pwdProvider.init(Collections.<String,String>emptyMap());
+            } else {
+              pwdProvider.init(PropUtils.parseStringAsMap(passwordProviderConfig, ";", ":"));
+            }
+            password = pwdProvider.getPassword();
+            passwordProviderInitialized.set(true);
+            
+            log.info("password provider initialized successfully.");
+          } catch(ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException("Failed to get password from PasswordProvider", e);
+          }
         }
       }
     }
-    return finalPassword;
+    return password;
   }
 
-  public String getPasswordKey() 
+  public String getPasswordProviderConfig() 
   {
-    return passwordKey;
+    return passwordProviderConfig;
   }
 
   public String getPasswordProvider() 

@@ -374,7 +374,7 @@ public class HadoopIngestionSpecTest
                     + "    \"type\" : \"db\",\n"
                     + "    \"connectURI\" : \"jdbc:mysql://localhost/druid\",\n"
                     + "    \"user\" : \"rofl\",\n"
-                    + "    \"passwordKey\" : \"doesnotmatter\",\n"
+                    + "    \"passwordProviderConfig\" : \"passwordKey:doesnotmatter\",\n"
                     + "    \"passwordProvider\" : \"io.druid.indexer.DummyPasswordProvider\",\n"
                     + "    \"segmentTable\" : \"segments\"\n"
                     + "  }"
@@ -385,7 +385,7 @@ public class HadoopIngestionSpecTest
     final DbUpdaterJobSpec spec = schema.getIOConfig().getMetadataUpdateSpec();
     final DbConnectorConfig connectorConfig = spec.get();
 
-    Assert.assertEquals("doesnotmatter", connectorConfig.getPasswordKey());
+    Assert.assertEquals("passwordKey:doesnotmatter", connectorConfig.getPasswordProviderConfig());
     Assert.assertEquals("trulydummy", connectorConfig.getPassword());
   }
 
