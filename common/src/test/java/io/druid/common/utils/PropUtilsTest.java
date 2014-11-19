@@ -5,6 +5,9 @@ import org.junit.Test;
 
 import com.metamx.common.ISE;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class PropUtilsTest
@@ -56,5 +59,37 @@ public class PropUtilsTest
     Properties prop = new Properties();
     prop.setProperty("key","1-value");
     PropUtils.getPropertyAsInt(prop,"key",null);
+  }
+
+  @Test
+  public void testParseStringAsMap_emptyMap()
+  {
+    Assert.assertEquals(Collections.<String,String>emptyMap(), PropUtils.parseStringAsMap("", ";", ":"));
+    Assert.assertEquals(Collections.<String,String>emptyMap(), PropUtils.parseStringAsMap("   ", ";", ":"));
+    Assert.assertEquals(Collections.<String,String>emptyMap(), PropUtils.parseStringAsMap(" ;  ; ", ";", ":"));
+  }
+  
+  @Test
+  public void testParseStringAsMap_singleElemMap()
+  {
+    Map<String,String> expected = new HashMap<>();
+    expected.put("k1", "v1");
+
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("k1:v1", ";", ":"));
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("  k1:v1  ", ";", ":"));
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("  k1:v1;  ", ";", ":"));
+  }
+  
+  @Test
+  public void testParseStringAs_multiElemMap()
+  {
+    Map<String,String> expected = new HashMap<>();
+    expected.put("k1", "v1");
+    expected.put("k2", "v2");
+
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("k1:v1;k2:v2", ";", ":"));
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("k2:v2;k1:v1", ";", ":"));
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("  k1:v1;k2:v2  ", ";", ":"));
+    Assert.assertEquals(expected, PropUtils.parseStringAsMap("  ;  k1:v1; ;k2:v2 ;", ";", ":"));
   }
 }
