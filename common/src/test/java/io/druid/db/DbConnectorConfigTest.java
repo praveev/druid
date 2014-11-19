@@ -16,15 +16,30 @@ import com.metamx.common.IAE;
 public class DbConnectorConfigTest
 {
 
+  @Test(expected = IAE.class)
+  public void testGetPassword_nullPasswordAndProvider()
+  {
+    DbConnectorConfig dbConfig = new DbConnectorConfig(null,null,null);
+    dbConfig.getPassword();
+  }
+
+  @Test
+  public void testGetPassword_withSimplePassword()
+  {
+    String pwd = "nothing";
+    DbConnectorConfig dbConfig = new DbConnectorConfig(null,null,pwd);
+    Assert.assertEquals(pwd, dbConfig.getPassword());
+  }
+
   @Test
   public void testGetPassword_withPasswordProvidor()
   {
     String pwd = "nothing";
-    DbConnectorConfig dbConfig = new DbConnectorConfig("pwd_key", "io.druid.db.DummyPasswordProvider");
-    Assert.assertEquals(pwd, dbConfig.getPassword());
+    DbConnectorConfig dbConfig = new DbConnectorConfig("io.druid.db.DummyPasswordProvider",
+        "pwd:" + pwd, null);
 
-    //call again and ensure that provider initialization stores the password
     Assert.assertEquals(pwd, dbConfig.getPassword());
+    Assert.assertEquals(pwd, dbConfig.getPassword()); //ensures that provider initialization stores the password
   }
 
   @Test
@@ -32,7 +47,8 @@ public class DbConnectorConfigTest
       throws ExecutionException, InterruptedException
   {
     String pwd = "nothing";
-    final DbConnectorConfig dbConfig = new DbConnectorConfig("pwd_key", "io.druid.db.DummyPasswordProvider");
+    final DbConnectorConfig dbConfig = new DbConnectorConfig("io.druid.db.DummyPasswordProvider"
+        ,"pwd:"+pwd,null);
 
     int nThreads = 5;
     ExecutorService es = Executors.newFixedThreadPool(nThreads);
