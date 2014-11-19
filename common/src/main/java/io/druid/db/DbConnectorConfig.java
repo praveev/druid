@@ -145,6 +145,8 @@ public class DbConnectorConfig
            ", connectURI='" + connectURI + '\'' +
            ", user='" + user + '\'' +
            ", password=****" +
+           ", passwordProvider='" + passwordProvider + '\'' +
+           ", passwordProviderConfig='" + passwordProviderConfig + '\'' +
            ", useValidationQuery=" + useValidationQuery +
            ", validationQuery='" + validationQuery + '\'' +
            '}';
