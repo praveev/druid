@@ -179,7 +179,7 @@ public class OrderedMergeIteratorTest
   }
 
   @Test(expected = UnsupportedOperationException.class)
-  public void testRemove() throws Exception
+  public void testRemove()
   {
     final ArrayList<Iterator<Integer>> iterators = Lists.newArrayList();
     OrderedMergeIterator<Integer> iter = new OrderedMergeIterator<Integer>(
