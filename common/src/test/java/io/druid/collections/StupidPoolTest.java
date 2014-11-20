@@ -42,8 +42,8 @@ public class StupidPoolTest
   public void testTake()
   {
     Assert.assertThat(resourceHolderObj, new IsInstanceOf(ResourceHolder.class));
-    Object object = resourceHolderObj.get();
-    Assert.assertEquals(object, defaultString);
+    Object expectedObject = resourceHolderObj.get();
+    Assert.assertEquals(expectedObject, defaultString);
   }
 
   @Test(expected = ISE.class)
