@@ -17,7 +17,7 @@ public class CombiningIteratorTest
 {
   private CombiningIterator<String> testingIterator;
   private Comparator<String> comparator;
-  private BinaryFn fn;
+  private BinaryFn binaryFn;
   private PeekingIterator<String> it;
 
   @Before
@@ -25,8 +25,8 @@ public class CombiningIteratorTest
   {
     it = EasyMock.createMock(PeekingIterator.class);
     comparator = EasyMock.createMock(Comparator.class);
-    fn = EasyMock.createMock(BinaryFn.class);
-    testingIterator = CombiningIterator.create(it,comparator,fn);
+    binaryFn = EasyMock.createMock(BinaryFn.class);
+    testingIterator = CombiningIterator.create(it,comparator,binaryFn);
   }
 
   @After
@@ -67,19 +67,19 @@ public class CombiningIteratorTest
     String defaultString = "S1";
     String resString = "S2";
     EasyMock.expect(it.next()).andReturn(defaultString);
-    EasyMock.expect(fn.apply(EasyMock.eq(defaultString), EasyMock.isNull()))
+    EasyMock.expect(binaryFn.apply(EasyMock.eq(defaultString), EasyMock.isNull()))
         .andReturn(resString);
     EasyMock.expect(it.next()).andReturn(defaultString);
     EasyMock.expect(comparator.compare(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(0);
     EasyMock.expect(it.next()).andReturn(defaultString);
-    EasyMock.expect(fn.apply(EasyMock.eq(resString), EasyMock.eq(defaultString)))
+    EasyMock.expect(binaryFn.apply(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(resString);
     EasyMock.expect(comparator.compare(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(1);
 
     EasyMock.replay(it);
-    EasyMock.replay(fn);
+    EasyMock.replay(binaryFn);
     EasyMock.replay(comparator);
 
     String actual = testingIterator.next();
@@ -87,7 +87,7 @@ public class CombiningIteratorTest
 
     EasyMock.verify(it);
     EasyMock.verify(comparator);
-    EasyMock.verify(fn);
+    EasyMock.verify(binaryFn);
   }
 
   @Test(expected = NoSuchElementException.class)
