@@ -21,16 +21,19 @@ package io.druid.indexer;
 
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.ByteWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.junit.Assert;
 import org.junit.Test;
+import org.hamcrest.number.OrderingComparison;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  */
@@ -154,5 +157,41 @@ public class SortableBytesTest
     Class sortComparatorClass = configuration.getClass(JobContext.KEY_COMPARATOR,null);
     Assert.assertNotNull(sortComparatorClass);
     Assert.assertEquals(SortableBytes.SortableBytesSortingComparator.class,sortComparatorClass);
+  }
+
+  @Test
+  public void testFromBytes()
+  {
+    String expectedKey = "sortKeyTest";
+    String expectedGroup = "groupKeyTest";
+    byte[] sortKey = expectedKey.getBytes(Charsets.UTF_8);
+    byte[] groupKey = expectedGroup.getBytes(Charsets.UTF_8);
+    SortableBytes sortableBytes = new SortableBytes(groupKey,sortKey);
+    byte[] byteArray = sortableBytes.toBytes();
+    Assert.assertEquals(equals(SortableBytes.fromBytes(byteArray)),equals(sortableBytes));
+  }
+
+  @Test
+  public void testFromBytesWritable()
+  {
+    String expectedKey = "sortKeyTest";
+    String expectedGroup = "groupKeyTest";
+    byte[] sortKey = expectedKey.getBytes(Charsets.UTF_8);
+    byte[] groupKey = expectedGroup.getBytes(Charsets.UTF_8);
+    SortableBytes sortableBytes = new SortableBytes(groupKey,sortKey);
+    byte[] byteArray = sortableBytes.toBytes();
+    Assert.assertEquals(equals(SortableBytes.fromBytesWritable(new BytesWritable(byteArray))),equals(sortableBytes));
+  }
+
+  @Test
+  public void testGetPartition()
+  {
+    int numPartitions = 10;
+    byte[] b = {0,0,0,1,127};
+    BytesWritable byteWritable = new BytesWritable(b);
+    SortableBytes.SortableBytesPartitioner partitioner = new SortableBytes.SortableBytesPartitioner();
+    int expected = partitioner.getPartition(byteWritable,null,numPartitions);
+    Assert.assertThat(expected,OrderingComparison.lessThan(numPartitions));
+    Assert.assertThat(expected,OrderingComparison.greaterThanOrEqualTo(0));
   }
 }
