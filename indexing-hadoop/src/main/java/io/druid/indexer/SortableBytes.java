@@ -42,10 +42,7 @@ public class SortableBytes
   {
     this.groupKey = groupKey;
     this.sortKey = sortKey;
-
-    if ("".equals(sortKey)) {
-      throw new IllegalArgumentException();
-    }
+    
   }
 
   public byte[] getGroupKey()
