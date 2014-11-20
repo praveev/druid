@@ -20,7 +20,11 @@
 package io.druid.indexer;
 
 import com.google.common.base.Charsets;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.WritableComparator;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -114,5 +118,41 @@ public class SortableBytesTest
   private String fromBytes(byte[] bytes)
   {
     return new String(bytes, Charsets.UTF_8);
+  }
+
+  @Test
+  public void testToString()
+  {
+    String expectedKey = "sortKeyTest";
+    String expectedGroup = "groupKeyTest";
+    byte[] sortKey = expectedKey.getBytes(Charsets.UTF_8);
+    byte[] groupKey = expectedGroup.getBytes(Charsets.UTF_8);
+    SortableBytes sortableBytes = new SortableBytes(groupKey,sortKey);
+    String actual = sortableBytes.toString();
+    String expected = "SortableBytes{" +
+        "groupKey='" + expectedGroup + '\'' +
+        ", sortKey='" + expectedKey + '\'' +
+        '}';
+    Assert.assertEquals(expected,actual);
+  }
+
+  @Test
+  public void testUseSortableBytesAsMapOutputKey() throws IOException, ClassNotFoundException
+  {
+    Job job = new Job();
+    Configuration configuration = job.getConfiguration();
+    SortableBytes.useSortableBytesAsMapOutputKey(job);
+    Class mapOutputKeyClass = job.getMapOutputKeyClass();
+    Assert.assertNotNull(mapOutputKeyClass);
+    Assert.assertEquals(mapOutputKeyClass,BytesWritable.class);
+    Class partitionerClass = job.getPartitionerClass();
+    Assert.assertNotNull(partitionerClass);
+    Assert.assertEquals(partitionerClass,SortableBytes.SortableBytesPartitioner.class);
+    Class groupingComparatorClass = configuration.getClass(JobContext.GROUP_COMPARATOR_CLASS,null);
+    Assert.assertNotNull(groupingComparatorClass);
+    Assert.assertEquals(SortableBytes.SortableBytesGroupingComparator.class,groupingComparatorClass);
+    Class sortComparatorClass = configuration.getClass(JobContext.KEY_COMPARATOR,null);
+    Assert.assertNotNull(sortComparatorClass);
+    Assert.assertEquals(SortableBytes.SortableBytesSortingComparator.class,sortComparatorClass);
   }
 }

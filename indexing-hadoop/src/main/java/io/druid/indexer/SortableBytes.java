@@ -42,7 +42,6 @@ public class SortableBytes
   {
     this.groupKey = groupKey;
     this.sortKey = sortKey;
-    
   }
 
   public byte[] getGroupKey()
