@@ -16,7 +16,7 @@ public class CombiningIterableTest
 {
 
   @Test
-  public void testCreateSplatted() throws Exception
+  public void testCreateSplatted()
   {
     List<Integer> list1 = Arrays.asList(1, 2, 5, 7, 9);
     List<Integer> list2 = Arrays.asList(2, 8);
