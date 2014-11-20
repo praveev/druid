@@ -14,19 +14,19 @@ public class CountingMapTest
   private CountingMap mapObject = null ;
 
   @Before
-  public void setUp() throws Exception
+  public void setUp()
   {
     mapObject = new CountingMap();
   }
 
   @After
-  public void tearDown() throws Exception
+  public void tearDown()
   {
     mapObject.clear();
   }
 
   @Test
-  public void testAdd() throws Exception
+  public void testAdd()
   {
     long defaultValue = 10;
     String defaultKey = "defaultKey";
@@ -36,7 +36,7 @@ public class CountingMapTest
   }
 
   @Test
-  public void testSnapshot() throws Exception
+  public void testSnapshot()
   {
     long defaultValue = 10;
     String defaultKey = "defaultKey";

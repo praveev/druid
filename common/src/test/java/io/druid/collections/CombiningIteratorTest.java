@@ -21,7 +21,7 @@ public class CombiningIteratorTest
   private PeekingIterator<String> it;
 
   @Before
-  public void setUp() throws Exception
+  public void setUp()
   {
     it = EasyMock.createMock(PeekingIterator.class);
     comparator = EasyMock.createMock(Comparator.class);
@@ -30,13 +30,13 @@ public class CombiningIteratorTest
   }
 
   @After
-  public void tearDown() throws Exception
+  public void tearDown()
   {
     testingIterator = null;
   }
 
   @Test
-  public void testHasNext() throws Exception
+  public void testHasNext()
   {
     boolean expected = true;
     EasyMock.expect(it.hasNext()).andReturn(expected);
@@ -47,7 +47,7 @@ public class CombiningIteratorTest
   }
 
   @Test
-  public void testFalseBranchNext() throws Exception
+  public void testFalseBranchNext()
   {
     boolean expected = true;
     EasyMock.expect(it.hasNext()).andReturn(expected);
@@ -60,7 +60,7 @@ public class CombiningIteratorTest
   }
 
   @Test
-  public void testNext() throws Exception
+  public void testNext()
   {
     boolean expected = true;
     EasyMock.expect(it.hasNext()).andReturn(expected).times(4);

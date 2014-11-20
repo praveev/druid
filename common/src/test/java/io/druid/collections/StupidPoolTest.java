@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 
 public class StupidPoolTest
 {
@@ -19,7 +20,7 @@ public class StupidPoolTest
   private ResourceHolder<String> resourceHolderObj;
 
   @Before
-  public void setUp() throws Exception
+  public void setUp()
   {
     generator = EasyMock.createMock(Supplier.class);
     poolOfString = new StupidPool<>(generator);
@@ -27,7 +28,7 @@ public class StupidPoolTest
   }
 
   @After
-  public void tearDown() throws Exception
+  public void tearDown() throws IOException
   {
     if (resourceHolderObj != null) {
       resourceHolderObj.close();
@@ -35,7 +36,7 @@ public class StupidPoolTest
   }
 
   @Test
-  public void testTake() throws Exception
+  public void testTake()
   {
     Assert.assertThat(resourceHolderObj, new IsInstanceOf(ResourceHolder.class));
     Object nullObject = resourceHolderObj.get();
