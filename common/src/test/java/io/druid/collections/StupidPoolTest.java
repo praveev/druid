@@ -18,11 +18,14 @@ public class StupidPoolTest
   private Supplier<String> generator;
   private StupidPool<String> poolOfString;
   private ResourceHolder<String> resourceHolderObj;
+  private String defaultString = new String("test");
 
   @Before
   public void setUp()
   {
     generator = EasyMock.createMock(Supplier.class);
+    EasyMock.expect(generator.get()).andReturn(defaultString).anyTimes();
+    EasyMock.replay(generator);
     poolOfString = new StupidPool<>(generator);
     resourceHolderObj = poolOfString.take();
   }
@@ -39,12 +42,12 @@ public class StupidPoolTest
   public void testTake()
   {
     Assert.assertThat(resourceHolderObj, new IsInstanceOf(ResourceHolder.class));
-    Object nullObject = resourceHolderObj.get();
-    Assert.assertThat(nullObject, new IsNull());
+    Object object = resourceHolderObj.get();
+    Assert.assertEquals(object, defaultString);
   }
 
   @Test(expected = ISE.class)
-  public void testExceptionInResourceHolderGet() throws Exception
+  public void testExceptionInResourceHolderGet() throws IOException
   {
     resourceHolderObj.close();
     resourceHolderObj.get();
