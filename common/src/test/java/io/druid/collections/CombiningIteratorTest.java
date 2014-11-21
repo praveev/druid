@@ -18,15 +18,15 @@ public class CombiningIteratorTest
   private CombiningIterator<String> testingIterator;
   private Comparator<String> comparator;
   private BinaryFn binaryFn;
-  private PeekingIterator<String> it;
+  private PeekingIterator<String> peekIterator;
 
   @Before
   public void setUp()
   {
-    it = EasyMock.createMock(PeekingIterator.class);
+    peekIterator = EasyMock.createMock(PeekingIterator.class);
     comparator = EasyMock.createMock(Comparator.class);
     binaryFn = EasyMock.createMock(BinaryFn.class);
-    testingIterator = CombiningIterator.create(it,comparator,binaryFn);
+    testingIterator = CombiningIterator.create(peekIterator,comparator,binaryFn);
   }
 
   @After
@@ -39,10 +39,10 @@ public class CombiningIteratorTest
   public void testHasNext()
   {
     boolean expected = true;
-    EasyMock.expect(it.hasNext()).andReturn(expected);
-    EasyMock.replay(it);
+    EasyMock.expect(peekIterator.hasNext()).andReturn(expected);
+    EasyMock.replay(peekIterator);
     boolean actual = testingIterator.hasNext();
-    EasyMock.verify(it);
+    EasyMock.verify(peekIterator);
     Assert.assertEquals("The hasNext function is broken",expected,actual);
   }
 
@@ -50,12 +50,12 @@ public class CombiningIteratorTest
   public void testFalseBranchNext()
   {
     boolean expected = true;
-    EasyMock.expect(it.hasNext()).andReturn(expected);
+    EasyMock.expect(peekIterator.hasNext()).andReturn(expected);
     expected = false;
-    EasyMock.expect(it.hasNext()).andReturn(expected);
-    EasyMock.replay(it);
+    EasyMock.expect(peekIterator.hasNext()).andReturn(expected);
+    EasyMock.replay(peekIterator);
     Object res = testingIterator.next();
-    EasyMock.verify(it);
+    EasyMock.verify(peekIterator);
     Assert.assertNull("Should be null",res);
   }
 
@@ -63,29 +63,29 @@ public class CombiningIteratorTest
   public void testNext()
   {
     boolean expected = true;
-    EasyMock.expect(it.hasNext()).andReturn(expected).times(4);
+    EasyMock.expect(peekIterator.hasNext()).andReturn(expected).times(4);
     String defaultString = "S1";
     String resString = "S2";
-    EasyMock.expect(it.next()).andReturn(defaultString);
+    EasyMock.expect(peekIterator.next()).andReturn(defaultString);
     EasyMock.expect(binaryFn.apply(EasyMock.eq(defaultString), EasyMock.isNull()))
         .andReturn(resString);
-    EasyMock.expect(it.next()).andReturn(defaultString);
+    EasyMock.expect(peekIterator.next()).andReturn(defaultString);
     EasyMock.expect(comparator.compare(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(0);
-    EasyMock.expect(it.next()).andReturn(defaultString);
+    EasyMock.expect(peekIterator.next()).andReturn(defaultString);
     EasyMock.expect(binaryFn.apply(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(resString);
     EasyMock.expect(comparator.compare(EasyMock.eq(resString), EasyMock.eq(defaultString)))
         .andReturn(1);
 
-    EasyMock.replay(it);
+    EasyMock.replay(peekIterator);
     EasyMock.replay(binaryFn);
     EasyMock.replay(comparator);
 
     String actual = testingIterator.next();
     Assert.assertEquals(resString,actual);
 
-    EasyMock.verify(it);
+    EasyMock.verify(peekIterator);
     EasyMock.verify(comparator);
     EasyMock.verify(binaryFn);
   }
@@ -94,10 +94,10 @@ public class CombiningIteratorTest
   public void testExceptionInNext() throws Exception
   {
     boolean expected = false;
-    EasyMock.expect(it.hasNext()).andReturn(expected);
-    EasyMock.replay(it);
+    EasyMock.expect(peekIterator.hasNext()).andReturn(expected);
+    EasyMock.replay(peekIterator);
     testingIterator.next();
-    EasyMock.verify(it);
+    EasyMock.verify(peekIterator);
   }
 
   @Test(expected = UnsupportedOperationException.class)
