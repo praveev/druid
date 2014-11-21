@@ -19,8 +19,10 @@
 
 package io.druid.common.utils;
 
+import com.google.common.base.Splitter;
 import com.metamx.common.ISE;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -62,5 +64,16 @@ public class PropUtils
     catch (NumberFormatException e) {
       throw new ISE(e, "Property[%s] is expected to be an int, it is not[%s].",property, retVal);
     }
+  }
+
+  /**
+   * Given a formatted string, return Map<String,String>.
+   * For example if elemSeparator = ";" and kvSeparator = ":"
+   * then a formatted string will look like "k1:v1;k2:v2"
+   */
+  public static Map<String,String> parseStringAsMap(String formattedStr, String elemSeparator, String kvSeparator)
+  {
+    return Splitter.on(elemSeparator).trimResults().omitEmptyStrings()
+                .withKeyValueSeparator(kvSeparator).split(formattedStr);
   }
 }

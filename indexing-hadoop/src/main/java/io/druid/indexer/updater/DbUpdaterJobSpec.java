@@ -36,8 +36,8 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
   @JsonProperty("password")
   public String password;
 
-  @JsonProperty("passwordKey")
-  private String passwordKey;
+  @JsonProperty("passwordProviderConfig")
+  private String passwordProviderConfig;
 
   @JsonProperty("passwordProvider")
   private String passwordProvider;
@@ -53,7 +53,7 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
   @Override
   public DbConnectorConfig get()
   {
-    return new DbConnectorConfig(passwordKey, passwordProvider)
+    return new DbConnectorConfig(passwordProvider, passwordProviderConfig, password)
     {
       @Override
       public String getConnectURI()
@@ -65,16 +65,6 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
       public String getUser()
       {
         return user;
-      }
-
-      @Override
-      public String getPassword() 
-      {
-        String finalPassword = super.getPassword();
-        if (finalPassword != null) {
-          return finalPassword;
-        }
-        return password;
       }
     };
   }
