@@ -71,20 +71,28 @@ public class Utils
     OutputStream retVal;
     FileSystem fs = outputPath.getFileSystem(job.getConfiguration());
 
-    if (fs.exists(outputPath)) {
-      if (deleteExisting) {
-        fs.delete(outputPath, false);
-      } else {
-        throw new ISE("outputPath[%s] must not exist.", outputPath);
-      }
-    }
-
     if (!FileOutputFormat.getCompressOutput(job)) {
+      if (fs.exists(outputPath)) {
+        if (deleteExisting) {
+          fs.delete(outputPath, false);
+        } else {
+          throw new ISE("outputPath[%s] must not exist.", outputPath);
+        }
+      }
+
       retVal = fs.create(outputPath, false);
     } else {
       Class<? extends CompressionCodec> codecClass = FileOutputFormat.getOutputCompressorClass(job, GzipCodec.class);
       CompressionCodec codec = ReflectionUtils.newInstance(codecClass, job.getConfiguration());
       outputPath = new Path(outputPath.toString() + codec.getDefaultExtension());
+
+      if (fs.exists(outputPath)) {
+        if (deleteExisting) {
+          fs.delete(outputPath, false);
+        } else {
+          throw new ISE("outputPath[%s] must not exist.", outputPath);
+        }
+      }
 
       retVal = codec.createOutputStream(fs.create(outputPath, false));
     }
