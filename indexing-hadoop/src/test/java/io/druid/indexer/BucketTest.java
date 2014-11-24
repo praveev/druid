@@ -13,7 +13,6 @@ import com.metamx.common.Pair;
 
 import java.nio.ByteBuffer;
 
-
 public class BucketTest
 {
   Bucket bucket;
@@ -59,7 +58,6 @@ public class BucketTest
 
   @Test public void testEquals()
   {
-    //Assert.assertEquals("Object should be equal to another object with the same reference",bucket,bucket);
     Assert.assertFalse("Object should not be equals to NULL", bucket.equals(null));
     Assert.assertFalse("Objects do not have the same Class",bucket.equals(new Integer(0)));
     Assert.assertFalse("Objects do not have the same partitionNum",
