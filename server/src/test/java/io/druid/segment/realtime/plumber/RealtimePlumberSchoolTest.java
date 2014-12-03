@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +83,7 @@ public class RealtimePlumberSchoolTest
   private ServiceEmitter emitter;
   private RealtimeTuningConfig tuningConfig;
   private DataSchema schema;
+  final static int ONE_MINUTE = 60000;
 
   public RealtimePlumberSchoolTest(RejectionPolicyFactory rejectionPolicy)
   {
@@ -194,11 +196,14 @@ public class RealtimePlumberSchoolTest
     EasyMock.verify(announcer, segmentPublisher, dataSegmentPusher, serverView, emitter);
   }
 
-  @Test
+  @Test(timeout = ONE_MINUTE)
   public void testPersist() throws Exception
   {
-    final MutableBoolean committed = new MutableBoolean(false);
-    plumber.getSinks().put(0L, new Sink(new Interval(0, TimeUnit.HOURS.toMillis(1)),schema, tuningConfig, DateTime.now().toString()));
+    final CountDownLatch committed = new CountDownLatch(1);
+    plumber.getSinks().put(
+        0L,
+        new Sink(new Interval(0, TimeUnit.HOURS.toMillis(1)),schema, tuningConfig, DateTime.now().toString())
+    );
     plumber.startJob();
     final InputRow row = EasyMock.createNiceMock(InputRow.class);
     EasyMock.expect(row.getTimestampFromEpoch()).andReturn(0L);
@@ -211,18 +216,12 @@ public class RealtimePlumberSchoolTest
           @Override
           public void run()
           {
-            committed.setValue(true);
+            committed.countDown();
           }
         }
     );
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
-    while (!committed.booleanValue()) {
-      Thread.sleep(100);
-      if (stopwatch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
-        throw new ISE("Taking too long to set perist value");
-      }
-    }
+    committed.await();
     plumber.getSinks().clear();
     plumber.finishJob();
   }
