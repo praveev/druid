@@ -83,6 +83,7 @@ public class RealtimePlumberSchoolTest
   private ServiceEmitter emitter;
   private RealtimeTuningConfig tuningConfig;
   private DataSchema schema;
+  final static int ONE_MINUTE = 60000;
 
   public RealtimePlumberSchoolTest(RejectionPolicyFactory rejectionPolicy)
   {
@@ -195,7 +196,7 @@ public class RealtimePlumberSchoolTest
     EasyMock.verify(announcer, segmentPublisher, dataSegmentPusher, serverView, emitter);
   }
 
-  @Test
+  @Test(timeout = ONE_MINUTE)
   public void testPersist() throws Exception
   {
     final CountDownLatch committed = new CountDownLatch(1);
