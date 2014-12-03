@@ -19,8 +19,12 @@
 
 package io.druid.indexer.updater;
 
+import javax.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Supplier;
+
+import io.druid.common.config.PasswordProvider;
 import io.druid.db.DbConnectorConfig;
 
 /**
@@ -33,14 +37,9 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
   @JsonProperty("user")
   public String user;
 
+  @NotNull
   @JsonProperty("password")
-  public String password;
-
-  @JsonProperty("passwordProviderConfig")
-  private String passwordProviderConfig;
-
-  @JsonProperty("passwordProvider")
-  private String passwordProvider;
+  private PasswordProvider passwordProvider;
 
   @JsonProperty("segmentTable")
   public String segmentTable;
@@ -53,7 +52,7 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
   @Override
   public DbConnectorConfig get()
   {
-    return new DbConnectorConfig(passwordProvider, passwordProviderConfig, password)
+    return new DbConnectorConfig()
     {
       @Override
       public String getConnectURI()
@@ -65,6 +64,11 @@ public class DbUpdaterJobSpec implements Supplier<DbConnectorConfig>
       public String getUser()
       {
         return user;
+      }
+      
+      @Override
+      public String getPassword() {
+        return passwordProvider.getPassword();
       }
     };
   }
