@@ -18,13 +18,19 @@
  */
 package io.druid.common.config;
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import io.druid.db.DefaultPasswordProvider;
 
 /**
- * Implement this for different ways to (optionally securely) access passwords.
+ * Implement this for different ways to (optionally securely) access db passwords.
  */
+@JsonTypeInfo(use= JsonTypeInfo.Id.NAME, property="type", defaultImpl = DefaultPasswordProvider.class)
+@JsonSubTypes(value={
+    @JsonSubTypes.Type(name="default", value=DefaultPasswordProvider.class),
+})
 public interface PasswordProvider 
 {
-  public void init(Map<String, String> configProperties);
   public String getPassword();
 }

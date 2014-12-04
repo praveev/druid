@@ -20,24 +20,16 @@
 package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.metamx.common.IAE;
-import com.metamx.common.logger.Logger;
 
 import io.druid.common.config.PasswordProvider;
-import io.druid.common.utils.PropUtils;
 
 import javax.validation.constraints.NotNull;
-
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  */
 public class DbConnectorConfig
 {
-  private static final Logger log = new Logger(DbConnectorConfig.class);
-  private final AtomicBoolean passwordProviderInitialized = new AtomicBoolean(false);
-  
+
   @JsonProperty
   private boolean createTables = true;
 
@@ -49,28 +41,15 @@ public class DbConnectorConfig
   @NotNull
   private String user = null;
 
-  @JsonProperty
-  private String password = null;
-
-  @JsonProperty
-  private String passwordProviderConfig = null;
-
-  @JsonProperty
-  private String passwordProvider = null;
+  @NotNull
+  @JsonProperty("password")
+  private PasswordProvider passwordProvider;
 
   @JsonProperty
   private boolean useValidationQuery = false;
 
   @JsonProperty
   private String validationQuery = "SELECT 1";
-
-  public DbConnectorConfig() { }
-
-  public DbConnectorConfig(String passwordProvider, String passwordProviderConfig, String password) {
-    this.passwordProvider = passwordProvider;
-    this.passwordProviderConfig = passwordProviderConfig;
-    this.password = password;
-  }
 
   public boolean isCreateTables()
   {
@@ -89,43 +68,7 @@ public class DbConnectorConfig
 
   public String getPassword() 
   {
-    if(password == null && passwordProvider == null) {
-      throw new IAE("Db config error.Both password and passwordProvider can't be null");
-    }
-
-    if (passwordProvider != null && !passwordProviderInitialized.get()) {
-      synchronized(this) {
-        if(!passwordProviderInitialized.get()) {
-          try {
-            log.info("Initializing password provider %s with config %s", passwordProvider, passwordProviderConfig);
-            
-            PasswordProvider pwdProvider = (PasswordProvider)Class.forName(passwordProvider.trim()).newInstance();
-            if(passwordProviderConfig == null) {
-              pwdProvider.init(Collections.<String,String>emptyMap());
-            } else {
-              pwdProvider.init(PropUtils.parseStringAsMap(passwordProviderConfig, ";", ":"));
-            }
-            password = pwdProvider.getPassword();
-            passwordProviderInitialized.set(true);
-            
-            log.info("password provider initialized successfully.");
-          } catch(ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-            throw new RuntimeException("Failed to get password from PasswordProvider", e);
-          }
-        }
-      }
-    }
-    return password;
-  }
-
-  public String getPasswordProviderConfig() 
-  {
-    return passwordProviderConfig;
-  }
-
-  public String getPasswordProvider() 
-  {
-    return passwordProvider;
+    return passwordProvider.getPassword();
   }
 
   public boolean isUseValidationQuery()
@@ -144,9 +87,7 @@ public class DbConnectorConfig
            "createTables=" + createTables +
            ", connectURI='" + connectURI + '\'' +
            ", user='" + user + '\'' +
-           ", password=****" +
            ", passwordProvider='" + passwordProvider + '\'' +
-           ", passwordProviderConfig='" + passwordProviderConfig + '\'' +
            ", useValidationQuery=" + useValidationQuery +
            ", validationQuery='" + validationQuery + '\'' +
            '}';
