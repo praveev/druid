@@ -20,10 +20,11 @@
 package io.druid.server.bridge;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.metamx.common.ISE;
+
 import com.metamx.common.concurrent.ScheduledExecutorFactory;
 import com.metamx.common.concurrent.ScheduledExecutors;
 import com.metamx.common.lifecycle.Lifecycle;
+import com.metamx.common.logger.Logger;
 import io.druid.client.BatchServerInventoryView;
 import io.druid.client.DruidServer;
 import io.druid.client.ServerView;
@@ -55,9 +56,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DruidClusterBridgeTest
 {
-  @Test
+  static final int ONE_MINUTE = 60000;
+  @Test(timeout = ONE_MINUTE)
   public void testRun() throws Exception
   {
+    Logger log = new Logger(DruidClusterBridgeTest.class);
     TestingCluster localCluster = new TestingCluster(1);
     localCluster.start();
 
@@ -209,9 +212,7 @@ public class DruidClusterBridgeTest
 
     int retry = 0;
     while (!bridge.isLeader()) {
-      if (retry > 5) {
-        throw new ISE("Unable to become leader");
-      }
+      log.info("Unable to become leader, retry number %d%n", retry);
 
       Thread.sleep(100);
       retry++;
@@ -220,9 +221,7 @@ public class DruidClusterBridgeTest
     String path = "/druid/announcements/localhost:8080";
     retry = 0;
     while (remoteCf.checkExists().forPath(path) == null) {
-      if (retry > 5) {
-        throw new ISE("Unable to announce");
-      }
+      log.info("Unable to announce, retry number %d%n", retry);
 
       Thread.sleep(100);
       retry++;
@@ -231,9 +230,7 @@ public class DruidClusterBridgeTest
     boolean verified = verifyUpdate(jsonMapper, path, remoteCf);
     retry = 0;
     while (!verified) {
-      if (retry > 5) {
-        throw new ISE("No updates to bridge node occurred");
-      }
+      log.info("No updates to bridge node occurred, retry number %d%n", retry);
 
       Thread.sleep(100);
       retry++;
