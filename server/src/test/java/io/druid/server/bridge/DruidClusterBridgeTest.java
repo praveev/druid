@@ -212,7 +212,9 @@ public class DruidClusterBridgeTest
 
     int retry = 0;
     while (!bridge.isLeader()) {
-      log.info("Unable to become leader, retry number %d%n", retry);
+      if(retry % 100 == 0) {
+        log.info("Unable to become leader, retry number %d%n", retry);
+      }
 
       Thread.sleep(100);
       retry++;
@@ -221,7 +223,9 @@ public class DruidClusterBridgeTest
     String path = "/druid/announcements/localhost:8080";
     retry = 0;
     while (remoteCf.checkExists().forPath(path) == null) {
-      log.info("Unable to announce, retry number %d%n", retry);
+      if(retry % 100 == 0) {
+        log.info("Unable to announce, retry number %d%n", retry);
+      }
 
       Thread.sleep(100);
       retry++;
@@ -230,7 +234,9 @@ public class DruidClusterBridgeTest
     boolean verified = verifyUpdate(jsonMapper, path, remoteCf);
     retry = 0;
     while (!verified) {
-      log.info("No updates to bridge node occurred, retry number %d%n", retry);
+      if(retry % 100 == 0) {
+        log.info("No updates to bridge node occurred, retry number %d%n", retry);
+      }
 
       Thread.sleep(100);
       retry++;
