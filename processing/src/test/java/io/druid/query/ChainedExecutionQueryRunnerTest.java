@@ -27,6 +27,7 @@ import com.metamx.common.concurrent.ExecutorServiceConfig;
 import com.metamx.common.guava.Sequence;
 import com.metamx.common.guava.Sequences;
 import com.metamx.common.lifecycle.Lifecycle;
+import com.metamx.common.logger.Logger;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import org.easymock.Capture;
@@ -42,7 +43,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 public class ChainedExecutionQueryRunnerTest
 {
@@ -59,10 +59,13 @@ public class ChainedExecutionQueryRunnerTest
   Capture<ListenableFuture> capturedFuture;
   QueryInterruptedException cause;
   ListenableFuture future;
+  static final int ONE_MINUTE = 60000;
+  Logger log;
 
   @Before
   public void Setup()
   {
+    log = new Logger(ChainedExecutionQueryRunnerTest.class);
     queriesStarted = new CountDownLatch(2);
     queriesInterrupted = new CountDownLatch(2);
     queryIsRegistered = new CountDownLatch(1);
@@ -121,7 +124,7 @@ public class ChainedExecutionQueryRunnerTest
 
   }
 
-  @Test
+  @Test(timeout = ONE_MINUTE)
   public void testQueryCancellation() throws InterruptedException
   {
 
@@ -158,7 +161,7 @@ public class ChainedExecutionQueryRunnerTest
     assertTimeoutStartInterruptedCompleted();
   }
 
-  @Test
+  @Test(timeout = ONE_MINUTE)
   public void testQueryTimeout() throws InterruptedException
   {
 
@@ -200,15 +203,18 @@ public class ChainedExecutionQueryRunnerTest
   private void assertRegisterStartCancel() throws InterruptedException
   {
     // wait for query to register and start
-    Assert.assertTrue("Timeout: query is not registered", queryIsRegistered.await(1, TimeUnit.SECONDS));
-    Assert.assertTrue("Timeout: query did not start", queriesStarted.await(1, TimeUnit.SECONDS));
+    log.info("Waiting for query to be registered");
+    queryIsRegistered.await();
+    log.info("Waiting for query to be started");
+    queriesStarted.await();
     // cancel the query
     Assert.assertTrue("capturedFuture.hasCaptured() should return true",capturedFuture.hasCaptured());
   }
 
   private void assertTimeoutStartInterruptedCompleted() throws InterruptedException
   {
-    Assert.assertTrue("Timeout at queriesInterrupted",queriesInterrupted.await(500, TimeUnit.MILLISECONDS));
+    log.info("Waiting for query to be interrupted");
+    queriesInterrupted.await();
     Assert.assertNotNull("Cause must be not null", cause);
     Assert.assertTrue("future.isCancelled() must be true", future.isCancelled());
     Assert.assertTrue(runner1.toString() + " hasStarted should be true", runner1.hasStarted);
