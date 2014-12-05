@@ -21,7 +21,6 @@ package io.druid.indexer;
 
 import com.google.common.base.Charsets;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.ByteWritable;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.io.BytesWritable;
@@ -33,7 +32,6 @@ import org.hamcrest.number.OrderingComparison;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  */
@@ -168,7 +166,7 @@ public class SortableBytesTest
     byte[] groupKey = expectedGroup.getBytes(Charsets.UTF_8);
     SortableBytes sortableBytes = new SortableBytes(groupKey,sortKey);
     byte[] byteArray = sortableBytes.toBytes();
-    Assert.assertEquals(equals(SortableBytes.fromBytes(byteArray)),equals(sortableBytes));
+    Assert.assertArrayEquals(SortableBytes.fromBytes(byteArray).toBytes(),sortableBytes.toBytes());
   }
 
   @Test
@@ -180,7 +178,7 @@ public class SortableBytesTest
     byte[] groupKey = expectedGroup.getBytes(Charsets.UTF_8);
     SortableBytes sortableBytes = new SortableBytes(groupKey,sortKey);
     byte[] byteArray = sortableBytes.toBytes();
-    Assert.assertEquals(equals(SortableBytes.fromBytesWritable(new BytesWritable(byteArray))),equals(sortableBytes));
+    Assert.assertArrayEquals(SortableBytes.fromBytesWritable(new BytesWritable(byteArray)).toBytes(),sortableBytes.toBytes());
   }
 
   @Test
