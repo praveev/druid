@@ -21,7 +21,6 @@ package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.druid.common.config.PasswordProvider;
 
 import javax.validation.constraints.NotNull;
 
