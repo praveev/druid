@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Supplier;
 
-import io.druid.common.config.PasswordProvider;
+import io.druid.db.PasswordProvider;
 import io.druid.db.DbConnectorConfig;
 
 /**

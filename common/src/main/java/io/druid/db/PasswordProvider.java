@@ -16,12 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package io.druid.common.config;
+package io.druid.db;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import io.druid.db.DefaultPasswordProvider;
 
 /**
  * Implement this for different ways to (optionally securely) access db passwords.
