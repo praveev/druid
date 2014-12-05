@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.metamx.common.ISE;
 
-import io.druid.common.config.PasswordProvider;
 
 public class DefaultPasswordProvider implements PasswordProvider
 {
