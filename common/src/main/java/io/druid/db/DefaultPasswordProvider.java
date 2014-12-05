@@ -10,7 +10,7 @@ import com.metamx.common.ISE;
 public class DefaultPasswordProvider implements PasswordProvider
 {
 
-  public final static String PASSWORD_KEY = "password";
+  private final static String PASSWORD_KEY = "password";
 
   private final String password;
 
@@ -26,7 +26,7 @@ public class DefaultPasswordProvider implements PasswordProvider
     } else if(spec instanceof Map && ((Map)spec).containsKey(PASSWORD_KEY)) {
       return ((Map)spec).get(PASSWORD_KEY).toString();
     } else {
-      throw new ISE("spec must be of type String or a Map<String,String> with having " + PASSWORD_KEY);
+      throw new ISE("spec must be of type String or a Map with key[%s].  Got [%s]", PASSWORD_KEY, spec);
     }
   }
 

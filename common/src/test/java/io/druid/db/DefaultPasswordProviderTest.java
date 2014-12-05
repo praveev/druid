@@ -1,12 +1,10 @@
 package io.druid.db;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Assert;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.metamx.common.ISE;
 
 public class DefaultPasswordProviderTest
@@ -21,9 +19,7 @@ public class DefaultPasswordProviderTest
   
   @Test
   public void testFromMapPassword() {
-    Map<String,String> m = new HashMap<String,String>();
-    m.put(DefaultPasswordProvider.PASSWORD_KEY, pwd);
-    DefaultPasswordProvider pp = new DefaultPasswordProvider(m);
+    DefaultPasswordProvider pp = new DefaultPasswordProvider(ImmutableMap.of("password", pwd));
     Assert.assertEquals(pwd, pp.getPassword());
   }
 
