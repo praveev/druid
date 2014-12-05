@@ -14,13 +14,13 @@ public class DefaultPasswordProviderTest
   private static final String pwd = "nothing";
 
   @Test
-  public void test_from_string_password() {
+  public void testFromStringPassword() {
     DefaultPasswordProvider pp = new DefaultPasswordProvider(pwd);
     Assert.assertEquals(pwd, pp.getPassword());
   }
   
   @Test
-  public void test_from_map_password() {
+  public void testFromMapPassword() {
     Map<String,String> m = new HashMap<String,String>();
     m.put(DefaultPasswordProvider.PASSWORD_KEY, pwd);
     DefaultPasswordProvider pp = new DefaultPasswordProvider(m);
@@ -28,7 +28,7 @@ public class DefaultPasswordProviderTest
   }
 
   @Test(expected=ISE.class)
-  public void test_illegal_password() {
+  public void testIllegalPassword() {
     new DefaultPasswordProvider(new Object());
   }
 }
