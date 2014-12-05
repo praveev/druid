@@ -10,7 +10,7 @@ import com.metamx.common.ISE;
 public class DefaultPasswordProvider implements PasswordProvider
 {
 
-  public final static String KEY_PASSWORD = "password";
+  public final static String PASSWORD_KEY = "password";
 
   private final String password;
 
@@ -23,10 +23,10 @@ public class DefaultPasswordProvider implements PasswordProvider
   private static String convertValue(Object spec) {
     if(spec instanceof String) {
       return spec.toString();
-    } else if(spec instanceof Map && ((Map<String,String>)spec).containsKey(KEY_PASSWORD)) {
-      return ((Map<String,String>)spec).get(KEY_PASSWORD);
+    } else if(spec instanceof Map && ((Map)spec).containsKey(PASSWORD_KEY)) {
+      return ((Map)spec).get(PASSWORD_KEY).toString();
     } else {
-      throw new ISE("spec must be of type String or a Map<String,String> with having " + KEY_PASSWORD);
+      throw new ISE("spec must be of type String or a Map<String,String> with having " + PASSWORD_KEY);
     }
   }
 

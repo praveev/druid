@@ -22,7 +22,7 @@ public class DefaultPasswordProviderTest
   @Test
   public void test_from_map_password() {
     Map<String,String> m = new HashMap<String,String>();
-    m.put(DefaultPasswordProvider.KEY_PASSWORD, pwd);
+    m.put(DefaultPasswordProvider.PASSWORD_KEY, pwd);
     DefaultPasswordProvider pp = new DefaultPasswordProvider(m);
     Assert.assertEquals(pwd, pp.getPassword());
   }
