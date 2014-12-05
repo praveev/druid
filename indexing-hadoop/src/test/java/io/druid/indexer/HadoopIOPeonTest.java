@@ -19,7 +19,7 @@ public class HadoopIOPeonTest
   JobContext mockJobContext;
   Configuration jobConfig;
   boolean overwritesFiles = true;
-  HadoopIOPeon IOPeon;
+  HadoopIOPeon ioPeon;
 
   @Rule
   public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -31,7 +31,7 @@ public class HadoopIOPeonTest
     EasyMock.expect(mockJobContext.getConfiguration()).andReturn(jobConfig).anyTimes();
     EasyMock.replay(mockJobContext);
 
-    IOPeon = new HadoopIOPeon(mockJobContext,new Path(tmpFolder.newFile().getParent()),overwritesFiles);
+    ioPeon = new HadoopIOPeon(mockJobContext,new Path(tmpFolder.newFile().getParent()),overwritesFiles);
   }
 
   @After public void tearDown()
@@ -43,16 +43,16 @@ public class HadoopIOPeonTest
 
   @Test public void testMakeOutputStream() throws IOException
   {
-    Assert.assertNotNull(IOPeon.makeOutputStream(TMP_FILE_NAME));
+    Assert.assertNotNull(ioPeon.makeOutputStream(TMP_FILE_NAME));
   }
 
   @Test public void testMakeInputStream() throws IOException
   {
-    Assert.assertNotNull(IOPeon.makeInputStream(tmpFolder.newFile(TMP_FILE_NAME).getName()));
+    Assert.assertNotNull(ioPeon.makeInputStream(tmpFolder.newFile(TMP_FILE_NAME).getName()));
   }
 
   @Test(expected = UnsupportedOperationException.class) public void testCleanup() throws IOException
   {
-    IOPeon.cleanup();
+    ioPeon.cleanup();
   }
 }
