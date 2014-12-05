@@ -60,12 +60,12 @@ public class ChainedExecutionQueryRunnerTest
   QueryInterruptedException cause;
   ListenableFuture future;
   static final int ONE_MINUTE = 60000;
-  Logger log;
+  static final Logger log = new Logger(ChainedExecutionQueryRunnerTest.class);
 
   @Before
   public void Setup()
   {
-    log = new Logger(ChainedExecutionQueryRunnerTest.class);
+
     queriesStarted = new CountDownLatch(2);
     queriesInterrupted = new CountDownLatch(2);
     queryIsRegistered = new CountDownLatch(1);
