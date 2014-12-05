@@ -240,9 +240,9 @@ public class ChainedExecutionQueryRunnerTest
     private final CountDownLatch stop;
     private final String name;
 
-    private boolean hasStarted = false;
-    private boolean hasCompleted = false;
-    private boolean interrupted = false;
+    private volatile boolean hasStarted = false;
+    private volatile boolean hasCompleted = false;
+    private volatile boolean interrupted = false;
 
     public DyingQueryRunner(CountDownLatch start,CountDownLatch stop, String name)
     {
