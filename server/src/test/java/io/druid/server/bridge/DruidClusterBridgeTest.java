@@ -57,10 +57,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DruidClusterBridgeTest
 {
   static final int ONE_MINUTE = 60000;
+  static final Logger log = new Logger(DruidClusterBridgeTest.class);
   @Test(timeout = ONE_MINUTE)
   public void testRun() throws Exception
   {
-    Logger log = new Logger(DruidClusterBridgeTest.class);
     TestingCluster localCluster = new TestingCluster(1);
     localCluster.start();
 
