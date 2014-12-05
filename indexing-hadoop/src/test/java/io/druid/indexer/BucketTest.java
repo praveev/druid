@@ -79,17 +79,4 @@ public class BucketTest
     hashCode = bucket.hashCode();
     Assert.assertEquals(hashCode, (31 * partitionNum + shardNum));
   }
-
-  @Test public void testFromGroupKey()
-  {
-    byte[] leftArray = {1, 0, 9, 8, 1};
-    ByteBuffer preambleBuffer = ByteBuffer.allocate(Bucket.PREAMBLE_BYTES);
-    preambleBuffer.putInt(shardNum);
-    preambleBuffer.putLong(time.getMillis());
-    preambleBuffer.putInt(partitionNum);
-    byte keyBytes[] = Bytes.concat(preambleBuffer.array(),leftArray);
-    Pair<Bucket, byte[]> actualPair = bucket.fromGroupKey(keyBytes);
-    Assert.assertEquals("Bucket is not matching", bucket,actualPair.lhs);
-    Assert.assertArrayEquals("Left Array is not matching", leftArray, actualPair.rhs);
-  }
 }
