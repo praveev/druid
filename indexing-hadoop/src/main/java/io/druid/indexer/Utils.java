@@ -21,8 +21,6 @@ package io.druid.indexer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterators;
 import com.metamx.common.ISE;
 import io.druid.jackson.DefaultObjectMapper;
 import org.apache.hadoop.fs.FileSystem;
@@ -36,8 +34,6 @@ import org.apache.hadoop.util.ReflectionUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**

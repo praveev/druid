@@ -4,11 +4,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
-
+import com.google.common.io.ByteStreams;
 import com.metamx.common.ISE;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.fs.Path;
