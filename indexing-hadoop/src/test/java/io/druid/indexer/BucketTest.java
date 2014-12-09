@@ -37,12 +37,8 @@ public class BucketTest
   {
     byte[] firstPart = {1, 1, 0, 10};
     byte[] secondPart = {2, 4, 0, 5};
-    ByteBuffer preambleBuffer = ByteBuffer.allocate(Bucket.PREAMBLE_BYTES);
-    preambleBuffer.putInt(shardNum);
-    preambleBuffer.putLong(time.getMillis());
-    preambleBuffer.putInt(partitionNum);
-    byte[] actualGroupParts = Bytes.concat(preambleBuffer.array(),firstPart,secondPart);
-    Pair<Bucket, byte[]> actualPair = Bucket.fromGroupKey(actualGroupParts);
+    byte[] expectedGroupParts = bucket.toGroupKey(firstPart,secondPart);
+    Pair<Bucket, byte[]> actualPair = Bucket.fromGroupKey(expectedGroupParts);
     Assert.assertEquals("Bucket is not matching", bucket, actualPair.lhs);
     Assert.assertArrayEquals("Parts not matching", Bytes.concat(firstPart,secondPart), actualPair.rhs);
   }
