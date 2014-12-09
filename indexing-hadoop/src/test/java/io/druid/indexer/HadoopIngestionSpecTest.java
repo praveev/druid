@@ -453,47 +453,4 @@ public class HadoopIngestionSpecTest
       throw Throwables.propagate(e);
     }
   }
-
-  public void testRandomPartitionsSpec() throws Exception{
-    {
-      final HadoopIngestionSpec schema;
-
-      try {
-        schema = jsonReadWriteRead(
-            "{"
-            + "\"partitionsSpec\":{"
-            + "   \"targetPartitionSize\":100,"
-            + "   \"type\":\"random\""
-            + " }"
-            + "}",
-            HadoopIngestionSpec.class
-        );
-      }
-      catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-
-      final PartitionsSpec partitionsSpec = schema.getTuningConfig().getPartitionsSpec();
-
-      Assert.assertEquals(
-          "isDeterminingPartitions",
-          partitionsSpec.isDeterminingPartitions(),
-          true
-      );
-
-      Assert.assertEquals(
-          "getTargetPartitionSize",
-          partitionsSpec.getTargetPartitionSize(),
-          100
-      );
-
-      Assert.assertEquals(
-          "getMaxPartitionSize",
-          partitionsSpec.getMaxPartitionSize(),
-          150
-      );
-
-      Assert.assertTrue("partitionsSpec" , partitionsSpec instanceof RandomPartitionsSpec);
-    }
-  }
 }
