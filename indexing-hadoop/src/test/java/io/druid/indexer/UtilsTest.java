@@ -43,7 +43,6 @@ public class UtilsTest
   private File tmpFile;
   private Path tmpPath;
   private FileSystem defaultFileSystem;
-  private Iterable setOfValues;
   private Set setOfKeys;
 
   @Rule
@@ -67,7 +66,6 @@ public class UtilsTest
 
     setOfKeys = new HashSet();
     setOfKeys.addAll(new ArrayList<>(Arrays.asList("key1","key2","key3")));
-    setOfValues = Iterables.transform(setOfKeys,new CreateValueFromKey());
     expectedMap = (Map<String, Object>) Maps.asMap(setOfKeys, new CreateValueFromKey());
 
     tmpFile = tmpFolder.newFile(TMP_FILE_NAME);
