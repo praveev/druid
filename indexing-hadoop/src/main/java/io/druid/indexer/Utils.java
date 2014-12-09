@@ -46,25 +46,6 @@ public class Utils
 {
   private static final ObjectMapper jsonMapper = new DefaultObjectMapper();
 
-  public static <K, V> Map<K, V> zipMap(Iterable<K> keys, Iterable<V> values)
-  {
-    Map<K, V> retVal = new HashMap<K, V>();
-
-    Iterator<K> keyIter = keys.iterator();
-    Iterator<V> valsIter = values.iterator();
-    while (keyIter.hasNext()) {
-      final K key = keyIter.next();
-
-      Preconditions.checkArgument(valsIter.hasNext(), "keys longer than vals, bad, bad vals.  Broke on key[%s]", key);
-      retVal.put(key, valsIter.next());
-    }
-    if (valsIter.hasNext()) {
-      throw new ISE("More values[%d] than keys[%d]", retVal.size() + Iterators.size(valsIter), retVal.size());
-    }
-
-    return retVal;
-  }
-
   public static OutputStream makePathAndOutputStream(JobContext job, Path outputPath, boolean deleteExisting)
       throws IOException
   {
