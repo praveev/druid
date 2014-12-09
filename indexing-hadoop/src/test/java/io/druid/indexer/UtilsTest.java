@@ -25,28 +25,26 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 
 public class UtilsTest
 {
-  static final String dummyString = "Very important string";
-  final String UTF8 = "UTF-8";
-  final String TMP_FILE_NAME = "test_file";
-  Configuration jobConfig;
-  JobContext mockJobContext;
-  List<String> keys;
-  Map expectedMap;
-  File tmpFile;
-  Path tmpPath;
-  FileSystem defaultFileSystem;
-  Iterable setOfValues;
-  Set setOfKeys;
+  private static final String DUMMY_STRING = "Very important string";
+  private static final String TMP_FILE_NAME = "test_file";
+  private Configuration jobConfig;
+  private JobContext mockJobContext;
+  private Map expectedMap;
+  private File tmpFile;
+  private Path tmpPath;
+  private FileSystem defaultFileSystem;
+  private Iterable setOfValues;
+  private Set setOfKeys;
 
   @Rule
   public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -55,7 +53,7 @@ public class UtilsTest
   {
     @Override public Object apply(Object input)
     {
-      return input.toString() + UtilsTest.dummyString;
+      return input.toString() + DUMMY_STRING;
     }
   }
 
@@ -127,10 +125,10 @@ public class UtilsTest
   @Test
   public void testPlainOpenInputStream() throws IOException
   {
-    FileUtils.writeStringToFile(tmpFile,dummyString);
+    FileUtils.writeStringToFile(tmpFile, DUMMY_STRING);
     InputStream inStream = Utils.openInputStream(mockJobContext, tmpPath);
     Assert.assertNotNull(inStream);
-    String expected = IOUtils.toString(inStream,UTF8);
-    Assert.assertEquals(expected, dummyString);
+    String expected = new String(ByteStreams.toByteArray(inStream), StandardCharsets.UTF_8.toString());
+    Assert.assertEquals(expected, DUMMY_STRING);
   }
 }

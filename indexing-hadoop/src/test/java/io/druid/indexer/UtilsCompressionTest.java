@@ -22,41 +22,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
 
 public class UtilsCompressionTest
 {
 
-  static final String dummyString = "Very important string";
-  final String UTF8 = "UTF-8";
-  final String TMP_FILE_NAME = "test_file";
-  final Class<? extends CompressionCodec> DEFAULT_COMPRESSION_CODEC = GzipCodec.class;
-  final String CODEC_CLASS = "org.apache.hadoop.io.compress.GzipCodec";
-  Configuration jobConfig;
-  JobContext mockJobContext;
-  FileSystem defaultFileSystem;
-  CompressionCodec codec;
-  List<String> keys;
-  List<String> values;
-  Map<String,Object> expectedMap;
-  File tmpFile;
-  Path tmpPathWithoutExtension;
-  Path tmpPathWithExtension;
-  Iterable setOfValues;
-  Set setOfKeys;
-
-  private class CreateValueFromKey implements Function
-  {
-    @Override public Object apply(Object input)
-    {
-      return input.toString() + UtilsCompressionTest.dummyString;
-    }
-  }
+  private static final String DUMMY_STRING = "Very important string";
+  private static final String TMP_FILE_NAME = "test_file";
+  private static final Class<? extends CompressionCodec> DEFAULT_COMPRESSION_CODEC = GzipCodec.class;
+  private static final String CODEC_CLASS = "org.apache.hadoop.io.compress.GzipCodec";
+  private Configuration jobConfig;
+  private JobContext mockJobContext;
+  private FileSystem defaultFileSystem;
+  private CompressionCodec codec;
+  private File tmpFile;
+  private Path tmpPathWithoutExtension;
+  private Path tmpPathWithExtension;
 
   @Rule
   public TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -75,13 +56,9 @@ public class UtilsCompressionTest
         .getOutputCompressorClass(mockJobContext, DEFAULT_COMPRESSION_CODEC);
     codec = ReflectionUtils.newInstance(codecClass, jobConfig);
 
-    setOfKeys = new HashSet(new ArrayList<>(Arrays.asList("key1", "key2", "key3")));
-    setOfValues = Iterables.transform(setOfKeys, new CreateValueFromKey());
-    expectedMap = (Map<String, Object>) Maps.asMap(setOfKeys, new CreateValueFromKey());
-
     tmpFile = tmpFolder.newFile(TMP_FILE_NAME + codec.getDefaultExtension());
     tmpPathWithExtension = new Path(tmpFile.getAbsolutePath());
-    tmpPathWithoutExtension = new Path(tmpFile.getParent() + File.separator + TMP_FILE_NAME);
+    tmpPathWithoutExtension = new Path(tmpFile.getParent(), TMP_FILE_NAME);
     defaultFileSystem = tmpPathWithoutExtension.getFileSystem(jobConfig);
   }
 
@@ -105,11 +82,11 @@ public class UtilsCompressionTest
   {
     boolean overwrite = true;
     OutputStream outStream = codec.createOutputStream(defaultFileSystem.create(tmpPathWithExtension, overwrite));
-    writeStingToOutputStream(dummyString,outStream);
+    writeStingToOutputStream(DUMMY_STRING,outStream);
     InputStream inStream = Utils.openInputStream(mockJobContext, tmpPathWithoutExtension);
     Assert.assertNotNull("Input stream should not be Null",inStream);
-    String actual = IOUtils.toString(inStream, UTF8);
-    Assert.assertEquals("Strings not matching",dummyString,actual);
+    String actual = new String(ByteStreams.toByteArray(inStream), StandardCharsets.UTF_8.toString());
+    Assert.assertEquals("Strings not matching", DUMMY_STRING,actual);
     inStream.close();
   }
 
@@ -119,16 +96,16 @@ public class UtilsCompressionTest
     boolean overwrite = true;
     OutputStream outStream = Utils.makePathAndOutputStream(mockJobContext,tmpPathWithoutExtension, overwrite);
     Assert.assertNotNull("Output stream should not be null",outStream);
-    writeStingToOutputStream(dummyString,outStream);
+    writeStingToOutputStream(DUMMY_STRING,outStream);
     InputStream inStream = codec.createInputStream(defaultFileSystem.open(tmpPathWithExtension));
-    String actual = IOUtils.toString(inStream,UTF8);
-    Assert.assertEquals("Strings not matching",dummyString,actual);
+    String actual = new String(ByteStreams.toByteArray(inStream), StandardCharsets.UTF_8.toString());
+    Assert.assertEquals("Strings not matching", DUMMY_STRING,actual);
     inStream.close();
   }
 
   private void writeStingToOutputStream(String string, OutputStream outStream) throws IOException
   {
-    IOUtils.write(string.getBytes(UTF8), outStream);
+    outStream.write(string.getBytes(StandardCharsets.UTF_8.toString()));
     outStream.flush();
     outStream.close();
   }
