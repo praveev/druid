@@ -82,20 +82,6 @@ public class UtilsTest
   }
 
   @Test
-  public void testZipMap()
-  {
-    Map actualMap = Utils.zipMap(setOfKeys,setOfValues);
-    Assert.assertThat("Hash content is not matching", expectedMap,Is.is(actualMap));
-  }
-
-  @Test(expected = ISE.class)
-  public void testZipMapValuesMoreThanKeys()
-  {
-    setOfValues = Iterables.concat(setOfValues,Arrays.asList("more values"));
-    Utils.zipMap(setOfKeys, setOfValues);
-  }
-
-  @Test
   public void testExistsPlainFile() throws IOException
   {
     boolean expected = Utils.exists(mockJobContext,defaultFileSystem,tmpPath);
