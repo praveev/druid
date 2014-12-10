@@ -24,7 +24,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import io.druid.db.DbConnectorConfig;
 import io.druid.indexer.partitions.PartitionsSpec;
-import io.druid.indexer.partitions.RandomPartitionsSpec;
 import io.druid.indexer.partitions.SingleDimensionPartitionsSpec;
 import io.druid.indexer.updater.DbUpdaterJobSpec;
 import io.druid.jackson.DefaultObjectMapper;
