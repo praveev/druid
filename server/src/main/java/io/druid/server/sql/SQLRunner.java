@@ -59,7 +59,7 @@ import java.util.List;
 
 public class SQLRunner
 {
-  private static final String STATEMENT = "select count(*), (1 - count(*) / sum(count)) * 100 as ratio from wikipedia where"
+  /*private static final String STATEMENT = "select count(*), (1 - count(*) / sum(count)) * 100 as ratio from wikipedia where"
                                           + " timestamp between '2013-02-01' and '2013-02-14'"
                                           + " and (namespace = 'article' or page ~ 'Talk:.*')"
                                           + " and language in ( 'en', 'fr' ) "
@@ -223,5 +223,5 @@ public class SQLRunner
     }
 
     CloseQuietly.close(stdInput);
-  }
+  }*/
 }
