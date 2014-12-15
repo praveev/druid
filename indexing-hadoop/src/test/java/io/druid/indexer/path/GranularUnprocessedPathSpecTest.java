@@ -5,7 +5,8 @@ import org.junit.Test;
 
 public class GranularUnprocessedPathSpecTest
 {
-  @Test public void testSetGetMaxBuckets()
+  @Test
+  public void testSetGetMaxBuckets()
   {
     GranularUnprocessedPathSpec granularUnprocessedPathSpec = new GranularUnprocessedPathSpec();
     int maxBuckets = 5;
