@@ -24,6 +24,7 @@ import com.google.api.client.util.Lists;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import com.metamx.common.Granularity;
 import io.druid.data.input.MapBasedInputRow;
 import io.druid.data.input.impl.JSONDataSpec;
@@ -37,7 +38,6 @@ import io.druid.segment.indexing.granularity.GranularitySpec;
 import io.druid.segment.indexing.granularity.UniformGranularitySpec;
 import io.druid.timeline.DataSegment;
 import io.druid.timeline.partition.HashBasedNumberedShardSpec;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
@@ -104,8 +104,7 @@ public class HadoopDruidIndexerConfigTest
         + "}"
       + "}";
     File tmpFile = tmpFolder.newFile();
-    FileUtils.writeStringToFile(tmpFile,schemaDescription, StandardCharsets.UTF_8.toString());
-
+    Files.write(schemaDescription.getBytes(StandardCharsets.UTF_8), tmpFile);
     HadoopDruidIndexerConfig hadoopDruidIndexerConfig = HadoopDruidIndexerConfig.fromFile(tmpFile);
     Assert.assertEquals("getDataSource",DATA_SOURCE,hadoopDruidIndexerConfig.getDataSource());
     Assert.assertEquals("isIgnoreInvalidRows",OVER_WRITE_FILE, hadoopDruidIndexerConfig.isOverwriteFiles());
