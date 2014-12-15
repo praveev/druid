@@ -24,7 +24,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import io.druid.db.DbConnectorConfig;
 import io.druid.indexer.partitions.PartitionsSpec;
-import io.druid.indexer.partitions.RandomPartitionsSpec;
 import io.druid.indexer.partitions.SingleDimensionPartitionsSpec;
 import io.druid.indexer.updater.DbUpdaterJobSpec;
 import io.druid.jackson.DefaultObjectMapper;
@@ -451,49 +450,6 @@ public class HadoopIngestionSpecTest
     }
     catch (Exception e) {
       throw Throwables.propagate(e);
-    }
-  }
-
-  public void testRandomPartitionsSpec() throws Exception{
-    {
-      final HadoopIngestionSpec schema;
-
-      try {
-        schema = jsonReadWriteRead(
-            "{"
-            + "\"partitionsSpec\":{"
-            + "   \"targetPartitionSize\":100,"
-            + "   \"type\":\"random\""
-            + " }"
-            + "}",
-            HadoopIngestionSpec.class
-        );
-      }
-      catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-
-      final PartitionsSpec partitionsSpec = schema.getTuningConfig().getPartitionsSpec();
-
-      Assert.assertEquals(
-          "isDeterminingPartitions",
-          partitionsSpec.isDeterminingPartitions(),
-          true
-      );
-
-      Assert.assertEquals(
-          "getTargetPartitionSize",
-          partitionsSpec.getTargetPartitionSize(),
-          100
-      );
-
-      Assert.assertEquals(
-          "getMaxPartitionSize",
-          partitionsSpec.getMaxPartitionSize(),
-          150
-      );
-
-      Assert.assertTrue("partitionsSpec" , partitionsSpec instanceof RandomPartitionsSpec);
     }
   }
 }
