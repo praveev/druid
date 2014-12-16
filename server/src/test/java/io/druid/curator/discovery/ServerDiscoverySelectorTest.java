@@ -4,7 +4,6 @@ import io.druid.client.selector.Server;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceProvider;
 import org.easymock.EasyMock;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,20 +19,16 @@ public class ServerDiscoverySelectorTest
   private static final int PORT = 8080;
   private static final String ADDRESS = "localhost";
 
-  @Before public void setUp()
+  @Before
+  public void setUp()
   {
     serviceProvider = EasyMock.createMock(ServiceProvider.class);
     instance = EasyMock.createMock(ServiceInstance.class);
     serverDiscoverySelector = new ServerDiscoverySelector(serviceProvider);
   }
 
-  @After public void tearDown()
-  {
-    serviceProvider = null;
-    serverDiscoverySelector = null;
-  }
-
-  @Test public void testPick() throws Exception
+  @Test
+  public void testPick() throws Exception
   {
     EasyMock.expect(serviceProvider.getInstance()).andReturn(instance).anyTimes();
     EasyMock.expect(instance.getAddress()).andReturn(ADDRESS).anyTimes();
@@ -48,7 +43,8 @@ public class ServerDiscoverySelectorTest
     EasyMock.verify(instance,serviceProvider);
   }
 
-  @Test public void testPickWithNullInstance() throws Exception
+  @Test
+  public void testPickWithNullInstance() throws Exception
   {
     EasyMock.expect(serviceProvider.getInstance()).andReturn(null).anyTimes();
     EasyMock.replay(serviceProvider);
@@ -57,7 +53,8 @@ public class ServerDiscoverySelectorTest
     EasyMock.verify(serviceProvider);
   }
 
-  @Test public void testPickWithException() throws Exception
+  @Test
+  public void testPickWithException() throws Exception
   {
     EasyMock.expect(serviceProvider.getInstance()).andThrow(new Exception()).anyTimes();
     EasyMock.replay(serviceProvider);
@@ -66,7 +63,8 @@ public class ServerDiscoverySelectorTest
     EasyMock.verify(serviceProvider);
   }
 
-  @Test public void testStart() throws Exception
+  @Test
+  public void testStart() throws Exception
   {
     serviceProvider.start();
     EasyMock.replay(serviceProvider);
@@ -74,7 +72,8 @@ public class ServerDiscoverySelectorTest
     EasyMock.verify(serviceProvider);
   }
 
-  @Test public void testStop() throws IOException
+  @Test
+  public void testStop() throws IOException
   {
     serviceProvider.close();
     EasyMock.replay(serviceProvider);
