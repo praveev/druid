@@ -41,8 +41,8 @@ public class ClientConversionQuery
   }
 
   public ClientConversionQuery(
-      String dataSource,
-      Interval interval
+      @JsonProperty("dataSource") String dataSource,
+      @JsonProperty("interval") Interval interval
   )
   {
     this.dataSource = dataSource;
