@@ -6,7 +6,7 @@
       "build": {
         "test": {
           "target": ["clover2:instrument", "verify", "clover2:aggregate", "clover2:clover"],
-          "before": "mvn versions:set -DnewVersion=`git describe`"
+          "before": "mvn versions:set -DnewVersion=`echo $(git describe)-${BUILD_NUMBER}`"
         },
         "publish": {
           "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
