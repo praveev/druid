@@ -24,17 +24,10 @@ public class ClientAppendQueryTest
     clientAppendQuery = new ClientAppendQuery(DATA_SOURCE, segments);
   }
 
-  @After
-  public void tearDown()
-  {
-    clientAppendQuery = null;
-  }
-
   @Test
   public void testGetType()
   {
     Assert.assertEquals("append",clientAppendQuery.getType());
-
   }
 
   @Test
