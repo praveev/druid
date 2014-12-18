@@ -1,6 +1,7 @@
 package io.druid.client.indexing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.metamx.common.IAE;
@@ -20,11 +21,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class IndexingServiceClientTest
 {
@@ -37,13 +36,24 @@ public class IndexingServiceClientTest
   private static final DataSegment DATA_SEGMENT = new DataSegment(DATA_SOURCE, INTERVAL, new DateTime().toString(), null,
       null, null, null, 0, 0);
   private static final ObjectMapper objectMapper = new DefaultObjectMapper();
+
+  public static byte [] jsonWriteReadWrite(Object object)
+  {
+    try {
+      return objectMapper.writeValueAsBytes(objectMapper.readValue(objectMapper.writeValueAsBytes(object),object.getClass()));
+    }
+    catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
   private RequestBuilder mockRequestBuilder;
+  private ListenableFuture mockListenableFuture = EasyMock.createMock(ListenableFuture.class);
 
   @Before
-  public void setUp() throws IOException
+  public void setUp() throws IOException, InterruptedException, ExecutionException
   {
     mockClient = EasyMock.createMock(HttpClient.class);
-    mockRequestBuilder = EasyMock.createStrictMock(RequestBuilder.class);
+    mockRequestBuilder = EasyMock.createMock(RequestBuilder.class);
     mockServerDiscoverySelector = EasyMock.createMock(ServerDiscoverySelector.class);
     serverInstance = EasyMock.createMock(Server.class);
 
@@ -54,12 +64,18 @@ public class IndexingServiceClientTest
     EasyMock.expect(mockServerDiscoverySelector.pick()).andReturn(serverInstance).anyTimes();
     EasyMock.replay(mockServerDiscoverySelector);
     EasyMock.verify(mockServerDiscoverySelector);
+    
+    EasyMock.expect(mockListenableFuture.get())
+        .andReturn(new InputStream() {@Override public int read() throws IOException {return 0;}}).anyTimes();
+    EasyMock.replay(mockListenableFuture);
 
     EasyMock.expect(mockClient.post(
         new URL("http://localhost/druid/indexer/v1/task"))).andReturn(mockRequestBuilder).anyTimes();
     EasyMock.replay(mockClient);
     EasyMock.verify(mockClient);
 
+    EasyMock.expect(mockRequestBuilder.go(EasyMock.isA(HttpResponseHandler.class))).andReturn(mockListenableFuture)
+        .anyTimes();
     indexingServiceClient = new IndexingServiceClient(mockClient, objectMapper, mockServerDiscoverySelector);
   }
 
@@ -87,207 +103,27 @@ public class IndexingServiceClientTest
 
     EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"), (byte[]) EasyMock.anyObject()))
         .andReturn(mockRequestBuilder).times(1);
-
-    EasyMock.expect(mockRequestBuilder.go(EasyMock.isA(HttpResponseHandler.class))).andReturn(
-        new ListenableFuture<InputStream>()
-        {
-          @Override public void addListener(Runnable listener, Executor executor)
-          {
-
-          }
-
-          @Override public boolean cancel(boolean mayInterruptIfRunning)
-          {
-            return false;
-          }
-
-          @Override public boolean isCancelled()
-          {
-            return false;
-          }
-
-          @Override public boolean isDone()
-          {
-            return false;
-          }
-
-          @Override public InputStream get() throws InterruptedException, ExecutionException
-          {
-            return new InputStream()
-            {
-              @Override public int read() throws IOException
-              {
-                return 0;
-              }
-            };
-          }
-
-          @Override public InputStream get(long timeout, TimeUnit unit)
-              throws InterruptedException, ExecutionException, TimeoutException
-          {
-            return null;
-          }
-        }).times(1);
     EasyMock.replay(mockRequestBuilder);
-
     indexingServiceClient.mergeSegments(segments);
     EasyMock.verify(mockRequestBuilder);
   }
 
   @Test
-  public void testKillSegments() throws IOException
+  public void testUpgradeKillSegments() throws IOException
   {
-    EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
-        EasyMock.aryEq(objectMapper.writeValueAsBytes(new ClientKillQuery(DATA_SOURCE, INTERVAL)))))
-        .andReturn(mockRequestBuilder).times(1);
-
-    EasyMock.expect(mockRequestBuilder.go(EasyMock.isA(HttpResponseHandler.class))).andReturn(
-        new ListenableFuture<InputStream>()
-        {
-          @Override public void addListener(Runnable listener, Executor executor)
-          {
-
-          }
-
-          @Override public boolean cancel(boolean mayInterruptIfRunning)
-          {
-            return false;
-          }
-
-          @Override public boolean isCancelled()
-          {
-            return false;
-          }
-
-          @Override public boolean isDone()
-          {
-            return false;
-          }
-
-          @Override public InputStream get() throws InterruptedException, ExecutionException
-          {
-            return new InputStream()
-            {
-              @Override public int read() throws IOException
-              {
-                return 0;
-              }
-            };
-          }
-
-          @Override public InputStream get(long timeout, TimeUnit unit)
-              throws InterruptedException, ExecutionException, TimeoutException
-          {
-            return null;
-          }
-        }).times(1);
-    EasyMock.replay(mockRequestBuilder);
-
-    indexingServiceClient.killSegments(DATA_SOURCE,INTERVAL);
-    EasyMock.verify(mockRequestBuilder);
-  }
-
-  @Test
-  public void testUpgradeSegment() throws IOException
-  {
-    EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
-        EasyMock.aryEq(objectMapper.writeValueAsBytes(new ClientConversionQuery(DATA_SEGMENT)))))
-        .andReturn(mockRequestBuilder).times(1);
-
-    EasyMock.expect(mockRequestBuilder.go(EasyMock.isA(HttpResponseHandler.class))).andReturn(
-        new ListenableFuture<InputStream>()
-        {
-          @Override public void addListener(Runnable listener, Executor executor)
-          {
-
-          }
-
-          @Override public boolean cancel(boolean mayInterruptIfRunning)
-          {
-            return false;
-          }
-
-          @Override public boolean isCancelled()
-          {
-            return false;
-          }
-
-          @Override public boolean isDone()
-          {
-            return false;
-          }
-
-          @Override public InputStream get() throws InterruptedException, ExecutionException
-          {
-            return new InputStream()
-            {
-              @Override public int read() throws IOException
-              {
-                return 0;
-              }
-            };
-          }
-
-          @Override public InputStream get(long timeout, TimeUnit unit)
-              throws InterruptedException, ExecutionException, TimeoutException
-          {
-            return null;
-          }
-        }).times(1);
-    EasyMock.replay(mockRequestBuilder);
-    indexingServiceClient.upgradeSegment(DATA_SEGMENT);
-    EasyMock.verify(mockRequestBuilder);
-  }
-
-  @Test
-  public void testUpgradeSegments() throws IOException
-  {
-    EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
-        EasyMock.aryEq(objectMapper.writeValueAsBytes(new ClientConversionQuery(DATA_SOURCE,INTERVAL)))))
-        .andReturn(mockRequestBuilder).times(1);
-
-    EasyMock.expect(mockRequestBuilder.go(EasyMock.isA(HttpResponseHandler.class))).andReturn(
-        new ListenableFuture<InputStream>()
-        {
-          @Override public void addListener(Runnable listener, Executor executor)
-          {
-
-          }
-
-          @Override public boolean cancel(boolean mayInterruptIfRunning)
-          {
-            return false;
-          }
-
-          @Override public boolean isCancelled()
-          {
-            return false;
-          }
-
-          @Override public boolean isDone()
-          {
-            return false;
-          }
-
-          @Override public InputStream get() throws InterruptedException, ExecutionException
-          {
-            return new InputStream()
-            {
-              @Override public int read() throws IOException
-              {
-                return 0;
-              }
-            };
-          }
-
-          @Override public InputStream get(long timeout, TimeUnit unit)
-              throws InterruptedException, ExecutionException, TimeoutException
-          {
-            return null;
-          }
-        }).times(1);
+    List<Object> listObjects = new ArrayList<>();
+    listObjects.add(new ClientConversionQuery(DATA_SOURCE,INTERVAL));
+    listObjects.add(new ClientConversionQuery(DATA_SEGMENT));
+    listObjects.add(new ClientKillQuery(DATA_SOURCE, INTERVAL));
+    for(Object object :listObjects ) {
+      EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
+          EasyMock.aryEq(jsonWriteReadWrite(object))))
+          .andReturn(mockRequestBuilder).times(1);
+    }
     EasyMock.replay(mockRequestBuilder);
     indexingServiceClient.upgradeSegments(DATA_SOURCE, INTERVAL);
+    indexingServiceClient.upgradeSegment(DATA_SEGMENT);
+    indexingServiceClient.killSegments(DATA_SOURCE,INTERVAL);
     EasyMock.verify(mockRequestBuilder);
   }
 }
