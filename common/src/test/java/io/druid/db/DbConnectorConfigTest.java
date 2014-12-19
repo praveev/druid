@@ -27,7 +27,12 @@ public class DbConnectorConfigTest
   @Before
   public void setUp() throws Exception
   {
-    dbConnectorConfig = objectMapper.readValue(DB_CONNECTOR_CONFIG_STRING,DbConnectorConfig.class);
+    dbConnectorConfig = objectMapper.readValue(
+        objectMapper.writeValueAsBytes(objectMapper.readValue(
+            DB_CONNECTOR_CONFIG_STRING,
+            DbConnectorConfig.class)),
+        DbConnectorConfig.class
+    );
   }
 
   @Test
