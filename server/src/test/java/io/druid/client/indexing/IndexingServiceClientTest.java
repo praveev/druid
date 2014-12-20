@@ -109,21 +109,36 @@ public class IndexingServiceClientTest
   }
 
   @Test
-  public void testUpgradeKillSegments() throws IOException
+  public void testUpgradeSegments()
   {
-    List<Object> listObjects = new ArrayList<>();
-    listObjects.add(new ClientConversionQuery(DATA_SOURCE,INTERVAL));
-    listObjects.add(new ClientConversionQuery(DATA_SEGMENT));
-    listObjects.add(new ClientKillQuery(DATA_SOURCE, INTERVAL));
-    for(Object object :listObjects ) {
-      EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
-          EasyMock.aryEq(jsonWriteReadWrite(object))))
-          .andReturn(mockRequestBuilder).times(1);
-    }
+    EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
+        EasyMock.aryEq(jsonWriteReadWrite(new ClientConversionQuery(DATA_SOURCE,INTERVAL)))))
+        .andReturn(mockRequestBuilder).times(1);
     EasyMock.replay(mockRequestBuilder);
     indexingServiceClient.upgradeSegments(DATA_SOURCE, INTERVAL);
-    indexingServiceClient.upgradeSegment(DATA_SEGMENT);
+    EasyMock.verify(mockRequestBuilder);
+  }
+
+  @Test
+  public void testKillSegments()
+  {
+    EasyMock.expect(
+        mockRequestBuilder.setContent(EasyMock.eq("application/json"),
+        EasyMock.aryEq(jsonWriteReadWrite(new ClientKillQuery(DATA_SOURCE, INTERVAL)))))
+        .andReturn(mockRequestBuilder).times(1);
+    EasyMock.replay(mockRequestBuilder);
     indexingServiceClient.killSegments(DATA_SOURCE,INTERVAL);
+    EasyMock.verify(mockRequestBuilder);
+  }
+
+  @Test
+  public void testUpgradeSegment()
+  {
+    EasyMock.expect(mockRequestBuilder.setContent(EasyMock.eq("application/json"),
+        EasyMock.aryEq(jsonWriteReadWrite(new ClientConversionQuery(DATA_SEGMENT)))))
+        .andReturn(mockRequestBuilder).times(1);
+    EasyMock.replay(mockRequestBuilder);
+    indexingServiceClient.upgradeSegment(DATA_SEGMENT);
     EasyMock.verify(mockRequestBuilder);
   }
 }
