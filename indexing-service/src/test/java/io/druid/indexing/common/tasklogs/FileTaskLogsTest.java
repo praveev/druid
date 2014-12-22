@@ -40,23 +40,32 @@ public class FileTaskLogsTest
     }
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void testPushTaskLogDirCreationFails() throws Exception
   {
     final File tmpDir = Files.createTempDir();
     
     try {
+      IOException thrown = null;
+      
       final File logDir = new File(tmpDir, "druid/logs");
       final File logFile = new File(tmpDir, "log");
       Files.write("blah", logFile, Charsets.UTF_8);
       
-      if(!tmpDir.setReadOnly()) {
+      if(!tmpDir.setWritable(false)) {
         new RuntimeException("failed to make tmp dir read-only");
       }
+
       final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
-      taskLogs.pushTaskLog("foo", logFile);
+      try {
+        taskLogs.pushTaskLog("foo", logFile);
+      } catch(IOException ex) {
+        thrown = ex;
+      }
+      Assert.assertNotNull("pushTaskLog should fail with exception of dir creation error", thrown);
     }
     finally {
+      tmpDir.setWritable(true);
       FileUtils.deleteDirectory(tmpDir);
     }
   }
