@@ -1,6 +1,7 @@
 package io.druid.indexing.common.tasklogs;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -49,7 +50,9 @@ public class FileTaskLogsTest
       final File logFile = new File(tmpDir, "log");
       Files.write("blah", logFile, Charsets.UTF_8);
       
-      tmpDir.setReadOnly();
+      if(!tmpDir.setReadOnly()) {
+        new RuntimeException("failed to make tmp dir read-only");
+      }
       final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
       taskLogs.pushTaskLog("foo", logFile);
     }
