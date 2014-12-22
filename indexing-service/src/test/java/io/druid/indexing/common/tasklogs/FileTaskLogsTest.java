@@ -20,7 +20,7 @@ public class FileTaskLogsTest
   {
     final File tmpDir = Files.createTempDir();
     try {
-      final File logDir = new File(tmpDir, "logs");
+      final File logDir = new File(tmpDir, "druid/logs");
       final File logFile = new File(tmpDir, "log");
       Files.write("blah", logFile, Charsets.UTF_8);
       final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
