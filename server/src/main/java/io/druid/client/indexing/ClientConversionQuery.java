@@ -19,6 +19,7 @@
 
 package io.druid.client.indexing;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.druid.timeline.DataSegment;
 import org.joda.time.Interval;
@@ -40,9 +41,10 @@ public class ClientConversionQuery
     this.segment = segment;
   }
 
+  @JsonCreator
   public ClientConversionQuery(
-      String dataSource,
-      Interval interval
+      @JsonProperty("dataSource") String dataSource,
+      @JsonProperty("interval") Interval interval
   )
   {
     this.dataSource = dataSource;
