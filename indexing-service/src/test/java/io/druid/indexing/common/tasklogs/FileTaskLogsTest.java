@@ -1,6 +1,7 @@
 package io.druid.indexing.common.tasklogs;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -11,6 +12,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 public class FileTaskLogsTest
@@ -20,7 +22,7 @@ public class FileTaskLogsTest
   {
     final File tmpDir = Files.createTempDir();
     try {
-      final File logDir = new File(tmpDir, "logs");
+      final File logDir = new File(tmpDir, "druid/logs");
       final File logFile = new File(tmpDir, "log");
       Files.write("blah", logFile, Charsets.UTF_8);
       final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
@@ -34,6 +36,36 @@ public class FileTaskLogsTest
       }
     }
     finally {
+      FileUtils.deleteDirectory(tmpDir);
+    }
+  }
+
+  @Test
+  public void testPushTaskLogDirCreationFails() throws Exception
+  {
+    final File tmpDir = Files.createTempDir();
+    
+    try {
+      IOException thrown = null;
+      
+      final File logDir = new File(tmpDir, "druid/logs");
+      final File logFile = new File(tmpDir, "log");
+      Files.write("blah", logFile, Charsets.UTF_8);
+      
+      if(!tmpDir.setWritable(false)) {
+        new RuntimeException("failed to make tmp dir read-only");
+      }
+
+      final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
+      try {
+        taskLogs.pushTaskLog("foo", logFile);
+      } catch(IOException ex) {
+        thrown = ex;
+      }
+      Assert.assertNotNull("pushTaskLog should fail with exception of dir creation error", thrown);
+    }
+    finally {
+      tmpDir.setWritable(true);
       FileUtils.deleteDirectory(tmpDir);
     }
   }
