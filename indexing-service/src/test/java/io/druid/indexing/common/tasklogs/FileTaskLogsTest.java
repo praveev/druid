@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 public class FileTaskLogsTest
@@ -32,6 +33,25 @@ public class FileTaskLogsTest
         final String string = new String(bytes);
         Assert.assertEquals(String.format("Read with offset %,d", entry.getKey()), string, entry.getValue());
       }
+    }
+    finally {
+      FileUtils.deleteDirectory(tmpDir);
+    }
+  }
+
+  @Test(expected = IOException.class)
+  public void testPushTaskLogDirCreationFails() throws Exception
+  {
+    final File tmpDir = Files.createTempDir();
+    
+    try {
+      final File logDir = new File(tmpDir, "druid/logs");
+      final File logFile = new File(tmpDir, "log");
+      Files.write("blah", logFile, Charsets.UTF_8);
+      
+      tmpDir.setReadOnly();
+      final TaskLogs taskLogs = new FileTaskLogs(new FileTaskLogsConfig(logDir));
+      taskLogs.pushTaskLog("foo", logFile);
     }
     finally {
       FileUtils.deleteDirectory(tmpDir);
