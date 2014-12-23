@@ -118,13 +118,14 @@ public class DbConnectorTest
   {
     try
     {
-      dbConnectorConfig = objectMapper.readValue(DB_CONNECTOR_CONFIG_STRING, DbConnectorConfig.class);
+      dbConnectorConfig = objectMapper.readValue(
+          objectMapper.writeValueAsBytes(objectMapper.readValue(DB_CONNECTOR_CONFIG_STRING, DbConnectorConfig.class)),
+          DbConnectorConfig.class);
     } catch (Exception e)
     {
       Throwables.propagate(e);
     }
-    String base = "base";
-    dbTablesConfig = DbTablesConfig.fromBase(base);
+    dbTablesConfig = DbTablesConfig.fromBase("base");
 
     EasyMock.expect(mockConfig.get()).andReturn(dbConnectorConfig).anyTimes();
     EasyMock.replay(mockConfig);
@@ -138,8 +139,7 @@ public class DbConnectorTest
   @Test
   public void testGetDBI()
   {
-    DbConnector dbConnector = new DbConnector(mockConfig, mockDbTables);
-    Assert.assertNotNull(dbConnector.getDBI());
+    Assert.assertEquals(mockIDBI, dbConnector.getDBI());
   }
 
   @Test
