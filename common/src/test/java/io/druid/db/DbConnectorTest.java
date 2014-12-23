@@ -41,10 +41,13 @@ public class DbConnectorTest
       + "}" ;
 
   protected static final String SEGMENT_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TINYTEXT NOT NULL, start TINYTEXT NOT NULL, end TINYTEXT NOT NULL, partitioned BOOLEAN NOT NULL, version TINYTEXT NOT NULL, used BOOLEAN NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), INDEX(used), PRIMARY KEY (id))";
-  protected static final String SEGMENT_TABLE_POSTGRE_QUERY = "";
+  protected static final String SEGMENT_TABLE_POSTGRE_QUERY = "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TEXT NOT NULL, start TEXT NOT NULL, \"end\" TEXT NOT NULL, partitioned SMALLINT NOT NULL, version TEXT NOT NULL, used BOOLEAN NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));" +
+      "CREATE INDEX ON %1$s(dataSource);"+
+      "CREATE INDEX ON %1$s(used);";
 
   protected static final String RULE_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TINYTEXT NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), PRIMARY KEY (id))";
-  protected static final String RULE_TABLE_POSTGRE_QUERY = "";
+  protected static final String RULE_TABLE_POSTGRE_QUERY = "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TEXT NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));"+
+      "CREATE INDEX ON %1$s(dataSource);";
 
   protected static final String CONFIG_TABLE_SQL_QUERY = "CREATE table %s (name VARCHAR(255) NOT NULL, payload BLOB NOT NULL, PRIMARY KEY(name))";
   protected static final String CONFIG_TABLE_POSTGRE_QUERY = "CREATE TABLE %s (name VARCHAR(255) NOT NULL, payload bytea NOT NULL, PRIMARY KEY(name))";
