@@ -1,6 +1,5 @@
 package io.druid.db;
 
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,61 +15,50 @@ public class DbTablesConfigTest
   @Test
   public void testFromBaseWithNull(){
     String defaultBase = "druid";
-    DbTablesConfig dbTablesConfig = new DbTablesConfig(
-        defaultBase,
-        defaultBase + SEGMENTS_TABLES,
-        defaultBase + RULES_TABLE,
-        defaultBase + CONFIG_TABLE,
-        defaultBase + TASKS_TABLE,
-        defaultBase + TASK_LOG_TABLE,
-        defaultBase + TASK_LOCK_TABLE
-    );
     DbTablesConfig defaultDbTablesConfigWithNull = DbTablesConfig.fromBase(null);
-    Assert.assertThat
-        (dbTablesConfig.getBase(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getBase())));
-    Assert.assertThat
-        (dbTablesConfig.getSegmentsTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getSegmentsTable())));
-    Assert.assertThat
-        (dbTablesConfig.getRulesTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getRulesTable())));
-    Assert.assertThat
-        (dbTablesConfig.getConfigTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getConfigTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTasksTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getTasksTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTaskLogTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getTaskLogTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTaskLockTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfigWithNull.getTaskLockTable())));
-
-
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getBase(), defaultBase);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getSegmentsTable(), defaultBase + SEGMENTS_TABLES);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getRulesTable(), defaultBase + RULES_TABLE);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getConfigTable(), defaultBase + CONFIG_TABLE);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getTasksTable(), defaultBase + TASKS_TABLE);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getTaskLogTable(), defaultBase + TASK_LOG_TABLE);
+    Assert.assertEquals(defaultDbTablesConfigWithNull.getTaskLockTable(),defaultBase + TASK_LOCK_TABLE);
   }
 
   @Test
   public void testFromBase()
   {
     String base = "base";
+    DbTablesConfig defaultDbTablesConfig = DbTablesConfig.fromBase(base);
+    Assert.assertEquals(defaultDbTablesConfig.getBase(), base);
+    Assert.assertEquals(defaultDbTablesConfig.getSegmentsTable(), base + SEGMENTS_TABLES);
+    Assert.assertEquals(defaultDbTablesConfig.getRulesTable(), base + RULES_TABLE);
+    Assert.assertEquals(defaultDbTablesConfig.getConfigTable(), base + CONFIG_TABLE);
+    Assert.assertEquals(defaultDbTablesConfig.getTasksTable(), base + TASKS_TABLE);
+    Assert.assertEquals(defaultDbTablesConfig.getTaskLogTable(), base + TASK_LOG_TABLE);
+    Assert.assertEquals(defaultDbTablesConfig.getTaskLockTable(),base + TASK_LOCK_TABLE);
+  }
+
+  @Test
+  public void testDbTablesConfigWithNull()
+  {
+    String base = "BASE";
+    String segmentsTables = base + "_SEGMENTS_TABLES";
     DbTablesConfig dbTablesConfig = new DbTablesConfig(
         base,
-        base + SEGMENTS_TABLES,
-        base + RULES_TABLE,
-        base + CONFIG_TABLE,
-        base + TASKS_TABLE,
-        base + TASK_LOG_TABLE,
-        base + TASK_LOCK_TABLE
+        segmentsTables,
+        null,
+        null,
+        null,
+        null,
+        null
     );
-    DbTablesConfig defaultDbTablesConfig = DbTablesConfig.fromBase(base);
-    Assert.assertThat
-        (dbTablesConfig.getBase(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getBase())));
-    Assert.assertThat
-        (dbTablesConfig.getSegmentsTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getSegmentsTable())));
-    Assert.assertThat
-        (dbTablesConfig.getRulesTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getRulesTable())));
-    Assert.assertThat
-        (dbTablesConfig.getConfigTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getConfigTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTasksTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getTasksTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTaskLogTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getTaskLogTable())));
-    Assert.assertThat
-        (dbTablesConfig.getTaskLockTable(), Matchers.is(Matchers.equalTo(defaultDbTablesConfig.getTaskLockTable())));
+    Assert.assertEquals(dbTablesConfig.getBase(), base);
+    Assert.assertEquals(dbTablesConfig.getSegmentsTable(), segmentsTables);
+    Assert.assertEquals(dbTablesConfig.getRulesTable(), base + RULES_TABLE);
+    Assert.assertEquals(dbTablesConfig.getConfigTable(), base + CONFIG_TABLE);
+    Assert.assertEquals(dbTablesConfig.getTasksTable(), base + TASKS_TABLE);
+    Assert.assertEquals(dbTablesConfig.getTaskLogTable(), base + TASK_LOG_TABLE);
+    Assert.assertEquals(dbTablesConfig.getTaskLockTable(),base + TASK_LOCK_TABLE);
   }
 }
