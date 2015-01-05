@@ -18,6 +18,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DbConnectorTest
@@ -160,22 +161,51 @@ public class DbConnectorTest
     EasyMock.verify(mockHandel, mockConnection, mockDatabaseMetaData);
   }
 
+  private void loadMockHandelExpectations(String tableName, String sql){
+    EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName)))
+        .andReturn(new ArrayList<Map<String,Object>>()).anyTimes();
+    EasyMock.expect(
+        mockHandel.createStatement(String.format(sql, tableName))
+    ).andReturn(null).anyTimes();
+  }
+
   @Test
-  public void testCreateTables()
+  public void testCreateRulesTable()
+  {
+    String tableName = mockDbTables.get().getRulesTable();
+    String sqlStatement = dbConnector.isPostgreSQL() ? RULE_TABLE_POSTGRE_QUERY : RULE_TABLE_SQL_QUERY;
+    loadMockHandelExpectations(tableName, sqlStatement);
+    EasyMock.replay(mockHandel);
+    dbConnector.createRulesTable();
+    EasyMock.verify(mockHandel);
+  }
+
+  @Test
+  public void testCreateSegmentTable()
+  {
+    String tableName = mockDbTables.get().getSegmentsTable();
+    String sqlStatement = dbConnector.isPostgreSQL() ? SEGMENT_TABLE_POSTGRE_QUERY : SEGMENT_TABLE_SQL_QUERY;
+    loadMockHandelExpectations(tableName, sqlStatement);
+    EasyMock.replay(mockHandel);
+    dbConnector.createSegmentTable();
+    EasyMock.verify(mockHandel);
+  }
+
+  @Test
+  public void testCreateConfigTable()
+  {
+    String tableName = mockDbTables.get().getConfigTable();
+    String sqlStatement = dbConnector.isPostgreSQL() ? CONFIG_TABLE_POSTGRE_QUERY : CONFIG_TABLE_SQL_QUERY;
+    loadMockHandelExpectations(tableName, sqlStatement);
+    EasyMock.replay(mockHandel);
+    dbConnector.createConfigTable();
+    EasyMock.verify(mockHandel);
+  }
+
+  @Test
+  public void testCreateTaskTables()
   {
     Map<String, String> mapOfTables = new HashMap<>();
-    mapOfTables.put(
-        mockDbTables.get().getRulesTable(),
-        dbConnector.isPostgreSQL() ? RULE_TABLE_POSTGRE_QUERY : RULE_TABLE_SQL_QUERY
-    );
-    mapOfTables.put(
-        mockDbTables.get().getSegmentsTable(),
-        dbConnector.isPostgreSQL() ? SEGMENT_TABLE_POSTGRE_QUERY : SEGMENT_TABLE_SQL_QUERY
-    );
-    mapOfTables.put(
-        mockDbTables.get().getConfigTable(),
-        dbConnector.isPostgreSQL() ? CONFIG_TABLE_POSTGRE_QUERY : CONFIG_TABLE_SQL_QUERY
-    );
     mapOfTables.put(
         mockDbTables.get().getTasksTable(),
         dbConnector.isPostgreSQL() ? TASK_TABLE_POSTGRE_QUERY : TASK_TABLE_SQL_QUERY
@@ -190,18 +220,23 @@ public class DbConnectorTest
     );
 
     for( Map.Entry<String,String> entry : mapOfTables.entrySet() ) {
-      EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", entry.getKey())))
-          .andReturn(new ArrayList<Map<String,Object>>()).anyTimes();
-      EasyMock.expect(
-          mockHandel.createStatement(String.format(entry.getValue(), entry.getKey()))
-      ).andReturn(null).anyTimes();
+      loadMockHandelExpectations(entry.getKey(),entry.getValue());
     }
 
     EasyMock.replay(mockHandel);
-    dbConnector.createRulesTable();
-    dbConnector.createSegmentTable();
-    dbConnector.createConfigTable();
     dbConnector.createTaskTables();
+    EasyMock.verify(mockHandel);
+  }
+
+  @Test
+  public void testCreateTableCaseTableExist()
+  {
+    String tableName = "tableName";
+    List result = new ArrayList();
+    result.add(1);
+    EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName))).andReturn(result).anyTimes();
+    EasyMock.replay(mockHandel);
+    DbConnector.createTable(mockIDBI, tableName, null, false);
     EasyMock.verify(mockHandel);
   }
 
