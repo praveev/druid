@@ -13,6 +13,9 @@ import org.skife.jdbi.v2.TransactionCallback;
 import org.skife.jdbi.v2.exceptions.CallbackFailedException;
 import org.skife.jdbi.v2.tweak.HandleCallback;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -143,14 +146,18 @@ public class DbConnectorTest
   }
 
   @Test
-  public void testStaticIsPostgreSQL()
+  public void testStaticIsPostgreSQL() throws SQLException
   {
-    IDBI mockDbi = EasyMock.createMock(IDBI.class);
-    EasyMock.expect(mockDbi.withHandle((HandleCallback<Object>) EasyMock.anyObject()))
-        .andReturn(new Boolean(true)).anyTimes();
-    EasyMock.replay(mockDbi);
-    Assert.assertTrue(DbConnector.isPostgreSQL(mockDbi));
-    EasyMock.verify(mockDbi);
+    Connection mockConnection = EasyMock.createMock(Connection.class);
+    DatabaseMetaData mockDatabaseMetaData = EasyMock.createMock(DatabaseMetaData.class);
+
+    EasyMock.expect(mockHandel.getConnection()).andReturn(mockConnection).anyTimes();
+    EasyMock.expect(mockConnection.getMetaData()).andReturn(mockDatabaseMetaData).anyTimes();
+    EasyMock.expect(mockDatabaseMetaData.getDatabaseProductName()).andReturn("PostgreSQL").anyTimes();
+
+    EasyMock.replay(mockHandel, mockConnection, mockDatabaseMetaData);
+    Assert.assertTrue(DbConnector.isPostgreSQL(mockIDBI));
+    EasyMock.verify(mockHandel, mockConnection, mockDatabaseMetaData);
   }
 
   @Test
