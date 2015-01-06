@@ -166,7 +166,7 @@ public class DbConnectorTest
     EasyMock.verify(mockHandel, mockConnection, mockDatabaseMetaData);
   }
 
-  private void loadMockHandelExpectations(String tableName, String sql){
+  private void loadMockHandleExpectations(String tableName, String sql){
     EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName)))
         .andReturn(new ArrayList<Map<String,Object>>()).anyTimes();
     EasyMock.expect(
@@ -179,7 +179,7 @@ public class DbConnectorTest
   {
     String tableName = mockDbTables.get().getRulesTable();
     String sqlStatement = dbConnector.isPostgreSQL() ? RULE_TABLE_POSTGRE_QUERY : RULE_TABLE_SQL_QUERY;
-    loadMockHandelExpectations(tableName, sqlStatement);
+    loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createRulesTable();
     EasyMock.verify(mockHandel);
@@ -190,7 +190,7 @@ public class DbConnectorTest
   {
     String tableName = mockDbTables.get().getSegmentsTable();
     String sqlStatement = dbConnector.isPostgreSQL() ? SEGMENT_TABLE_POSTGRE_QUERY : SEGMENT_TABLE_SQL_QUERY;
-    loadMockHandelExpectations(tableName, sqlStatement);
+    loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createSegmentTable();
     EasyMock.verify(mockHandel);
@@ -201,7 +201,7 @@ public class DbConnectorTest
   {
     String tableName = mockDbTables.get().getConfigTable();
     String sqlStatement = dbConnector.isPostgreSQL() ? CONFIG_TABLE_POSTGRE_QUERY : CONFIG_TABLE_SQL_QUERY;
-    loadMockHandelExpectations(tableName, sqlStatement);
+    loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createConfigTable();
     EasyMock.verify(mockHandel);
@@ -225,7 +225,7 @@ public class DbConnectorTest
     );
 
     for( Map.Entry<String,String> entry : mapOfTables.entrySet() ) {
-      loadMockHandelExpectations(entry.getKey(),entry.getValue());
+      loadMockHandleExpectations(entry.getKey(),entry.getValue());
     }
 
     EasyMock.replay(mockHandel);
