@@ -270,8 +270,7 @@ public class DbConnectorTest
         return callback.withHandle(handle);
       } catch (Exception e)
       {
-        Throwables.propagate(e);
-        return  null;
+        throw Throwables.propagate(e);
       }
     }
 
