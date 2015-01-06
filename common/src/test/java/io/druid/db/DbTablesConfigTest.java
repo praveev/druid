@@ -43,10 +43,9 @@ public class DbTablesConfigTest
   public void testDbTablesConfigWithNull()
   {
     String base = "BASE";
-    String segmentsTables = base + "_SEGMENTS_TABLES";
     DbTablesConfig dbTablesConfig = new DbTablesConfig(
         base,
-        segmentsTables,
+        "CUSTOMIZE_NAME",
         null,
         null,
         null,
@@ -54,7 +53,7 @@ public class DbTablesConfigTest
         null
     );
     Assert.assertEquals(dbTablesConfig.getBase(), base);
-    Assert.assertEquals(dbTablesConfig.getSegmentsTable(), segmentsTables);
+    Assert.assertEquals(dbTablesConfig.getSegmentsTable(), "CUSTOMIZE_NAME");
     Assert.assertEquals(dbTablesConfig.getRulesTable(), base + RULES_TABLE);
     Assert.assertEquals(dbTablesConfig.getConfigTable(), base + CONFIG_TABLE);
     Assert.assertEquals(dbTablesConfig.getTasksTable(), base + TASKS_TABLE);
