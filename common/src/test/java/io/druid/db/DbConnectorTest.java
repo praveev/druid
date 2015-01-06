@@ -48,17 +48,29 @@ public class DbConnectorTest
       + "\"password\" : {\"type\":\"default\",\"password\":\"" + PASSWORD + "\"}"
       + "}" ;
 
-  protected static final String SEGMENT_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TINYTEXT NOT NULL, start TINYTEXT NOT NULL, end TINYTEXT NOT NULL, partitioned BOOLEAN NOT NULL, version TINYTEXT NOT NULL, used BOOLEAN NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), INDEX(used), PRIMARY KEY (id))";
-  protected static final String SEGMENT_TABLE_POSTGRE_QUERY = "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TEXT NOT NULL, start TEXT NOT NULL, \"end\" TEXT NOT NULL, partitioned SMALLINT NOT NULL, version TEXT NOT NULL, used BOOLEAN NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));" +
-      "CREATE INDEX ON %1$s(dataSource);"+
-      "CREATE INDEX ON %1$s(used);";
+  protected static final String SEGMENT_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL,"
+          + " dataSource VARCHAR(255) NOT NULL,"
+          + " created_date TINYTEXT NOT NULL,"
+          + " start TINYTEXT NOT NULL,"
+          + " end TINYTEXT NOT NULL,"
+          + " partitioned BOOLEAN NOT NULL,"
+          + " version TINYTEXT NOT NULL,"
+          + " used BOOLEAN NOT NULL,"
+          + " payload LONGTEXT NOT NULL,"
+          + " INDEX(dataSource),"
+          + " INDEX(used),"
+          + " PRIMARY KEY (id))";
 
-  protected static final String RULE_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TINYTEXT NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), PRIMARY KEY (id))";
-  protected static final String RULE_TABLE_POSTGRE_QUERY = "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TEXT NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));"+
-      "CREATE INDEX ON %1$s(dataSource);";
+  protected static final String RULE_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL,"
+      + " dataSource VARCHAR(255) NOT NULL,"
+      + " version TINYTEXT NOT NULL,"
+      + " payload LONGTEXT NOT NULL,"
+      + " INDEX(dataSource),"
+      + " PRIMARY KEY (id))";
 
-  protected static final String CONFIG_TABLE_SQL_QUERY = "CREATE table %s (name VARCHAR(255) NOT NULL, payload BLOB NOT NULL, PRIMARY KEY(name))";
-  protected static final String CONFIG_TABLE_POSTGRE_QUERY = "CREATE TABLE %s (name VARCHAR(255) NOT NULL, payload bytea NOT NULL, PRIMARY KEY(name))";
+  protected static final String CONFIG_TABLE_SQL_QUERY = "CREATE table %s (name VARCHAR(255) NOT NULL,"
+      + " payload BLOB NOT NULL,"
+      + " PRIMARY KEY(name))";
 
   protected static final String TASK_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -71,17 +83,6 @@ public class DbConnectorTest
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY (active, created_date(100))\n"
           + ")";
-  protected static final String TASK_TABLE_POSTGRE_QUERY =
-      "CREATE TABLE %1$s (\n"
-          + "  id varchar(255) NOT NULL,\n"
-          + "  created_date TEXT NOT NULL,\n"
-          + "  datasource varchar(255) NOT NULL,\n"
-          + "  payload bytea NOT NULL,\n"
-          + "  status_payload bytea NOT NULL,\n"
-          + "  active SMALLINT NOT NULL DEFAULT '0',\n"
-          + "  PRIMARY KEY (id)\n"
-          + ");\n" +
-          "CREATE INDEX ON %1$s(active, created_date);";
 
   protected static final String TASK_LOG_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -91,14 +92,6 @@ public class DbConnectorTest
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY `task_id` (`task_id`)\n"
           + ")";
-  protected static final String TASK_LOG_TABLE_POSTGRE_QUERY =
-      "CREATE TABLE %1$s (\n"
-          + "  id bigserial NOT NULL,\n"
-          + "  task_id varchar(255) DEFAULT NULL,\n"
-          + "  log_payload bytea,\n"
-          + "  PRIMARY KEY (id)\n"
-          + ");\n"+
-          "CREATE INDEX ON %1$s(task_id);";
 
   protected static final String TASK_LOCK_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -108,14 +101,6 @@ public class DbConnectorTest
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY `task_id` (`task_id`)\n"
           + ")";
-  protected static final String TASK_LOCK_TABLE_POSTGRE_QUERY =
-      "CREATE TABLE %1$s (\n"
-          + "  id bigserial NOT NULL,\n"
-          + "  task_id varchar(255) DEFAULT NULL,\n"
-          + "  lock_payload bytea,\n"
-          + "  PRIMARY KEY (id)\n"
-          + ");\n"+
-          "CREATE INDEX ON %1$s(task_id);";
 
   private final Handle mockHandel = EasyMock.createMock(Handle.class);
   private Supplier<DbConnectorConfig> mockConfig = EasyMock.createMock(Supplier.class);
@@ -178,7 +163,7 @@ public class DbConnectorTest
   public void testCreateRulesTable()
   {
     String tableName = mockDbTables.get().getRulesTable();
-    String sqlStatement = dbConnector.isPostgreSQL() ? RULE_TABLE_POSTGRE_QUERY : RULE_TABLE_SQL_QUERY;
+    String sqlStatement = RULE_TABLE_SQL_QUERY;
     loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createRulesTable();
@@ -189,7 +174,7 @@ public class DbConnectorTest
   public void testCreateSegmentTable()
   {
     String tableName = mockDbTables.get().getSegmentsTable();
-    String sqlStatement = dbConnector.isPostgreSQL() ? SEGMENT_TABLE_POSTGRE_QUERY : SEGMENT_TABLE_SQL_QUERY;
+    String sqlStatement = SEGMENT_TABLE_SQL_QUERY;
     loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createSegmentTable();
@@ -200,7 +185,7 @@ public class DbConnectorTest
   public void testCreateConfigTable()
   {
     String tableName = mockDbTables.get().getConfigTable();
-    String sqlStatement = dbConnector.isPostgreSQL() ? CONFIG_TABLE_POSTGRE_QUERY : CONFIG_TABLE_SQL_QUERY;
+    String sqlStatement = CONFIG_TABLE_SQL_QUERY;
     loadMockHandleExpectations(tableName, sqlStatement);
     EasyMock.replay(mockHandel);
     dbConnector.createConfigTable();
@@ -213,15 +198,15 @@ public class DbConnectorTest
     Map<String, String> mapOfTables = new HashMap<>();
     mapOfTables.put(
         mockDbTables.get().getTasksTable(),
-        dbConnector.isPostgreSQL() ? TASK_TABLE_POSTGRE_QUERY : TASK_TABLE_SQL_QUERY
+        TASK_TABLE_SQL_QUERY
     );
     mapOfTables.put(
         mockDbTables.get().getTaskLogTable(),
-        dbConnector.isPostgreSQL() ? TASK_LOG_TABLE_POSTGRE_QUERY : TASK_LOG_TABLE_SQL_QUERY
+        TASK_LOG_TABLE_SQL_QUERY
     );
     mapOfTables.put(
         mockDbTables.get().getTaskLockTable(),
-        dbConnector.isPostgreSQL() ? TASK_LOCK_TABLE_POSTGRE_QUERY : TASK_LOCK_TABLE_SQL_QUERY
+        TASK_LOCK_TABLE_SQL_QUERY
     );
 
     for( Map.Entry<String,String> entry : mapOfTables.entrySet() ) {
