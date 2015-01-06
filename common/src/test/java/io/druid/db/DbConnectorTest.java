@@ -3,10 +3,13 @@ package io.druid.db;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.IDBI;
 import org.skife.jdbi.v2.TransactionCallback;
@@ -21,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@RunWith(JUnitParamsRunner.class)
 public class DbConnectorTest
 {
   ObjectMapper objectMapper = new ObjectMapper();
@@ -147,17 +151,18 @@ public class DbConnectorTest
   }
 
   @Test
-  public void testStaticIsPostgreSQL() throws SQLException
+  @Parameters({"PostgreSQL, true","doesn't contain <Postgre SQL> as one word, false"})
+  public void testStaticIsPostgreSQL(String productName, boolean expected) throws SQLException
   {
     Connection mockConnection = EasyMock.createMock(Connection.class);
     DatabaseMetaData mockDatabaseMetaData = EasyMock.createMock(DatabaseMetaData.class);
 
     EasyMock.expect(mockHandel.getConnection()).andReturn(mockConnection).anyTimes();
     EasyMock.expect(mockConnection.getMetaData()).andReturn(mockDatabaseMetaData).anyTimes();
-    EasyMock.expect(mockDatabaseMetaData.getDatabaseProductName()).andReturn("PostgreSQL").anyTimes();
+    EasyMock.expect(mockDatabaseMetaData.getDatabaseProductName()).andReturn(productName).anyTimes();
 
     EasyMock.replay(mockHandel, mockConnection, mockDatabaseMetaData);
-    Assert.assertTrue(DbConnector.isPostgreSQL(mockIDBI));
+    Assert.assertEquals(expected, DbConnector.isPostgreSQL(mockIDBI));
     EasyMock.verify(mockHandel, mockConnection, mockDatabaseMetaData);
   }
 
