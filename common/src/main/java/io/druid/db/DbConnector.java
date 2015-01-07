@@ -315,7 +315,7 @@ public class DbConnector
 
   private final Supplier<DbConnectorConfig> config;
   private final Supplier<DbTablesConfig> dbTables;
-  private final DBI dbi;
+  private final IDBI dbi;
   private boolean isPostgreSQL = false;
 
   @Inject
@@ -327,7 +327,14 @@ public class DbConnector
     this.dbi = new DBI(getDatasource());
   }
 
-  public DBI getDBI()
+  protected DbConnector(Supplier<DbConnectorConfig> config, Supplier<DbTablesConfig> dbTables, IDBI dbi)
+  {
+    this.config = config;
+    this.dbTables = dbTables;
+    this.dbi = dbi;
+  }
+
+  public IDBI getDBI()
   {
     return dbi;
   }
