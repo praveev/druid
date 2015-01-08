@@ -51,6 +51,7 @@
         <module>processing</module>
         <module>server</module>
         <module>services</module>
+        <module>examples</module>
         <!-- Non-default modules -->
         <module>hdfs-storage</module>
     </modules>
