@@ -187,7 +187,7 @@ public class HadoopDruidIndexerConfig
       this.spec = schema;
     }
     this.pathSpec = jsonMapper.convertValue(this.spec.getIOConfig().getPathSpec(), PathSpec.class);
-    for (Map.Entry<DateTime, List<HadoopyShardSpec>> entry : spec.getTuningConfig().getShardSpecs().entrySet()) {
+    for (Map.Entry<DateTime, List<HadoopyShardSpec>> entry : this.spec.getTuningConfig().getShardSpecs().entrySet()) {
       if (entry.getValue() == null || entry.getValue().isEmpty()) {
         continue;
       }

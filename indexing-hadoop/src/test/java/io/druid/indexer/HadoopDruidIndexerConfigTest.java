@@ -21,6 +21,7 @@ package io.druid.indexer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.util.Lists;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -183,13 +184,14 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     String expectedIntermediatePath = String.format("%s/%s/%s",
         schema.getTuningConfig().getWorkingPath(),
         schema.getDataSchema().getDataSource(),
-        configuration.getSchema().getTuningConfig().getVersion().replace(":", ""));
+        configuration.getSpec().getTuningConfig().getVersion().replace(":", ""));
 
     String expectedDescriptorInfoPath = String.format("%s/%s/%s.json",
         expectedIntermediatePath,
@@ -246,11 +248,12 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.setVersion(version);
 
-    Assert.assertEquals(configuration.getSchema().getTuningConfig().getVersion(),version);
+    Assert.assertEquals(configuration.getSpec().getTuningConfig().getVersion(),version);
 
     List<HadoopyShardSpec> listHadoopyShardSpec = new ArrayList<>();
     listHadoopyShardSpec.add(new HadoopyShardSpec(null,1));
@@ -291,7 +294,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     configuration.setGranularitySpec(granularitySpec);
@@ -344,7 +348,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     Job job = new Job();
@@ -381,7 +386,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.addJobProperties(job);
     Assert.assertEquals(job.getConfiguration().get(entryKey), entryValue);
@@ -413,7 +419,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.intoConfiguration(job);
     Assert.assertEquals(job.getConfiguration().get(HadoopDruidIndexerConfig.CONFIG_PROPERTY),

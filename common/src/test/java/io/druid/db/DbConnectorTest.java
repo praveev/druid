@@ -3,6 +3,7 @@ package io.druid.db;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
 import org.easymock.EasyMock;
@@ -12,6 +13,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.IDBI;
+import org.skife.jdbi.v2.Query;
 import org.skife.jdbi.v2.TransactionCallback;
 import org.skife.jdbi.v2.exceptions.CallbackFailedException;
 import org.skife.jdbi.v2.tweak.HandleCallback;
@@ -152,6 +154,11 @@ public class DbConnectorTest
   }
 
   private void loadMockHandleExpectations(String tableName, String sql){
+    Query query = EasyMock.createMock(Query.class);
+    EasyMock.expect(
+        mockHandel.createQuery("SHOW VARIABLES where variable_name = 'character_set_database' and value = 'utf8'")
+    ).andReturn(query);
+    EasyMock.expect(query.list()).andReturn(ImmutableList.of("a single entry")).anyTimes();
     EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName)))
         .andReturn(new ArrayList<Map<String,Object>>()).anyTimes();
     EasyMock.expect(
@@ -224,6 +231,12 @@ public class DbConnectorTest
     String tableName = "tableName";
     List result = new ArrayList();
     result.add(1);
+
+    Query query = EasyMock.createMock(Query.class);
+    EasyMock.expect(
+        mockHandel.createQuery("SHOW VARIABLES where variable_name = 'character_set_database' and value = 'utf8'")
+    ).andReturn(query);
+    EasyMock.expect(query.list()).andReturn(ImmutableList.of("a single entry")).anyTimes();
     EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName))).andReturn(result).anyTimes();
     EasyMock.replay(mockHandel);
     DbConnector.createTable(mockIDBI, tableName, null, false);
