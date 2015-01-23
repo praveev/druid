@@ -42,7 +42,6 @@
         <apache.curator.version>2.7.0</apache.curator.version>
         <jetty.version>9.2.5.v20141112</jetty.version>
         <druid.api.version>0.2.14.1</druid.api.version>
-        <maven.deploy.skip>true</maven.deploy.skip>
         <enforcer.skip>true</enforcer.skip>
     </properties>
 
