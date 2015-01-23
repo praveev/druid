@@ -184,13 +184,14 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     String expectedIntermediatePath = String.format("%s/%s/%s",
         schema.getTuningConfig().getWorkingPath(),
         schema.getDataSchema().getDataSource(),
-        configuration.getSchema().getTuningConfig().getVersion().replace(":", ""));
+        configuration.getSpec().getTuningConfig().getVersion().replace(":", ""));
 
     String expectedDescriptorInfoPath = String.format("%s/%s/%s.json",
         expectedIntermediatePath,
@@ -247,11 +248,12 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.setVersion(version);
 
-    Assert.assertEquals(configuration.getSchema().getTuningConfig().getVersion(),version);
+    Assert.assertEquals(configuration.getSpec().getTuningConfig().getVersion(),version);
 
     List<HadoopyShardSpec> listHadoopyShardSpec = new ArrayList<>();
     listHadoopyShardSpec.add(new HadoopyShardSpec(null,1));
@@ -292,7 +294,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     configuration.setGranularitySpec(granularitySpec);
@@ -345,7 +348,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
 
     Job job = new Job();
@@ -382,7 +386,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.addJobProperties(job);
     Assert.assertEquals(job.getConfiguration().get(entryKey), entryValue);
@@ -414,7 +419,8 @@ public class HadoopDruidIndexerConfigTest
                 .withVersion(
                     new DateTime().toString()
                 )
-        )
+        ),
+        null
     );
     configuration.intoConfiguration(job);
     Assert.assertEquals(job.getConfiguration().get(HadoopDruidIndexerConfig.CONFIG_PROPERTY),
@@ -424,10 +430,10 @@ public class HadoopDruidIndexerConfigTest
   @Test
   public void shouldMakeHDFSCompliantSegmentOutputPath()
   {
-    HadoopIngestionSpec schema;
+    HadoopIngestionSpec spec;
 
     try {
-      schema = jsonReadWriteRead(
+      spec = jsonReadWriteRead(
           "{"
           + "\"dataSource\": \"source\","
           + " \"granularitySpec\":{"
@@ -445,12 +451,13 @@ public class HadoopDruidIndexerConfigTest
     }
 
     HadoopDruidIndexerConfig cfg = new HadoopDruidIndexerConfig(
-        schema.withTuningConfig(
-            schema.getTuningConfig()
+        spec.withTuningConfig(
+            spec.getTuningConfig()
                   .withVersion(
                       "some:brand:new:version"
                   )
-        )
+        ),
+        null
     );
 
     Bucket bucket = new Bucket(4711, new DateTime(2012, 07, 10, 5, 30), 4712);
@@ -464,10 +471,10 @@ public class HadoopDruidIndexerConfigTest
   @Test
   public void shouldMakeDefaultSegmentOutputPathIfNotHDFS()
   {
-    final HadoopIngestionSpec schema;
+    final HadoopIngestionSpec spec;
 
     try {
-      schema = jsonReadWriteRead(
+      spec = jsonReadWriteRead(
           "{"
           + "\"dataSource\": \"the:data:source\","
           + " \"granularitySpec\":{"
@@ -485,12 +492,13 @@ public class HadoopDruidIndexerConfigTest
     }
 
     HadoopDruidIndexerConfig cfg = new HadoopDruidIndexerConfig(
-        schema.withTuningConfig(
-            schema.getTuningConfig()
+        spec.withTuningConfig(
+            spec.getTuningConfig()
                   .withVersion(
                       "some:brand:new:version"
                   )
-        )
+        ),
+        null
     );
 
     Bucket bucket = new Bucket(4711, new DateTime(2012, 07, 10, 5, 30), 4712);
@@ -541,7 +549,7 @@ public class HadoopDruidIndexerConfigTest
         null,
         null
     );
-    HadoopDruidIndexerConfig config = HadoopDruidIndexerConfig.fromSchema(spec);
+    HadoopDruidIndexerConfig config = HadoopDruidIndexerConfig.fromSpec(spec);
     final List<String> dims = Arrays.asList("diM1", "dIM2");
     final ImmutableMap<String, Object> values = ImmutableMap.<String, Object>of(
         "Dim1",

@@ -27,7 +27,7 @@
     <parent>
         <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.6.160</version>
+        <version>0.6.171</version>
     </parent>
 
     <dependencies>
@@ -50,6 +50,11 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.18</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.3-1102-jdbc41</version>
         </dependency>
 
         <!-- Tests -->

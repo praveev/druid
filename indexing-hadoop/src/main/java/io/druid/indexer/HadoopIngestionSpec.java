@@ -44,7 +44,7 @@ import java.util.Map;
 
 /**
  */
-public class HadoopIngestionSpec extends IngestionSpec<HadoopIOConfig, HadoopTuningConfig>
+public class HadoopIngestionSpec
 {
   private final DataSchema dataSchema;
   private final HadoopIOConfig ioConfig;
@@ -83,8 +83,6 @@ public class HadoopIngestionSpec extends IngestionSpec<HadoopIOConfig, HadoopTun
       final @JsonProperty("targetPartitionSize") Long targetPartitionSize
   )
   {
-    super(dataSchema, ioConfig, tuningConfig);
-
     if (dataSchema != null) {
       this.dataSchema = dataSchema;
       this.ioConfig = ioConfig;
@@ -171,21 +169,18 @@ public class HadoopIngestionSpec extends IngestionSpec<HadoopIOConfig, HadoopTun
   }
 
   @JsonProperty("dataSchema")
-  @Override
   public DataSchema getDataSchema()
   {
     return dataSchema;
   }
 
   @JsonProperty("ioConfig")
-  @Override
   public HadoopIOConfig getIOConfig()
   {
     return ioConfig;
   }
 
   @JsonProperty("tuningConfig")
-  @Override
   public HadoopTuningConfig getTuningConfig()
   {
     return tuningConfig;

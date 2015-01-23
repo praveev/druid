@@ -359,12 +359,18 @@ public class ServerManager implements QuerySegmentWalker
                 );
 
                 if (entry == null) {
-                  return null;
+                  throw new ISE(
+                      "No segment descriptor found for [%s]! Looks like segments were dropped while queries were still in queue",
+                      input
+                  );
                 }
 
                 final PartitionChunk<ReferenceCountingSegment> chunk = entry.getChunk(input.getPartitionNumber());
                 if (chunk == null) {
-                  return null;
+                  throw new ISE(
+                      "No partition chunk found for [%s]! Looks like segments were dropped while queries were still in queue",
+                      input
+                  );
                 }
 
                 final ReferenceCountingSegment adapter = chunk.getObject();
@@ -421,7 +427,7 @@ public class ServerManager implements QuerySegmentWalker
                         },
                         new ReferenceCountingSegmentQueryRunner<T>(factory, adapter),
                         "scan/time"
-                    ).withWaitMeasuredFromNow(),
+                    ),
                     cacheConfig
                 )
             )

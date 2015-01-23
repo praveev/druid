@@ -53,7 +53,7 @@ public class DbConnector
                 "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TEXT NOT NULL, start TEXT NOT NULL, \"end\" TEXT NOT NULL, partitioned SMALLINT NOT NULL, version TEXT NOT NULL, used BOOLEAN NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));" +
                 "CREATE INDEX ON %1$s(dataSource);"+
                 "CREATE INDEX ON %1$s(used);":
-                "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TINYTEXT NOT NULL, start TINYTEXT NOT NULL, end TINYTEXT NOT NULL, partitioned BOOLEAN NOT NULL, version TINYTEXT NOT NULL, used BOOLEAN NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), INDEX(used), PRIMARY KEY (id))",
+                "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, created_date TINYTEXT NOT NULL, start TINYTEXT NOT NULL, end TINYTEXT NOT NULL, partitioned BOOLEAN NOT NULL, version TINYTEXT NOT NULL, used BOOLEAN NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), INDEX(used), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8",
             segmentTableName
         ),
         isPostgreSQL
@@ -69,7 +69,7 @@ public class DbConnector
             isPostgreSQL ?
                 "CREATE TABLE %1$s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TEXT NOT NULL, payload bytea NOT NULL, PRIMARY KEY (id));"+
                 "CREATE INDEX ON %1$s(dataSource);":
-                "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TINYTEXT NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), PRIMARY KEY (id))",
+                "CREATE table %s (id VARCHAR(255) NOT NULL, dataSource VARCHAR(255) NOT NULL, version TINYTEXT NOT NULL, payload LONGTEXT NOT NULL, INDEX(dataSource), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8",
             ruleTableName
         ),
         isPostgreSQL
@@ -84,7 +84,7 @@ public class DbConnector
         String.format(
             isPostgreSQL ?
                 "CREATE TABLE %s (name VARCHAR(255) NOT NULL, payload bytea NOT NULL, PRIMARY KEY(name))":
-                "CREATE table %s (name VARCHAR(255) NOT NULL, payload BLOB NOT NULL, PRIMARY KEY(name))",
+                "CREATE table %s (name VARCHAR(255) NOT NULL, payload BLOB NOT NULL, PRIMARY KEY(name)) DEFAULT CHARACTER SET utf8",
             configTableName
         ),
         isPostgreSQL
@@ -117,7 +117,7 @@ public class DbConnector
                 + "  `active` tinyint(1) NOT NULL DEFAULT '0',\n"
                 + "  PRIMARY KEY (`id`),\n"
                 + "  KEY (active, created_date(100))\n"
-                + ")",
+                + ") DEFAULT CHARACTER SET utf8",
             taskTableName
         ),
         isPostgreSQL
@@ -144,7 +144,7 @@ public class DbConnector
                 + "  `log_payload` longblob,\n"
                 + "  PRIMARY KEY (`id`),\n"
                 + "  KEY `task_id` (`task_id`)\n"
-                + ")",
+                + ") DEFAULT CHARACTER SET utf8",
             taskLogsTableName
         ),
         isPostgreSQL
@@ -171,7 +171,7 @@ public class DbConnector
                 + "  `lock_payload` longblob,\n"
                 + "  PRIMARY KEY (`id`),\n"
                 + "  KEY `task_id` (`task_id`)\n"
-                + ")",
+                + ") DEFAULT CHARACTER SET utf8",
             taskLocksTableName
         ),
         isPostgreSQL
@@ -196,6 +196,20 @@ public class DbConnector
               if ( isPostgreSQL ) {
                 table = handle.select(String.format("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename LIKE '%s'", tableName));
               } else {
+                // ensure database defaults to utf8, otherwise bail
+                boolean isUtf8 =
+                    handle.createQuery("SHOW VARIABLES where variable_name = 'character_set_database' and value = 'utf8'")
+                          .list()
+                          .size() == 1;
+
+                if(!isUtf8) {
+                  throw new ISE(
+                      "Database default character set is not UTF-8." + System.lineSeparator()
+                    + "  Druid requires its MySQL database to be created using UTF-8 as default character set."
+                    + " If you are upgrading from previous version of Druid, please make all tables have been converted to utf8 and change the database default."
+                    + " For more information on how to convert and set the default, please refer to section on updating in the Druid 0.6.171 release notes."
+                    );
+                }
                 table = handle.select(String.format("SHOW tables LIKE '%s'", tableName));
               }
 

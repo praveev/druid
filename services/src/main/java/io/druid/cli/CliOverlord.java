@@ -58,25 +58,22 @@ import io.druid.indexing.overlord.TaskMaster;
 import io.druid.indexing.overlord.TaskRunnerFactory;
 import io.druid.indexing.overlord.TaskStorage;
 import io.druid.indexing.overlord.TaskStorageQueryAdapter;
+import io.druid.indexing.overlord.autoscaling.ResourceManagementSchedulerConfig;
+import io.druid.indexing.overlord.autoscaling.ResourceManagementSchedulerFactory;
+import io.druid.indexing.overlord.autoscaling.ResourceManagementSchedulerFactoryImpl;
+import io.druid.indexing.overlord.autoscaling.ResourceManagementStrategy;
+import io.druid.indexing.overlord.autoscaling.SimpleResourceManagementConfig;
+import io.druid.indexing.overlord.autoscaling.SimpleResourceManagementStrategy;
 import io.druid.indexing.overlord.config.TaskQueueConfig;
 import io.druid.indexing.overlord.http.OverlordRedirectInfo;
 import io.druid.indexing.overlord.http.OverlordResource;
-import io.druid.indexing.overlord.scaling.AutoScalingStrategy;
-import io.druid.indexing.overlord.scaling.EC2AutoScalingStrategy;
-import io.druid.indexing.overlord.scaling.NoopAutoScalingStrategy;
-import io.druid.indexing.overlord.scaling.ResourceManagementSchedulerConfig;
-import io.druid.indexing.overlord.scaling.ResourceManagementSchedulerFactory;
-import io.druid.indexing.overlord.scaling.ResourceManagementSchedulerFactoryImpl;
-import io.druid.indexing.overlord.scaling.ResourceManagementStrategy;
-import io.druid.indexing.overlord.scaling.SimpleResourceManagementConfig;
-import io.druid.indexing.overlord.scaling.SimpleResourceManagementStrategy;
-import io.druid.indexing.overlord.setup.FillCapacityWorkerSelectStrategy;
-import io.druid.indexing.overlord.setup.WorkerSelectStrategy;
+import io.druid.indexing.overlord.setup.WorkerBehaviorConfig;
 import io.druid.indexing.overlord.setup.WorkerSetupData;
 import io.druid.indexing.worker.config.WorkerConfig;
 import io.druid.segment.realtime.firehose.ChatHandlerProvider;
 import io.druid.server.http.RedirectFilter;
 import io.druid.server.http.RedirectInfo;
+import io.druid.server.initialization.BaseJettyServerInitializer;
 import io.druid.server.initialization.JettyServerInitializer;
 import io.druid.tasklogs.TaskLogStreamer;
 import io.druid.tasklogs.TaskLogs;
@@ -87,7 +84,6 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
 import org.eclipse.jetty.util.resource.ResourceCollection;
 
 import java.util.List;
@@ -199,19 +195,8 @@ public class CliOverlord extends ServerRunnable
             biddy.addBinding("remote").to(RemoteTaskRunnerFactory.class).in(LazySingleton.class);
             binder.bind(RemoteTaskRunnerFactory.class).in(LazySingleton.class);
 
-            PolyBind.createChoice(
-                binder,
-                "druid.indexer.runner.workerSelectStrategy.type",
-                Key.get(WorkerSelectStrategy.class),
-                Key.get(FillCapacityWorkerSelectStrategy.class)
-            );
-            final MapBinder<String, WorkerSelectStrategy> stratBinder = PolyBind.optionBinder(
-                binder,
-                Key.get(WorkerSelectStrategy.class)
-            );
-
-            stratBinder.addBinding("fillCapacity").to(FillCapacityWorkerSelectStrategy.class);
-            binder.bind(FillCapacityWorkerSelectStrategy.class).in(LazySingleton.class);
+            JacksonConfigProvider.bind(binder, WorkerSetupData.CONFIG_KEY, WorkerSetupData.class, null);
+            JacksonConfigProvider.bind(binder, WorkerBehaviorConfig.CONFIG_KEY, WorkerBehaviorConfig.class, null);
           }
 
           private void configureAutoscale(Binder binder)
@@ -220,24 +205,6 @@ public class CliOverlord extends ServerRunnable
             binder.bind(ResourceManagementStrategy.class)
                   .to(SimpleResourceManagementStrategy.class)
                   .in(LazySingleton.class);
-
-            JacksonConfigProvider.bind(binder, WorkerSetupData.CONFIG_KEY, WorkerSetupData.class, null);
-
-            PolyBind.createChoice(
-                binder,
-                "druid.indexer.autoscale.strategy",
-                Key.get(AutoScalingStrategy.class),
-                Key.get(NoopAutoScalingStrategy.class)
-            );
-
-            final MapBinder<String, AutoScalingStrategy> autoScalingBinder = PolyBind.optionBinder(
-                binder, Key.get(AutoScalingStrategy.class)
-            );
-            autoScalingBinder.addBinding("ec2").to(EC2AutoScalingStrategy.class);
-            binder.bind(EC2AutoScalingStrategy.class).in(LazySingleton.class);
-
-            autoScalingBinder.addBinding("noop").to(NoopAutoScalingStrategy.class);
-            binder.bind(NoopAutoScalingStrategy.class).in(LazySingleton.class);
 
             JsonConfigProvider.bind(binder, "druid.indexer.autoscale", SimpleResourceManagementConfig.class);
           }
@@ -249,7 +216,7 @@ public class CliOverlord extends ServerRunnable
 
   /**
    */
-  private static class OverlordJettyServerInitializer implements JettyServerInitializer
+  private static class OverlordJettyServerInitializer extends BaseJettyServerInitializer
   {
     @Override
     public void initialize(Server server, Injector injector)
@@ -267,11 +234,15 @@ public class CliOverlord extends ServerRunnable
               }
           )
       );
+      root.addFilter(defaultGzipFilterHolder(), "/*", null);
+
+      // /status should not redirect, so add first
+      root.addFilter(GuiceFilter.class, "/status/*", null);
+
+      // redirect anything other than status to the current lead
       root.addFilter(new FilterHolder(injector.getInstance(RedirectFilter.class)), "/*", null);
-      root.addFilter(GzipFilter.class, "/*", null);
 
       // Can't use /* here because of Guice and Jetty static content conflicts
-      root.addFilter(GuiceFilter.class, "/status/*", null);
       root.addFilter(GuiceFilter.class, "/druid/*", null);
 
       HandlerList handlerList = new HandlerList();

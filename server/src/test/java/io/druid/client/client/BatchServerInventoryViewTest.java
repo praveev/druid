@@ -339,7 +339,7 @@ public class BatchServerInventoryViewTest
     while (Iterables.isEmpty(batchServerInventoryView.getInventory())
            || Iterables.get(batchServerInventoryView.getInventory(), 0).getSegments().size() != testSegments.size()) {
       Thread.sleep(500);
-      if (stopwatch.elapsed(TimeUnit.MILLISECONDS) > 2000) {
+      if (stopwatch.elapsed(TimeUnit.MILLISECONDS) > 10000) {
         throw new ISE("BatchServerInventoryView is not updating");
       }
     }

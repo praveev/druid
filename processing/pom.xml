@@ -27,7 +27,7 @@
     <parent>
         <groupId>com.yahoo.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.6.160</version>
+        <version>0.6.171</version>
     </parent>
 
     <dependencies>
@@ -87,6 +87,11 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>junit-benchmarks</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
