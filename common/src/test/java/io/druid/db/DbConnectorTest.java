@@ -61,18 +61,18 @@ public class DbConnectorTest
           + " payload LONGTEXT NOT NULL,"
           + " INDEX(dataSource),"
           + " INDEX(used),"
-          + " PRIMARY KEY (id))";
+          + " PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8";
 
   protected static final String RULE_TABLE_SQL_QUERY = "CREATE table %s (id VARCHAR(255) NOT NULL,"
       + " dataSource VARCHAR(255) NOT NULL,"
       + " version TINYTEXT NOT NULL,"
       + " payload LONGTEXT NOT NULL,"
       + " INDEX(dataSource),"
-      + " PRIMARY KEY (id))";
+      + " PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8";
 
   protected static final String CONFIG_TABLE_SQL_QUERY = "CREATE table %s (name VARCHAR(255) NOT NULL,"
       + " payload BLOB NOT NULL,"
-      + " PRIMARY KEY(name))";
+      + " PRIMARY KEY(name)) DEFAULT CHARACTER SET utf8";
 
   protected static final String TASK_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -84,7 +84,7 @@ public class DbConnectorTest
           + "  `active` tinyint(1) NOT NULL DEFAULT '0',\n"
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY (active, created_date(100))\n"
-          + ")";
+          + ") DEFAULT CHARACTER SET utf8";
 
   protected static final String TASK_LOG_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -93,7 +93,7 @@ public class DbConnectorTest
           + "  `log_payload` longblob,\n"
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY `task_id` (`task_id`)\n"
-          + ")";
+          + ") DEFAULT CHARACTER SET utf8";
 
   protected static final String TASK_LOCK_TABLE_SQL_QUERY =
       "CREATE TABLE `%s` (\n"
@@ -102,7 +102,7 @@ public class DbConnectorTest
           + "  `lock_payload` longblob,\n"
           + "  PRIMARY KEY (`id`),\n"
           + "  KEY `task_id` (`task_id`)\n"
-          + ")";
+          + ") DEFAULT CHARACTER SET utf8";
 
   private final Handle mockHandel = EasyMock.createMock(Handle.class);
   private Supplier<DbConnectorConfig> mockConfig = EasyMock.createMock(Supplier.class);
@@ -164,6 +164,8 @@ public class DbConnectorTest
     EasyMock.expect(
         mockHandel.createStatement(String.format(sql, tableName))
     ).andReturn(null).anyTimes();
+
+    EasyMock.replay(query);
   }
 
   @Test
@@ -238,9 +240,9 @@ public class DbConnectorTest
     ).andReturn(query);
     EasyMock.expect(query.list()).andReturn(ImmutableList.of("a single entry")).anyTimes();
     EasyMock.expect(mockHandel.select(String.format("SHOW tables LIKE '%s'", tableName))).andReturn(result).anyTimes();
-    EasyMock.replay(mockHandel);
+    EasyMock.replay(mockHandel, query);
     DbConnector.createTable(mockIDBI, tableName, null, false);
-    EasyMock.verify(mockHandel);
+    EasyMock.verify(mockHandel, query);
   }
 
   private class MockDbi implements IDBI
