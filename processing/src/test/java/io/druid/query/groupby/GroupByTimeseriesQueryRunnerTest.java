@@ -75,7 +75,8 @@ public class GroupByTimeseriesQueryRunnerTest extends TimeseriesQueryRunnerTest
         engine,
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
         configSupplier,
-        new GroupByQueryQueryToolChest(configSupplier, new DefaultObjectMapper(), engine)
+        new GroupByQueryQueryToolChest(configSupplier, new DefaultObjectMapper(), engine,
+            QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator())
     );
 
     final Collection<?> objects = QueryRunnerTestHelper.makeQueryRunners(factory);

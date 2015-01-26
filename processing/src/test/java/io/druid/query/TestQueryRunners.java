@@ -4,14 +4,17 @@ import com.google.common.base.Supplier;
 import io.druid.collections.StupidPool;
 import io.druid.query.search.SearchQueryQueryToolChest;
 import io.druid.query.search.SearchQueryRunnerFactory;
+import io.druid.query.search.SearchResultValue;
 import io.druid.query.search.search.SearchQueryConfig;
 import io.druid.query.timeboundary.TimeBoundaryQueryRunnerFactory;
 import io.druid.query.timeseries.TimeseriesQueryEngine;
 import io.druid.query.timeseries.TimeseriesQueryQueryToolChest;
 import io.druid.query.timeseries.TimeseriesQueryRunnerFactory;
+import io.druid.query.timeseries.TimeseriesResultValue;
 import io.druid.query.topn.TopNQueryConfig;
 import io.druid.query.topn.TopNQueryQueryToolChest;
 import io.druid.query.topn.TopNQueryRunnerFactory;
+import io.druid.query.topn.TopNResultValue;
 import io.druid.segment.Segment;
 
 import java.nio.ByteBuffer;
@@ -44,7 +47,8 @@ public class TestQueryRunners
   {
     QueryRunnerFactory factory = new TopNQueryRunnerFactory(
         pool,
-        new TopNQueryQueryToolChest(topNConfig),
+        new TopNQueryQueryToolChest(topNConfig,
+            QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER
     );
     return new FinalizeResultsQueryRunner<T>(
@@ -58,7 +62,8 @@ public class TestQueryRunners
   )
   {
     QueryRunnerFactory factory = new TimeseriesQueryRunnerFactory(
-        new TimeseriesQueryQueryToolChest(new QueryConfig()),
+        new TimeseriesQueryQueryToolChest(new QueryConfig(),
+            QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
         new TimeseriesQueryEngine(),
         QueryRunnerTestHelper.NOOP_QUERYWATCHER
     );
@@ -73,7 +78,10 @@ public class TestQueryRunners
       Segment adapter
   )
   {
-    QueryRunnerFactory factory = new SearchQueryRunnerFactory(new SearchQueryQueryToolChest(new SearchQueryConfig()), QueryRunnerTestHelper.NOOP_QUERYWATCHER);
+    QueryRunnerFactory factory = new SearchQueryRunnerFactory(new SearchQueryQueryToolChest(
+          new SearchQueryConfig(),
+          QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
+        QueryRunnerTestHelper.NOOP_QUERYWATCHER);
     return new FinalizeResultsQueryRunner<T>(
         factory.createRunner(adapter),
         factory.getToolchest()

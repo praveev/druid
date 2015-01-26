@@ -68,7 +68,8 @@ public class TopNQueryRunnerTest
         QueryRunnerTestHelper.makeQueryRunners(
             new TopNQueryRunnerFactory(
                 TestQueryRunners.getPool(),
-                new TopNQueryQueryToolChest(new TopNQueryConfig()),
+                new TopNQueryQueryToolChest(new TopNQueryConfig(),
+                    QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
                 QueryRunnerTestHelper.NOOP_QUERYWATCHER
             )
         )
@@ -86,7 +87,8 @@ public class TopNQueryRunnerTest
                       }
                     }
                 ),
-                new TopNQueryQueryToolChest(new TopNQueryConfig()),
+                new TopNQueryQueryToolChest(new TopNQueryConfig(),
+                    QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
                 QueryRunnerTestHelper.NOOP_QUERYWATCHER
             )
         )

@@ -63,7 +63,8 @@ public class TimeSeriesUnionQueryRunnerTest
   {
     return QueryRunnerTestHelper.makeUnionQueryRunners(
         new TimeseriesQueryRunnerFactory(
-            new TimeseriesQueryQueryToolChest(new QueryConfig()),
+            new TimeseriesQueryQueryToolChest(new QueryConfig(),
+                QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
             new TimeseriesQueryEngine(),
             QueryRunnerTestHelper.NOOP_QUERYWATCHER
         )
@@ -136,7 +137,8 @@ public class TimeSeriesUnionQueryRunnerTest
                                       )
                                   )
                                   .build();
-    QueryToolChest toolChest = new TimeseriesQueryQueryToolChest(new QueryConfig());
+    QueryToolChest toolChest = new TimeseriesQueryQueryToolChest(new QueryConfig(),
+        QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator());
     QueryRunner mergingrunner = toolChest.mergeResults(
         new UnionQueryRunner<Result<TimeseriesResultValue>>(
             new QueryRunner<Result<TimeseriesResultValue>>()

@@ -65,7 +65,8 @@ public class TopNUnionQueryTest
         QueryRunnerTestHelper.makeUnionQueryRunners(
             new TopNQueryRunnerFactory(
                 TestQueryRunners.getPool(),
-                new TopNQueryQueryToolChest(new TopNQueryConfig()),
+                new TopNQueryQueryToolChest(new TopNQueryConfig(),
+                    QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
                 QueryRunnerTestHelper.NOOP_QUERYWATCHER
             )
         )
@@ -83,7 +84,8 @@ public class TopNUnionQueryTest
                       }
                     }
                 ),
-                new TopNQueryQueryToolChest(new TopNQueryConfig()),
+                new TopNQueryQueryToolChest(new TopNQueryConfig(),
+                    QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
                 QueryRunnerTestHelper.NOOP_QUERYWATCHER
             )
         )
