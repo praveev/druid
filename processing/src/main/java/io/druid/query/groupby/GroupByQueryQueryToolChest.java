@@ -39,15 +39,18 @@ import io.druid.collections.OrderedMergeSequence;
 import io.druid.data.input.MapBasedRow;
 import io.druid.data.input.Row;
 import io.druid.granularity.QueryGranularity;
+import io.druid.guice.annotations.Processing;
 import io.druid.query.CacheStrategy;
 import io.druid.query.DataSource;
 import io.druid.query.IntervalChunkingQueryRunner;
+import io.druid.query.IntervalChunkingQueryRunnerDecorator;
 import io.druid.query.Query;
 import io.druid.query.QueryCacheHelper;
 import io.druid.query.QueryDataSource;
 import io.druid.query.QueryMetricUtil;
 import io.druid.query.QueryRunner;
 import io.druid.query.QueryToolChest;
+import io.druid.query.QueryWatcher;
 import io.druid.query.SubqueryQueryRunner;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.MetricManipulationFn;
@@ -62,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 /**
  */
@@ -76,25 +80,25 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
   {
   };
   private static final String GROUP_BY_MERGE_KEY = "groupByMerge";
-  private static final Map<String, Object> NO_MERGE_CONTEXT = ImmutableMap.<String, Object>of(
-      GROUP_BY_MERGE_KEY,
-      "false"
-  );
 
   private final Supplier<GroupByQueryConfig> configSupplier;
   private final ObjectMapper jsonMapper;
   private GroupByQueryEngine engine; // For running the outer query around a subquery
 
+  private final IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator;
+
   @Inject
   public GroupByQueryQueryToolChest(
       Supplier<GroupByQueryConfig> configSupplier,
       ObjectMapper jsonMapper,
-      GroupByQueryEngine engine
+      GroupByQueryEngine engine,
+      IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator
   )
   {
     this.configSupplier = configSupplier;
     this.jsonMapper = jsonMapper;
     this.engine = engine;
+    this.intervalChunkingQueryRunnerDecorator = intervalChunkingQueryRunnerDecorator;
   }
 
   @Override
@@ -110,7 +114,7 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
         }
 
         if (Boolean.valueOf(input.getContextValue(GROUP_BY_MERGE_KEY, "true"))) {
-          return mergeGroupByResults(((GroupByQuery) input).withOverriddenContext(NO_MERGE_CONTEXT), runner);
+          return mergeGroupByResults((GroupByQuery)input, runner);
         }
         return runner.run(input);
       }
@@ -246,7 +250,7 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
   public QueryRunner<Row> preMergeQueryDecoration(QueryRunner<Row> runner)
   {
     return new SubqueryQueryRunner<>(
-        new IntervalChunkingQueryRunner<>(runner, configSupplier.get().getChunkPeriod())
+        intervalChunkingQueryRunnerDecorator.decorate(runner, this)
     );
   }
 

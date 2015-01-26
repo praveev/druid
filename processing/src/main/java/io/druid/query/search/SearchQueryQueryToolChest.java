@@ -38,7 +38,7 @@ import com.metamx.common.guava.nary.BinaryFn;
 import com.metamx.emitter.service.ServiceMetricEvent;
 import io.druid.collections.OrderedMergeSequence;
 import io.druid.query.CacheStrategy;
-import io.druid.query.IntervalChunkingQueryRunner;
+import io.druid.query.IntervalChunkingQueryRunnerDecorator;
 import io.druid.query.Query;
 import io.druid.query.QueryMetricUtil;
 import io.druid.query.QueryRunner;
@@ -73,12 +73,16 @@ public class SearchQueryQueryToolChest extends QueryToolChest<Result<SearchResul
 
   private final SearchQueryConfig config;
 
+  private final IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator;
+
   @Inject
   public SearchQueryQueryToolChest(
-      SearchQueryConfig config
+      SearchQueryConfig config,
+      IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator
   )
   {
     this.config = config;
+    this.intervalChunkingQueryRunnerDecorator = intervalChunkingQueryRunnerDecorator;
   }
 
   @Override
@@ -253,7 +257,7 @@ public class SearchQueryQueryToolChest extends QueryToolChest<Result<SearchResul
   public QueryRunner<Result<SearchResultValue>> preMergeQueryDecoration(QueryRunner<Result<SearchResultValue>> runner)
   {
     return new SearchThresholdAdjustingQueryRunner(
-        new IntervalChunkingQueryRunner<Result<SearchResultValue>>(runner, config.getChunkPeriod()),
+        intervalChunkingQueryRunnerDecorator.decorate(runner, this),
         config
     );
   }

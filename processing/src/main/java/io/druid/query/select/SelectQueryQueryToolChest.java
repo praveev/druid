@@ -19,6 +19,30 @@
 
 package io.druid.query.select;
 
+import io.druid.collections.OrderedMergeSequence;
+import io.druid.granularity.QueryGranularity;
+import io.druid.query.CacheStrategy;
+import io.druid.query.IntervalChunkingQueryRunnerDecorator;
+import io.druid.query.Query;
+import io.druid.query.QueryConfig;
+import io.druid.query.QueryMetricUtil;
+import io.druid.query.QueryRunner;
+import io.druid.query.QueryToolChest;
+import io.druid.query.Result;
+import io.druid.query.ResultGranularTimestampComparator;
+import io.druid.query.ResultMergeQueryRunner;
+import io.druid.query.aggregation.MetricManipulationFn;
+import io.druid.query.filter.DimFilter;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.joda.time.DateTime;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -31,28 +55,6 @@ import com.metamx.common.guava.MergeSequence;
 import com.metamx.common.guava.Sequence;
 import com.metamx.common.guava.nary.BinaryFn;
 import com.metamx.emitter.service.ServiceMetricEvent;
-import io.druid.collections.OrderedMergeSequence;
-import io.druid.granularity.QueryGranularity;
-import io.druid.query.CacheStrategy;
-import io.druid.query.IntervalChunkingQueryRunner;
-import io.druid.query.Query;
-import io.druid.query.QueryConfig;
-import io.druid.query.QueryMetricUtil;
-import io.druid.query.QueryRunner;
-import io.druid.query.QueryToolChest;
-import io.druid.query.Result;
-import io.druid.query.ResultGranularTimestampComparator;
-import io.druid.query.ResultMergeQueryRunner;
-import io.druid.query.aggregation.MetricManipulationFn;
-import io.druid.query.filter.DimFilter;
-import org.joda.time.DateTime;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  */
@@ -71,11 +73,15 @@ public class SelectQueryQueryToolChest extends QueryToolChest<Result<SelectResul
   private final QueryConfig config;
   private final ObjectMapper jsonMapper;
 
+  private final IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator;
+
   @Inject
-  public SelectQueryQueryToolChest(QueryConfig config, ObjectMapper jsonMapper)
+  public SelectQueryQueryToolChest(QueryConfig config, ObjectMapper jsonMapper,
+      IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator)
   {
     this.config = config;
     this.jsonMapper = jsonMapper;
+    this.intervalChunkingQueryRunnerDecorator = intervalChunkingQueryRunnerDecorator;
   }
 
   @Override
@@ -272,11 +278,7 @@ public class SelectQueryQueryToolChest extends QueryToolChest<Result<SelectResul
   @Override
   public QueryRunner<Result<SelectResultValue>> preMergeQueryDecoration(QueryRunner<Result<SelectResultValue>> runner)
   {
-    return new IntervalChunkingQueryRunner<Result<SelectResultValue>>(
-        runner,
-        config.getChunkPeriod()
-
-    );
+    return intervalChunkingQueryRunnerDecorator.decorate(runner, this);
   }
 
   public Ordering<Result<SelectResultValue>> getOrdering()
