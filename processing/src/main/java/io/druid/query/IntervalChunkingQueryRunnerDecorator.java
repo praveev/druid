@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import com.google.inject.Inject;
 import com.metamx.emitter.service.ServiceEmitter;
 
-public class IntervalChunkingQueryRunnerDecorator implements QueryRunnerDecorator
+public class IntervalChunkingQueryRunnerDecorator
 {
   private final ExecutorService executor;
   private final QueryWatcher queryWatcher;
@@ -22,9 +22,8 @@ public class IntervalChunkingQueryRunnerDecorator implements QueryRunnerDecorato
     this.emitter = emitter;
   }
 
-  @Override
-  public <T> QueryRunner<T> decorate(QueryRunner<T> delegate,
-      QueryToolChest<T, ? extends Query<T>> toolChest) {
+  public <T> QueryRunner<T> decorate(QueryRunner<T> delegate, QueryToolChest<T, ? extends Query<T>> toolChest)
+  {
     return new IntervalChunkingQueryRunner<T>(delegate, (QueryToolChest<T, Query<T>>)toolChest,
         executor, queryWatcher, emitter);
   }
