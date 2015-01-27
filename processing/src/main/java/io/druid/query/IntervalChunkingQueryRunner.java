@@ -98,7 +98,7 @@ public class IntervalChunkingQueryRunner<T> implements QueryRunner<T>
                     return toolChest.makeMetricBuilder(query);
                   }
                 },
-                baseRunner, "chunk/time"
+                baseRunner
             ).withWaitMeasuredFromNow()),
         executor, queryWatcher);
 
