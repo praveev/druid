@@ -36,8 +36,7 @@ public class AsyncQueryRunner<T> implements QueryRunner<T>
           public Sequence<T> call() throws Exception
           {
             //Note: this is assumed that baseRunner does most of the work eagerly on call to the
-            //run() method and is not lazy i.e. does not do any work on call to run() but actually
-            //when sequence is accumulated/yielded
+            //run() method and resulting sequence accumulate/yield is fast.
             return baseRunner.run(query);
           }
         });
