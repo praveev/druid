@@ -20,10 +20,9 @@
 package io.druid.query;
 
 import com.metamx.common.concurrent.ExecutorServiceConfig;
-import io.druid.segment.column.ColumnConfig;
 import org.skife.config.Config;
 
-public abstract class DruidProcessingConfig extends ExecutorServiceConfig implements ColumnConfig
+public abstract class DruidProcessingConfig extends ExecutorServiceConfig
 {
   @Config({"druid.computation.buffer.size", "${base_path}.buffer.sizeBytes"})
   public int intermediateComputeSizeBytes()
@@ -37,11 +36,5 @@ public abstract class DruidProcessingConfig extends ExecutorServiceConfig implem
     // default to leaving one core for background tasks
     final int processors = Runtime.getRuntime().availableProcessors();
     return processors > 1 ? processors - 1 : processors;
-  }
-
-  @Config(value = "${base_path}.columnCache.sizeBytes")
-  public int columnCacheSizeBytes()
-  {
-    return 0;
   }
 }
