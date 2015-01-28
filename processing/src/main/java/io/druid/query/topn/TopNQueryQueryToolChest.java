@@ -19,6 +19,33 @@
 
 package io.druid.query.topn;
 
+import io.druid.collections.OrderedMergeSequence;
+import io.druid.granularity.QueryGranularity;
+import io.druid.query.BySegmentResultValue;
+import io.druid.query.CacheStrategy;
+import io.druid.query.IntervalChunkingQueryRunnerDecorator;
+import io.druid.query.Query;
+import io.druid.query.QueryCacheHelper;
+import io.druid.query.QueryMetricUtil;
+import io.druid.query.QueryRunner;
+import io.druid.query.QueryToolChest;
+import io.druid.query.Result;
+import io.druid.query.ResultGranularTimestampComparator;
+import io.druid.query.ResultMergeQueryRunner;
+import io.druid.query.aggregation.AggregatorFactory;
+import io.druid.query.aggregation.AggregatorUtil;
+import io.druid.query.aggregation.MetricManipulationFn;
+import io.druid.query.aggregation.PostAggregator;
+import io.druid.query.filter.DimFilter;
+
+import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.joda.time.DateTime;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -33,31 +60,6 @@ import com.metamx.common.guava.Sequence;
 import com.metamx.common.guava.Sequences;
 import com.metamx.common.guava.nary.BinaryFn;
 import com.metamx.emitter.service.ServiceMetricEvent;
-import io.druid.collections.OrderedMergeSequence;
-import io.druid.granularity.QueryGranularity;
-import io.druid.query.BySegmentResultValue;
-import io.druid.query.CacheStrategy;
-import io.druid.query.IntervalChunkingQueryRunner;
-import io.druid.query.Query;
-import io.druid.query.QueryCacheHelper;
-import io.druid.query.QueryMetricUtil;
-import io.druid.query.QueryRunner;
-import io.druid.query.QueryToolChest;
-import io.druid.query.Result;
-import io.druid.query.ResultGranularTimestampComparator;
-import io.druid.query.ResultMergeQueryRunner;
-import io.druid.query.aggregation.AggregatorFactory;
-import io.druid.query.aggregation.AggregatorUtil;
-import io.druid.query.aggregation.MetricManipulationFn;
-import io.druid.query.aggregation.PostAggregator;
-import io.druid.query.filter.DimFilter;
-import org.joda.time.DateTime;
-
-import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  */
@@ -72,12 +74,16 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
   };
   private final TopNQueryConfig config;
 
+  private final IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator;
+
   @Inject
   public TopNQueryQueryToolChest(
-      TopNQueryConfig config
+      TopNQueryConfig config,
+      IntervalChunkingQueryRunnerDecorator intervalChunkingQueryRunnerDecorator
   )
   {
     this.config = config;
+    this.intervalChunkingQueryRunnerDecorator = intervalChunkingQueryRunnerDecorator;
   }
 
   protected static String[] extractFactoryName(final List<AggregatorFactory> aggregatorFactories){
@@ -418,10 +424,7 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
   @Override
   public QueryRunner<Result<TopNResultValue>> preMergeQueryDecoration(QueryRunner<Result<TopNResultValue>> runner)
   {
-    return new IntervalChunkingQueryRunner<Result<TopNResultValue>>(
-        runner,
-        config.getChunkPeriod()
-    );
+    return intervalChunkingQueryRunnerDecorator.decorate(runner, this);
   }
 
   @Override

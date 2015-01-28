@@ -68,7 +68,8 @@ public class TimeseriesQueryRunnerTest
   {
     return QueryRunnerTestHelper.makeQueryRunners(
         new TimeseriesQueryRunnerFactory(
-            new TimeseriesQueryQueryToolChest(new QueryConfig()),
+            new TimeseriesQueryQueryToolChest(new QueryConfig(),
+                QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
             new TimeseriesQueryEngine(),
             QueryRunnerTestHelper.NOOP_QUERYWATCHER
         )

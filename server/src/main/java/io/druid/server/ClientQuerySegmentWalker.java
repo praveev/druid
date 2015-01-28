@@ -83,18 +83,7 @@ public class ClientQuerySegmentWalker implements QuerySegmentWalker
         toolChest.postMergeQueryDecoration(
             toolChest.mergeResults(
                 new UnionQueryRunner<T>(
-                    new MetricsEmittingQueryRunner<T>(
-                        emitter,
-                        new Function<Query<T>, ServiceMetricEvent.Builder>()
-                        {
-                          @Override
-                          public ServiceMetricEvent.Builder apply(@Nullable Query<T> input)
-                          {
-                            return toolChest.makeMetricBuilder(query);
-                          }
-                        },
-                        toolChest.preMergeQueryDecoration(baseClient)
-                    ).withWaitMeasuredFromNow(),
+                    toolChest.preMergeQueryDecoration(baseClient),
                     toolChest
                 )
             )

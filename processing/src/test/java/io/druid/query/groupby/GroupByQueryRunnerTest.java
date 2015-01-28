@@ -118,7 +118,8 @@ public class GroupByQueryRunnerTest
         engine,
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
         configSupplier,
-        new GroupByQueryQueryToolChest(configSupplier, mapper, engine)
+        new GroupByQueryQueryToolChest(configSupplier, mapper, engine,
+            QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator())
     );
 
     GroupByQueryConfig singleThreadedConfig = new GroupByQueryConfig()
@@ -138,7 +139,8 @@ public class GroupByQueryRunnerTest
         singleThreadEngine,
         QueryRunnerTestHelper.NOOP_QUERYWATCHER,
         singleThreadedConfigSupplier,
-        new GroupByQueryQueryToolChest(singleThreadedConfigSupplier, mapper, singleThreadEngine)
+        new GroupByQueryQueryToolChest(singleThreadedConfigSupplier, mapper, singleThreadEngine,
+            QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator())
     );
 
 
@@ -909,7 +911,8 @@ public class GroupByQueryRunnerTest
     QueryRunner<Row> mergeRunner = new GroupByQueryQueryToolChest(
         configSupplier,
         new DefaultObjectMapper(),
-        engine
+        engine,
+        QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()
     ).mergeResults(runner);
     TestHelper.assertExpectedObjects(expectedResults, mergeRunner.run(query), "no-limit");
   }
@@ -962,7 +965,8 @@ public class GroupByQueryRunnerTest
     QueryRunner<Row> mergeRunner = new GroupByQueryQueryToolChest(
         configSupplier,
         new DefaultObjectMapper(),
-        engine
+        engine,
+        QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()
     ).mergeResults(runner);
     TestHelper.assertExpectedObjects(expectedResults, mergeRunner.run(query), "no-limit");
   }
@@ -1015,7 +1019,8 @@ public class GroupByQueryRunnerTest
     QueryRunner<Row> mergeRunner = new GroupByQueryQueryToolChest(
         configSupplier,
         new DefaultObjectMapper(),
-        engine
+        engine,
+        QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()
     ).mergeResults(runner);
     TestHelper.assertExpectedObjects(expectedResults, mergeRunner.run(query), "no-limit");
   }
