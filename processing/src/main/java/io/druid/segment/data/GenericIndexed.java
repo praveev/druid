@@ -23,7 +23,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import com.metamx.common.IAE;
-import com.metamx.common.Pair;
 import com.metamx.common.guava.CloseQuietly;
 import com.metamx.common.logger.Logger;
 
@@ -34,8 +33,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * A generic, flat storage mechanism.  Use static methods fromArray() or fromIterable() to construct.  If input
@@ -50,7 +47,7 @@ import java.util.Map;
  * bytes 10-((numElements * 4) + 10): integers representing *end* offsets of byte serialized values
  * bytes ((numElements * 4) + 10)-(numBytesUsed + 2): 4-byte integer representing length of value, followed by bytes for value
  */
-public class GenericIndexed<T> implements Indexed<T>, Closeable
+public class GenericIndexed<T> implements Indexed<T>
 {
   private static final Logger log = new Logger(GenericIndexed.class);
 
@@ -124,49 +121,11 @@ public class GenericIndexed<T> implements Indexed<T>, Closeable
     return new GenericIndexed<T>(theBuffer.asReadOnlyBuffer(), strategy, allowReverseLookup);
   }
 
-  private static class SizedLRUMap<K, V> extends LinkedHashMap<K, Pair<Integer, V>>
-  {
-    private final int maxBytes;
-    private int numBytes = 0;
-
-    public SizedLRUMap(int initialCapacity, int maxBytes)
-    {
-      super(initialCapacity, 0.75f, true);
-      this.maxBytes = maxBytes;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<K, Pair<Integer, V>> eldest)
-    {
-      if (numBytes > maxBytes) {
-        numBytes -= eldest.getValue().lhs;
-        return true;
-      }
-      return false;
-    }
-
-    public void put(K key, V value, int size)
-    {
-      final int totalSize = size + 48; // add approximate object overhead
-      numBytes += totalSize;
-      super.put(key, new Pair<>(totalSize, value));
-    }
-
-    public V getValue(Object key)
-    {
-      final Pair<Integer, V> sizeValuePair = super.get(key);
-      return sizeValuePair == null ? null : sizeValuePair.rhs;
-    }
-  }
-
   private final ByteBuffer theBuffer;
   private final ObjectStrategy<T> strategy;
   private final boolean allowReverseLookup;
   private final int size;
 
-  private final boolean cacheable;
-  private final ThreadLocal<ByteBuffer> cachedBuffer;
-  private final ThreadLocal<SizedLRUMap<Integer, T>> cachedValues;
   private final int valuesOffset;
 
   GenericIndexed(
@@ -182,44 +141,6 @@ public class GenericIndexed<T> implements Indexed<T>, Closeable
     size = theBuffer.getInt();
     indexOffset = theBuffer.position();
     valuesOffset = theBuffer.position() + (size << 2);
-
-    this.cachedBuffer = new ThreadLocal<ByteBuffer>()
-    {
-      @Override
-      protected ByteBuffer initialValue()
-      {
-        return theBuffer.asReadOnlyBuffer();
-      }
-    };
-
-    this.cacheable = false;
-    this.cachedValues = new ThreadLocal<>();
-  }
-
-  /**
-   * Creates a copy of the given indexed with the given cache size
-   * The resulting copy must be closed to release resources used by the cache
-   */
-  GenericIndexed(GenericIndexed<T> other, final int maxBytes)
-  {
-    this.theBuffer = other.theBuffer;
-    this.strategy = other.strategy;
-    this.allowReverseLookup = other.allowReverseLookup;
-    this.size = other.size;
-    this.indexOffset = other.indexOffset;
-    this.valuesOffset = other.valuesOffset;
-    this.cachedBuffer = other.cachedBuffer;
-
-    this.cachedValues = new ThreadLocal<SizedLRUMap<Integer, T>>() {
-      @Override
-      protected SizedLRUMap<Integer, T> initialValue()
-      {
-        log.debug("Allocating column cache of max size[%d]", maxBytes);
-        return new SizedLRUMap<>(INITIAL_CACHE_CAPACITY, maxBytes);
-      }
-    };
-
-    this.cacheable = strategy instanceof CacheableObjectStrategy;
   }
 
   @Override
@@ -244,15 +165,7 @@ public class GenericIndexed<T> implements Indexed<T>, Closeable
       throw new IAE(String.format("Index[%s] >= size[%s]", index, size));
     }
 
-    if(cacheable) {
-      final T cached = cachedValues.get().getValue(index);
-      if (cached != null) {
-        return cached;
-      }
-    }
-
-    // using a cached copy of the buffer instead of making a read-only copy every time get() is called is faster
-    final ByteBuffer copyBuffer = this.cachedBuffer.get();
+    final ByteBuffer copyBuffer = theBuffer.asReadOnlyBuffer();
 
     final int startOffset;
     final int endOffset;
@@ -271,14 +184,7 @@ public class GenericIndexed<T> implements Indexed<T>, Closeable
     }
 
     copyBuffer.position(valuesOffset + startOffset);
-    final int size = endOffset - startOffset;
-    // fromByteBuffer must not modify the buffer limit
-    final T value = strategy.fromByteBuffer(copyBuffer, size);
-
-    if(cacheable) {
-      cachedValues.get().put(index, value, size);
-    }
-    return value;
+    return strategy.fromByteBuffer(copyBuffer, endOffset - startOffset);
   }
 
   @Override
@@ -322,27 +228,6 @@ public class GenericIndexed<T> implements Indexed<T>, Closeable
     channel.write(ByteBuffer.wrap(Ints.toByteArray(theBuffer.remaining() + 4)));
     channel.write(ByteBuffer.wrap(Ints.toByteArray(size)));
     channel.write(theBuffer.asReadOnlyBuffer());
-  }
-
-  /**
-   * The returned GenericIndexed must be closed to release the underlying memory
-   *
-   * @param maxBytes maximum size in bytes of the lookup cache
-   * @return a copy of this GenericIndexed with a lookup cache.
-   */
-  public GenericIndexed<T> withCache(int maxBytes)
-  {
-    return new GenericIndexed<>(this, maxBytes);
-  }
-
-  @Override
-  public void close() throws IOException
-  {
-    if(cacheable) {
-      log.debug("Closing column cache");
-      cachedValues.get().clear();
-      cachedValues.remove();
-    }
   }
 
   public static <T> GenericIndexed<T> read(ByteBuffer buffer, ObjectStrategy<T> strategy)

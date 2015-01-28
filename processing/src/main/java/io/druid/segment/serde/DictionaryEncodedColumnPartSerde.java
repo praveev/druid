@@ -25,7 +25,6 @@ import com.google.common.primitives.Ints;
 import com.metamx.collections.spatial.ImmutableRTree;
 import com.metamx.common.IAE;
 import io.druid.segment.column.ColumnBuilder;
-import io.druid.segment.column.ColumnConfig;
 import io.druid.segment.column.ValueType;
 import io.druid.segment.data.ByteBufferSerializer;
 import io.druid.segment.data.ConciseCompressedIndexedInts;
@@ -128,7 +127,7 @@ public class DictionaryEncodedColumnPartSerde implements ColumnPartSerde
   }
 
   @Override
-  public ColumnPartSerde read(ByteBuffer buffer, ColumnBuilder builder, ColumnConfig columnConfig)
+  public ColumnPartSerde read(ByteBuffer buffer, ColumnBuilder builder)
   {
     final boolean isSingleValued = buffer.get() == 0x0;
     final GenericIndexed<String> dictionary = GenericIndexed.read(buffer, GenericIndexed.stringStrategy);
@@ -141,12 +140,12 @@ public class DictionaryEncodedColumnPartSerde implements ColumnPartSerde
       singleValuedColumn = VSizeIndexedInts.readFromByteBuffer(buffer);
       multiValuedColumn = null;
       builder.setHasMultipleValues(false)
-             .setDictionaryEncodedColumn(new DictionaryEncodedColumnSupplier(dictionary, singleValuedColumn, null, columnConfig.columnCacheSizeBytes()));
+             .setDictionaryEncodedColumn(new DictionaryEncodedColumnSupplier(dictionary, singleValuedColumn, null));
     } else {
       singleValuedColumn = null;
       multiValuedColumn = VSizeIndexed.readFromByteBuffer(buffer);
       builder.setHasMultipleValues(true)
-             .setDictionaryEncodedColumn(new DictionaryEncodedColumnSupplier(dictionary, null, multiValuedColumn, columnConfig.columnCacheSizeBytes()));
+             .setDictionaryEncodedColumn(new DictionaryEncodedColumnSupplier(dictionary, null, multiValuedColumn));
     }
 
     GenericIndexed<ImmutableConciseSet> bitmaps = GenericIndexed.read(

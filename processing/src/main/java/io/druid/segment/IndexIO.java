@@ -22,7 +22,6 @@ package io.druid.segment;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -32,9 +31,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.metamx.collections.spatial.ImmutableRTree;
 import com.metamx.common.IAE;
 import com.metamx.common.ISE;
@@ -45,13 +41,9 @@ import com.metamx.common.io.smoosh.SmooshedWriter;
 import com.metamx.common.logger.Logger;
 import com.metamx.emitter.EmittingLogger;
 import io.druid.common.utils.SerializerUtils;
-import io.druid.guice.ConfigProvider;
-import io.druid.guice.GuiceInjectors;
 import io.druid.jackson.DefaultObjectMapper;
-import io.druid.query.DruidProcessingConfig;
 import io.druid.segment.column.Column;
 import io.druid.segment.column.ColumnBuilder;
-import io.druid.segment.column.ColumnConfig;
 import io.druid.segment.column.ColumnDescriptor;
 import io.druid.segment.column.ValueType;
 import io.druid.segment.data.ArrayIndexed;
@@ -119,31 +111,8 @@ public class IndexIO
   private static final EmittingLogger log = new EmittingLogger(IndexIO.class);
   private static final SerializerUtils serializerUtils = new SerializerUtils();
 
-  private static final ObjectMapper mapper;
-  protected static final ColumnConfig columnConfig;
-
-  static {
-    final Injector injector = GuiceInjectors.makeStartupInjectorWithModules(
-        ImmutableList.<Module>of(
-            new Module()
-            {
-              @Override
-              public void configure(Binder binder)
-              {
-                ConfigProvider.bind(
-                    binder,
-                    DruidProcessingConfig.class,
-                    ImmutableMap.of("base_path", "druid.processing")
-                );
-                binder.bind(ColumnConfig.class).to(DruidProcessingConfig.class);
-              }
-            }
-        )
-    );
-    mapper = injector.getInstance(ObjectMapper.class);
-    columnConfig = injector.getInstance(ColumnConfig.class);
-  }
-
+  // This should really be provided by DI, should be changed once we switch around to using a DI framework
+  private static final ObjectMapper mapper = new DefaultObjectMapper();
   private static volatile IndexIOHandler handler = null;
 
   @Deprecated
@@ -657,10 +626,7 @@ public class IndexIO
             .setHasMultipleValues(true)
             .setDictionaryEncodedColumn(
                 new DictionaryEncodedColumnSupplier(
-                    index.getDimValueLookup(dimension),
-                    null,
-                    index.getDimColumn(dimension),
-                    columnConfig.columnCacheSizeBytes()
+                    index.getDimValueLookup(dimension), null, index.getDimColumn(dimension)
                 )
             )
             .setBitmapIndex(
@@ -772,7 +738,7 @@ public class IndexIO
       ColumnDescriptor serde = mapper.readValue(
           serializerUtils.readString(byteBuffer), ColumnDescriptor.class
       );
-      return serde.read(byteBuffer, columnConfig);
+      return serde.read(byteBuffer);
     }
   }
 

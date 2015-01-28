@@ -22,7 +22,6 @@ package io.druid.segment.serde;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.druid.segment.column.ColumnBuilder;
-import io.druid.segment.column.ColumnConfig;
 import io.druid.segment.column.ValueType;
 import io.druid.segment.data.CompressedFloatsIndexedSupplier;
 
@@ -71,7 +70,7 @@ public class FloatGenericColumnPartSerde implements ColumnPartSerde
   }
 
   @Override
-  public ColumnPartSerde read(ByteBuffer buffer, ColumnBuilder builder, ColumnConfig columnConfig)
+  public ColumnPartSerde read(ByteBuffer buffer, ColumnBuilder builder)
   {
     final CompressedFloatsIndexedSupplier column = CompressedFloatsIndexedSupplier.fromByteBuffer(buffer, byteOrder);
 

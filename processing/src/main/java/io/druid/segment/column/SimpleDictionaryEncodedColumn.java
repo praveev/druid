@@ -90,6 +90,5 @@ public class SimpleDictionaryEncodedColumn implements DictionaryEncodedColumn
   @Override
   public void close() throws IOException
   {
-    lookups.close();
   }
 }
