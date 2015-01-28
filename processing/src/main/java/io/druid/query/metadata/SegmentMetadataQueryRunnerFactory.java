@@ -44,6 +44,7 @@ import io.druid.query.metadata.metadata.SegmentMetadataQuery;
 import io.druid.segment.QueryableIndex;
 import io.druid.segment.Segment;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -145,7 +146,9 @@ public class SegmentMetadataQueryRunnerFactory implements QueryRunnerFactory<Seg
                           @Override
                           public Sequence<SegmentAnalysis> call() throws Exception
                           {
-                            return input.run(query);
+                            return Sequences.simple(
+                                Sequences.toList(input.run(query), new ArrayList<SegmentAnalysis>())
+                            );
                           }
                         }
                     );
