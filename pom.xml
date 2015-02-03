@@ -53,7 +53,7 @@
         <module>server</module>
         <module>services</module>
         <module>examples</module>
-        <!-- Non-default modules -->
+        <module>kafka-eight</module>
         <module>hdfs-storage</module>
     </modules>
 
