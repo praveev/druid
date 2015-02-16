@@ -46,7 +46,7 @@ public class ClientInfoResourceTest
     addSegment(timeline, server, "2014-02-17/2014-02-18", ImmutableList.of("d2"), ImmutableList.of("m2"));
     
     serverInventoryView = EasyMock.createMock(InventoryView.class);
-    EasyMock.expect(serverInventoryView.getInventory()).andReturn(ImmutableList.of(server));
+    EasyMock.expect(serverInventoryView.getInventory()).andReturn(ImmutableList.of(server)).anyTimes();
 
     timelineServerView = EasyMock.createMock(TimelineServerView.class);
     EasyMock.expect(timelineServerView.getTimeline(EasyMock.anyObject(TableDataSource.class))).andReturn(timeline);
@@ -63,7 +63,7 @@ public class ClientInfoResourceTest
         KEY_DIMENSIONS, ImmutableSet.of("d1", "d2"),
         KEY_METRICS, ImmutableSet.of("m1", "m2")
         );
-    EasyMock.verify(serverInventoryView, timelineServerView);
+    EasyMock.verify(serverInventoryView);
     Assert.assertEquals(expected, actual);
   }
 
