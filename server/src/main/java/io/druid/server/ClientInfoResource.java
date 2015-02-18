@@ -124,7 +124,7 @@ public class ClientInfoResource
     }
 
     VersionedIntervalTimeline<String, ServerSelector> timeline = timelineServerView.getTimeline(new TableDataSource(dataSourceName));
-    List<TimelineObjectHolder<String, ServerSelector>> serversLookup = timeline.lookup(theInterval);
+    List<TimelineObjectHolder<String, ServerSelector>> serversLookup = timeline != null ? timeline.lookup(theInterval) : null;
     if(serversLookup == null || serversLookup.isEmpty()) {
       return Collections.EMPTY_MAP;
     }
