@@ -154,13 +154,14 @@ public class ClientInfoResource
 
     for (DataSegment segment : segments) {
       if(servedIntervals.containsKey(segment.getInterval())) {
-        ((Map<String,Set<String>>)servedIntervals.get(segment.getInterval())).get(KEY_DIMENSIONS).addAll(segment.getDimensions());
-        ((Map<String,Set<String>>)servedIntervals.get(segment.getInterval())).get(KEY_METRICS).addAll(segment.getMetrics());
+        Map<String,Set<String>> columns = (Map<String,Set<String>>)servedIntervals.get(segment.getInterval());
+        columns.get(KEY_DIMENSIONS).addAll(segment.getDimensions());
+        columns.get(KEY_METRICS).addAll(segment.getMetrics());
       }
     }
 
     //collapse intervals if they abut and have same set of columns
-    Map<String,Object> result = Maps.newHashMap();
+    Map<String,Object> result = Maps.newLinkedHashMap();
     Interval curr = null;
     Map<String,Set<String>> cols = null;
     for(Map.Entry<Interval,Object> e : servedIntervals.entrySet()) {
