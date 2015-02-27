@@ -208,9 +208,19 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
         case CHILD_ADDED:
           synchronized (lock) {
             final ChildData child = event.getData();
+
+            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            if(data == null) {
+              log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
+                  event.getType(),
+                  child.getPath(),
+                  child.getStat().getVersion());
+              return;
+            }
+
             final String containerKey = ZKPaths.getNodeFromPath(child.getPath());
 
-            final ContainerClass container = strategy.deserializeContainer(child.getData());
+            final ContainerClass container = strategy.deserializeContainer(data);
 
             // This would normally be a race condition, but the only thing that should be mutating the containers
             // map is this listener, which should never run concurrently.  If the same container is going to disappear
@@ -259,9 +269,19 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
         case CHILD_UPDATED:
           synchronized (lock) {
             final ChildData child = event.getData();
+
+            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            if (data == null) {
+              log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
+                  event.getType(),
+                  child.getPath(),
+                  child.getStat().getVersion());
+              return;
+            }
+
             final String containerKey = ZKPaths.getNodeFromPath(child.getPath());
 
-            final ContainerClass container = strategy.deserializeContainer(child.getData());
+            final ContainerClass container = strategy.deserializeContainer(data);
 
             ContainerHolder oldContainer = containers.get(containerKey);
             if (oldContainer == null) {
@@ -336,10 +356,20 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
         switch (event.getType()) {
           case CHILD_ADDED: {
             final ChildData child = event.getData();
+
+            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            if (data == null) {
+              log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
+                  event.getType(),
+                  child.getPath(),
+                  child.getStat().getVersion());
+              return;
+            }
+
             final String inventoryKey = ZKPaths.getNodeFromPath(child.getPath());
             log.info("CHILD_ADDED[%s] with version[%s]", inventoryKey, event.getData().getStat().getVersion());
 
-            final InventoryClass addedInventory = strategy.deserializeInventory(child.getData());
+            final InventoryClass addedInventory = strategy.deserializeInventory(data);
 
             synchronized (holder) {
               holder.setContainer(strategy.addInventory(holder.getContainer(), inventoryKey, addedInventory));
@@ -349,10 +379,20 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
 
           case CHILD_UPDATED: {
             final ChildData child = event.getData();
+
+            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            if (data == null) {
+              log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
+                  event.getType(),
+                  child.getPath(),
+                  child.getStat().getVersion());
+              return;
+            }
+
             final String inventoryKey = ZKPaths.getNodeFromPath(child.getPath());
             log.info("CHILD_UPDATED[%s] with version[%s]", inventoryKey, event.getData().getStat().getVersion());
 
-            final InventoryClass updatedInventory = strategy.deserializeInventory(child.getData());
+            final InventoryClass updatedInventory = strategy.deserializeInventory(data);
 
             synchronized (holder) {
               holder.setContainer(strategy.updateInventory(holder.getContainer(), inventoryKey, updatedInventory));
