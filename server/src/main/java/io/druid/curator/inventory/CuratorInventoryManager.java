@@ -83,7 +83,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
     this.containers = new MapMaker().makeMap();
     this.uninitializedInventory = Sets.newConcurrentHashSet();
 
-    this.cacheFactory = new SimplePathChildrenCacheFactory(true, true, new ShutdownNowIgnoringExecutorService(exec));
+    this.cacheFactory = new SimplePathChildrenCacheFactory(false, true, new ShutdownNowIgnoringExecutorService(exec));
   }
 
   @LifecycleStart
