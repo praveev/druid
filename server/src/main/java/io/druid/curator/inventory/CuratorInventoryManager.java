@@ -165,6 +165,15 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
     );
   }
 
+  private byte[] getZkDataForNode(String path) {
+    try {
+      return curatorFramework.getData().decompressed().forPath(path);
+    } catch(Exception ex) {
+      log.warn(ex, "Exception while getting data for node %s", path);
+      return null;
+    }
+  }
+
   private class ContainerHolder
   {
     private final AtomicReference<ContainerClass> container;
@@ -209,7 +218,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           synchronized (lock) {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
+            byte[] data = getZkDataForNode(child.getPath());
             if(data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -270,7 +279,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           synchronized (lock) {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
+            byte[] data = getZkDataForNode(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -357,7 +366,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           case CHILD_ADDED: {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
+            byte[] data = getZkDataForNode(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -380,7 +389,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           case CHILD_UPDATED: {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
+            byte[] data = getZkDataForNode(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
