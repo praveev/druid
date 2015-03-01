@@ -209,7 +209,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           synchronized (lock) {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
             if(data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -270,7 +270,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           synchronized (lock) {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -357,7 +357,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           case CHILD_ADDED: {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
@@ -380,7 +380,7 @@ public class CuratorInventoryManager<ContainerClass, InventoryClass>
           case CHILD_UPDATED: {
             final ChildData child = event.getData();
 
-            byte[] data = curatorFramework.getData().forPath(child.getPath());
+            byte[] data = curatorFramework.getData().decompressed().forPath(child.getPath());
             if (data == null) {
               log.info("Ignoring event: Type - %s , Path - %s , Version - %s",
                   event.getType(),
