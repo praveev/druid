@@ -581,6 +581,7 @@
                     <configuration>
                         <!-- locale settings must be set on the command line before startup -->
                         <argLine>-Duser.language=en -Duser.country=US</argLine>
+                        <reportsDirectory>${env.TEST_RESULTS_DIR}</reportsDirectory>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -655,8 +656,48 @@
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>1.2.1</version>
                 </plugin>
+                <plugin>
+                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <artifactId>maven-clover2-plugin</artifactId>
+                    <version>4.0.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.atlassian.maven.plugins</groupId>
+                <artifactId>maven-clover2-plugin</artifactId>
+                <configuration>
+                    <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
+                </configuration>
+            </plugin>
+        </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
     </build>
 
+    <repositories>
+        <repository>
+            <id>pub-libs</id>
+            <name>pub-libs-local</name>
+            <url>https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local</url>
+        </repository>
+        <repository>
+            <id>thirdparty-uploads</id>
+            <name>JBoss Thirdparty Uploads</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-uploads</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>artifactory.ops.yahoo.com-releases</id>
+            <name>artifactory.ops.yahoo.com-releases</name>
+            <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-release/</url>
+        </repository>
+    </distributionManagement>
 </project>
