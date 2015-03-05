@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "shared": {},
+  "jobs": {
+    "component": {
+      "build": {
+        "test": {
+          "target": ["clover2:instrument", "install", "clover2:aggregate", "clover2:clover"],
+          "before": "mvn versions:set -DnewVersion=`echo $(fgrep '<version>' pom.xml | sed -n 2p | cut -d '>' -f2 | cut -d '<' -f1 | sed 's/-SNAPSHOT//')-$(date '+%s')-$(git rev-parse --short HEAD)`-${BUILD_NUMBER}"
+        },
+        "publish": {
+          "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
+        },
+        "remote_trigger": {
+          "url": "http://http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/32605-greyhawk-druid_package-0_7-trunk-component",
+          "params": {}
+        }
+      }
+    }
+  }
+}
