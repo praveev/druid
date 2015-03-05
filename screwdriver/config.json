@@ -12,7 +12,7 @@
           "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
         },
         "remote_trigger": {
-          "url": "http://http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/32605-greyhawk-druid_package-0_7-trunk-component",
+          "url": "http://jenkins.screwdriver.corp.yahoo.com:9999/jenkins/job/32605-greyhawk-druid_package-0_7-trunk-component",
           "params": {}
         }
       }
