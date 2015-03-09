@@ -1,6 +1,8 @@
 {
   "version": 2,
-  "shared": {},
+  "shared": {
+    "notification_email": "greyhawk@yahoo-inc.com"
+  },
   "jobs": {
     "component": {
       "build": {
