@@ -8,7 +8,7 @@
       "build": {
         "test": {
           "target": ["clover2:instrument", "install", "clover2:aggregate", "clover2:clover"],
-          "before": "mvn versions:set -DnewVersion=`echo $(fgrep '<version>' pom.xml | sed -n 2p | grep -oP '\d+\.\d+\.\d+')-$(date '+%s')-$(git rev-parse --short HEAD)`-${BUILD_NUMBER}"
+          "before": "mvn versions:set -DnewVersion=`./screwdriver/parse_version.sh`"
         },
         "publish": {
           "before": "git config remote.origin.url | grep '^git@git.corp.yahoo.com:greyhawk/druid.git$' > /dev/null"
