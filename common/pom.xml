@@ -26,7 +26,7 @@
     <parent>
         <groupId>io.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.7.1-rc2-SNAPSHOT</version>
+        <version>0.7.2-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -131,6 +131,10 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-1.2-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
