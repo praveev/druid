@@ -61,6 +61,7 @@ import io.druid.query.aggregation.DoubleSumAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
 import io.druid.query.filter.SelectorDimFilter;
 import io.druid.segment.IndexMerger;
+import io.druid.segment.IndexSpec;
 import io.druid.segment.incremental.IncrementalIndexSchema;
 import io.druid.segment.incremental.OnheapIncrementalIndex;
 import io.druid.segment.loading.DataSegmentArchiver;
@@ -100,9 +101,11 @@ import java.util.Set;
 @RunWith(Parameterized.class)
 public class IngestSegmentFirehoseFactoryTest
 {
+
   @Parameterized.Parameters(name = "{1}")
   public static Collection<Object[]> constructorFeeder() throws IOException
   {
+    final IndexSpec indexSpec = new IndexSpec();
 
     final HeapMemoryTaskStorage ts = new HeapMemoryTaskStorage(
         new TaskStorageConfig(null)
@@ -132,7 +135,7 @@ public class IngestSegmentFirehoseFactoryTest
     if (!persistDir.mkdirs() && !persistDir.exists()) {
       throw new IOException(String.format("Could not create directory at [%s]", persistDir.getAbsolutePath()));
     }
-    IndexMerger.persist(index, persistDir);
+    IndexMerger.persist(index, persistDir, indexSpec);
 
     final TaskLockbox tl = new TaskLockbox(ts);
     final IndexerSQLMetadataStorageCoordinator mdc = new IndexerSQLMetadataStorageCoordinator(null, null, null)
@@ -280,7 +283,7 @@ public class IngestSegmentFirehoseFactoryTest
         ROW_PARSER,
         new MapInputRowParser(
             new JSONParseSpec(
-                new TimestampSpec(TIME_COLUMN, "auto"),
+                new TimestampSpec(TIME_COLUMN, "auto", null),
                 new DimensionsSpec(
                     ImmutableList.<String>of(),
                     ImmutableList.of(DIM_FLOAT_NAME, DIM_LONG_NAME),
@@ -349,7 +352,7 @@ public class IngestSegmentFirehoseFactoryTest
   private static final String DIM_FLOAT_NAME = "testDimFloatName";
   private static final String METRIC_LONG_NAME = "testLongMetric";
   private static final String METRIC_FLOAT_NAME = "testFloatMetric";
-  private static final Long METRIC_LONG_VALUE = 1l;
+  private static final Long METRIC_LONG_VALUE = 1L;
   private static final Float METRIC_FLOAT_VALUE = 1.0f;
   private static final String TIME_COLUMN = "ts";
   private static final Integer MAX_SHARD_NUMBER = 10;
@@ -363,7 +366,7 @@ public class IngestSegmentFirehoseFactoryTest
 
   private static final InputRowParser<Map<String, Object>> ROW_PARSER = new MapInputRowParser(
       new JSONParseSpec(
-          new TimestampSpec(TIME_COLUMN, "auto"),
+          new TimestampSpec(TIME_COLUMN, "auto", null),
           new DimensionsSpec(
               ImmutableList.of(DIM_NAME),
               ImmutableList.of(DIM_FLOAT_NAME, DIM_LONG_NAME),
@@ -401,7 +404,7 @@ public class IngestSegmentFirehoseFactoryTest
             MAX_SHARD_NUMBER
         ),
         BINARY_VERSION,
-        0l
+        0L
     );
   }
 

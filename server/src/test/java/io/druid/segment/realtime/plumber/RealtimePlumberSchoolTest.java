@@ -120,7 +120,7 @@ public class RealtimePlumberSchoolTest
           public ParseSpec getParseSpec()
           {
             return new JSONParseSpec(
-                new TimestampSpec("timestamp", "auto"),
+                new TimestampSpec("timestamp", "auto", null),
                 new DimensionsSpec(null, null, null)
             );
           }
@@ -160,6 +160,7 @@ public class RealtimePlumberSchoolTest
         null,
         new IntervalStartVersioningPolicy(),
         rejectionPolicy,
+        null,
         null,
         null,
         null,

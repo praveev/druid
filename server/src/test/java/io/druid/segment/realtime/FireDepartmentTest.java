@@ -53,7 +53,8 @@ public class FireDepartmentTest
                 new JSONParseSpec(
                     new TimestampSpec(
                         "timestamp",
-                        "auto"
+                        "auto",
+                        null
                     ),
                     new DimensionsSpec(
                         Arrays.asList("dim1", "dim2"),
@@ -74,7 +75,7 @@ public class FireDepartmentTest
             )
         ),
         new RealtimeTuningConfig(
-            null, null, null, null, null, null, null, null, false, false, null
+            null, null, null, null, null, null, null, null, null, false, false, null
         )
     );
 

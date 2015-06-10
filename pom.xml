@@ -26,7 +26,7 @@
     </parent>
 
     <artifactId>druid</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
+    <version>0.7.3</version>
     <packaging>pom</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -61,14 +61,14 @@
         <connection>scm:git:ssh://git@github.com/druid-io/druid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/druid-io/druid.git</developerConnection>
         <url>https://github.com/druid-io/druid.git</url>
-        <tag>druid-0.7.1-SNAPSHOT</tag>
+        <tag>druid-0.7.3</tag>
     </scm>
 
     <properties>
         <metamx.java-util.version>0.27.0</metamx.java-util.version>
         <apache.curator.version>2.7.0</apache.curator.version>
         <jetty.version>9.2.5.v20141112</jetty.version>
-        <druid.api.version>0.3.6</druid.api.version>
+        <druid.api.version>0.3.8</druid.api.version>
         <jackson.version>2.4.4</jackson.version>
         <log4j.version>2.2</log4j.version>
         <slf4j.version>1.7.10</slf4j.version>
@@ -96,6 +96,7 @@
         <module>extensions/histogram</module>
         <module>extensions/mysql-metadata-storage</module>
         <module>extensions/postgresql-metadata-storage</module>
+        <module>extensions/azure-extensions</module>
     </modules>
 
     <dependencyManagement>
@@ -110,12 +111,12 @@
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>emitter</artifactId>
-                <version>0.3.0</version>
+                <version>0.3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>http-client</artifactId>
-                <version>1.0.1</version>
+                <version>1.0.2</version>
             </dependency>
             <dependency>
                 <groupId>com.metamx</groupId>
@@ -130,7 +131,7 @@
             <dependency>
                 <groupId>com.metamx</groupId>
                 <artifactId>server-metrics</artifactId>
-                <version>0.1.0</version>
+                <version>0.1.1</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -628,11 +629,10 @@
                     <configuration>
                         <!-- locale settings must be set on the command line before startup -->
                         <reportsDirectory>${env.TEST_RESULTS_DIR}</reportsDirectory>
-                        <argLine>-Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8 -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager</argLine>
                         <!-- Exclude log4j from curator dependencies in favor of log4j-1.2-api -->
+                        <argLine>-Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8 -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager</argLine>
                         <!-- set heap size to work around https://github.com/travis-ci/travis-ci/issues/3396 -->
                         <argLine>-Xmx1024m -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8 -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager</argLine>
-                        <!--  work around Travis CI not setting appropriate heap limits https://github.com/travis-ci/travis-ci/issues/3396 -->
                         <!-- our tests are very verbose, let's keep the volume down -->
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     </configuration>
@@ -762,4 +762,30 @@
             <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-release/</url>
         </repository>
     </distributionManagement>
+    <profiles>
+        <profile>
+            <id>strict</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-compiler-plugin</artifactId>
+                            <configuration>
+                                <compilerId>javac-with-errorprone</compilerId>
+                                <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                            </configuration>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.codehaus.plexus</groupId>
+                                    <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                                    <version>2.5</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 </project>

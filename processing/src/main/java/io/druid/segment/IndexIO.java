@@ -20,6 +20,7 @@ package io.druid.segment;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -61,8 +62,13 @@ import io.druid.segment.data.BitmapSerde;
 import io.druid.segment.data.BitmapSerdeFactory;
 import io.druid.segment.data.ByteBufferSerializer;
 import io.druid.segment.data.CompressedLongsIndexedSupplier;
+import io.druid.segment.data.CompressedObjectStrategy;
+import io.druid.segment.data.CompressedVSizeIntsIndexedSupplier;
 import io.druid.segment.data.GenericIndexed;
+import io.druid.segment.data.Indexed;
+import io.druid.segment.data.IndexedInts;
 import io.druid.segment.data.IndexedIterable;
+import io.druid.segment.data.IndexedMultivalue;
 import io.druid.segment.data.IndexedRTree;
 import io.druid.segment.data.VSizeIndexed;
 import io.druid.segment.data.VSizeIndexedInts;
@@ -87,6 +93,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.AbstractList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -121,9 +128,11 @@ public class IndexIO
   private static final SerializerUtils serializerUtils = new SerializerUtils();
 
   private static final ObjectMapper mapper;
-  private static final BitmapSerdeFactory bitmapSerdeFactory;
 
   protected static final ColumnConfig columnConfig;
+
+  @Deprecated // specify bitmap type in IndexSpec instead
+  protected static final BitmapSerdeFactory CONFIGURED_BITMAP_SERDE_FACTORY;
 
   static {
     final Injector injector = GuiceInjectors.makeStartupInjectorWithModules(
@@ -140,6 +149,7 @@ public class IndexIO
                 );
                 binder.bind(ColumnConfig.class).to(DruidProcessingConfig.class);
 
+                // this property is deprecated, use IndexSpec instead
                 JsonConfigProvider.bind(binder, "druid.processing.bitmap", BitmapSerdeFactory.class);
               }
             }
@@ -147,7 +157,7 @@ public class IndexIO
     );
     mapper = injector.getInstance(ObjectMapper.class);
     columnConfig = injector.getInstance(ColumnConfig.class);
-    bitmapSerdeFactory = injector.getInstance(BitmapSerdeFactory.class);
+    CONFIGURED_BITMAP_SERDE_FACTORY = injector.getInstance(BitmapSerdeFactory.class);
   }
 
   public static QueryableIndex loadIndex(File inDir) throws IOException
@@ -186,7 +196,13 @@ public class IndexIO
     }
   }
 
-  public static boolean convertSegment(File toConvert, File converted) throws IOException
+  public static boolean convertSegment(File toConvert, File converted, IndexSpec indexSpec) throws IOException
+  {
+    return convertSegment(toConvert, converted, indexSpec, false);
+  }
+
+  public static boolean convertSegment(File toConvert, File converted, IndexSpec indexSpec, boolean forceIfCurrent)
+      throws IOException
   {
     final int version = SegmentUtils.getVersionFromDir(toConvert);
 
@@ -205,21 +221,134 @@ public class IndexIO
         log.info("Old version, re-persisting.");
         IndexMerger.append(
             Arrays.<IndexableAdapter>asList(new QueryableIndexIndexableAdapter(loadIndex(toConvert))),
-            converted
+            converted,
+            indexSpec
         );
         return true;
       case 8:
-        DefaultIndexIOHandler.convertV8toV9(toConvert, converted);
+        DefaultIndexIOHandler.convertV8toV9(toConvert, converted, indexSpec);
         return true;
       default:
-        log.info("Version[%s], skipping.", version);
-        return false;
+        if (forceIfCurrent) {
+          IndexMaker.convert(toConvert, converted, indexSpec);
+          DefaultIndexIOHandler.validateTwoSegments(toConvert, converted);
+          return true;
+        } else {
+          log.info("Version[%s], skipping.", version);
+          return false;
+        }
     }
   }
 
   public static interface IndexIOHandler
   {
     public MMappedIndex mapDir(File inDir) throws IOException;
+  }
+
+  public static void validateRowValues(
+      Rowboat rb1,
+      IndexableAdapter adapter1,
+      Rowboat rb2,
+      IndexableAdapter adapter2
+  )
+  {
+    final int[][] dims1 = rb1.getDims();
+    final int[][] dims2 = rb2.getDims();
+    if (dims1.length != dims2.length) {
+      throw new SegmentValidationException(
+          "Dim lengths not equal %s vs %s",
+          Arrays.deepToString(dims1),
+          Arrays.deepToString(dims2)
+      );
+    }
+    final Indexed<String> dim1Names = adapter1.getDimensionNames();
+    final Indexed<String> dim2Names = adapter2.getDimensionNames();
+    for (int i = 0; i < dims1.length; ++i) {
+      final int[] dim1Vals = dims1[i];
+      final int[] dim2Vals = dims2[i];
+      final String dim1Name = dim1Names.get(i);
+      final String dim2Name = dim2Names.get(i);
+      final Indexed<String> dim1ValNames = adapter1.getDimValueLookup(dim1Name);
+      final Indexed<String> dim2ValNames = adapter2.getDimValueLookup(dim2Name);
+
+      if (dim1Vals == null || dim2Vals == null) {
+        if (dim1Vals != dim2Vals) {
+          throw new SegmentValidationException(
+              "Expected nulls, found %s and %s",
+              Arrays.toString(dim1Vals),
+              Arrays.toString(dim2Vals)
+          );
+        } else {
+          continue;
+        }
+      }
+      if (dim1Vals.length != dim2Vals.length) {
+        // Might be OK if one of them has null. This occurs in IndexMakerTest
+        if (dim1Vals.length == 0 && dim2Vals.length == 1) {
+          final String dimValName = dim2ValNames.get(dim2Vals[0]);
+          if (dimValName == null) {
+            continue;
+          } else {
+            throw new SegmentValidationException(
+                "Dim [%s] value [%s] is not null",
+                dim2Name,
+                dimValName
+            );
+          }
+        } else if (dim2Vals.length == 0 && dim1Vals.length == 1) {
+          final String dimValName = dim1ValNames.get(dim1Vals[0]);
+          if (dimValName == null) {
+            continue;
+          } else {
+            throw new SegmentValidationException(
+                "Dim [%s] value [%s] is not null",
+                dim1Name,
+                dimValName
+            );
+          }
+        } else {
+          throw new SegmentValidationException(
+              "Dim [%s] value lengths not equal. Expected %d found %d",
+              dim1Name,
+              dims1.length,
+              dims2.length
+          );
+        }
+      }
+
+      for (int j = 0; j < Math.max(dim1Vals.length, dim2Vals.length); ++j) {
+        final int dIdex1 = dim1Vals.length <= j ? -1 : dim1Vals[j];
+        final int dIdex2 = dim2Vals.length <= j ? -1 : dim2Vals[j];
+
+        if (dIdex1 == dIdex2) {
+          continue;
+        }
+
+        final String dim1ValName = dIdex1 < 0 ? null : dim1ValNames.get(dIdex1);
+        final String dim2ValName = dIdex2 < 0 ? null : dim2ValNames.get(dIdex2);
+        if ((dim1ValName == null) || (dim2ValName == null)) {
+          if ((dim1ValName == null) && (dim2ValName == null)) {
+            continue;
+          } else {
+            throw new SegmentValidationException(
+                "Dim [%s] value not equal. Expected [%s] found [%s]",
+                dim1Name,
+                dim1ValName,
+                dim2ValName
+            );
+          }
+        }
+
+        if (!dim1ValName.equals(dim2ValName)) {
+          throw new SegmentValidationException(
+              "Dim [%s] value not equal. Expected [%s] found [%s]",
+              dim1Name,
+              dim1ValName,
+              dim2ValName
+          );
+        }
+      }
+    }
   }
 
   public static class DefaultIndexIOHandler implements IndexIOHandler
@@ -249,10 +378,10 @@ public class IndexIO
 
       indexBuffer.get(); // Skip the version byte
       final GenericIndexed<String> availableDimensions = GenericIndexed.read(
-          indexBuffer, GenericIndexed.stringStrategy
+          indexBuffer, GenericIndexed.STRING_STRATEGY
       );
       final GenericIndexed<String> availableMetrics = GenericIndexed.read(
-          indexBuffer, GenericIndexed.stringStrategy
+          indexBuffer, GenericIndexed.STRING_STRATEGY
       );
       final Interval dataInterval = new Interval(serializerUtils.readString(indexBuffer));
       final BitmapSerdeFactory bitmapSerdeFactory = new BitmapSerde.LegacyBitmapSerdeFactory();
@@ -286,7 +415,7 @@ public class IndexIO
             fileDimensionName
         );
 
-        dimValueLookups.put(dimension, GenericIndexed.read(dimBuffer, GenericIndexed.stringStrategy));
+        dimValueLookups.put(dimension, GenericIndexed.read(dimBuffer, GenericIndexed.STRING_STRATEGY));
         dimColumns.put(dimension, VSizeIndexed.readFromByteBuffer(dimBuffer));
       }
 
@@ -328,7 +457,74 @@ public class IndexIO
       return retVal;
     }
 
-    public static void convertV8toV9(File v8Dir, File v9Dir) throws IOException
+    public static void validateTwoSegments(File dir1, File dir2) throws IOException
+    {
+      validateTwoSegments(
+          new QueryableIndexIndexableAdapter(loadIndex(dir1)),
+          new QueryableIndexIndexableAdapter(loadIndex(dir2))
+      );
+    }
+
+    public static void validateTwoSegments(final IndexableAdapter adapter1, final IndexableAdapter adapter2)
+    {
+      if (adapter1.getNumRows() != adapter2.getNumRows()) {
+        throw new SegmentValidationException(
+            "Row count mismatch. Expected [%d] found [%d]",
+            adapter1.getNumRows(),
+            adapter2.getNumRows()
+        );
+      }
+      {
+        final Set<String> dimNames1 = Sets.newHashSet(adapter1.getDimensionNames());
+        final Set<String> dimNames2 = Sets.newHashSet(adapter2.getDimensionNames());
+        if (!dimNames1.equals(dimNames2)) {
+          throw new SegmentValidationException(
+              "Dimension names differ. Expected [%s] found [%s]",
+              dimNames1,
+              dimNames2
+          );
+        }
+        final Set<String> metNames1 = Sets.newHashSet(adapter1.getMetricNames());
+        final Set<String> metNames2 = Sets.newHashSet(adapter2.getMetricNames());
+        if (!metNames1.equals(metNames2)) {
+          throw new SegmentValidationException("Metric names differ. Expected [%s] found [%s]", metNames1, metNames2);
+        }
+      }
+      final Iterator<Rowboat> it1 = adapter1.getRows().iterator();
+      final Iterator<Rowboat> it2 = adapter2.getRows().iterator();
+      long row = 0L;
+      while (it1.hasNext()) {
+        if (!it2.hasNext()) {
+          throw new SegmentValidationException("Unexpected end of second adapter");
+        }
+        final Rowboat rb1 = it1.next();
+        final Rowboat rb2 = it2.next();
+        ++row;
+        if (rb1.getRowNum() != rb2.getRowNum()) {
+          throw new SegmentValidationException("Row number mismatch: [%d] vs [%d]", rb1.getRowNum(), rb2.getRowNum());
+        }
+        if (rb1.compareTo(rb2) != 0) {
+          try {
+            validateRowValues(rb1, adapter1, rb2, adapter2);
+          }
+          catch (SegmentValidationException ex) {
+            throw new SegmentValidationException(ex, "Validation failure on row %d: [%s] vs [%s]", row, rb1, rb2);
+          }
+        }
+      }
+      if (it2.hasNext()) {
+        throw new SegmentValidationException("Unexpected end of first adapter");
+      }
+      if (row != adapter1.getNumRows()) {
+        throw new SegmentValidationException(
+            "Actual Row count mismatch. Expected [%d] found [%d]",
+            row,
+            adapter1.getNumRows()
+        );
+      }
+    }
+
+    public static void convertV8toV9(File v8Dir, File v9Dir, IndexSpec indexSpec) throws IOException
     {
       log.info("Converting v8[%s] to v9[%s]", v8Dir, v9Dir);
 
@@ -353,6 +549,8 @@ public class IndexIO
 
       Map<String, GenericIndexed<ImmutableBitmap>> bitmapIndexes = Maps.newHashMap();
       final ByteBuffer invertedBuffer = v8SmooshedFiles.mapFile("inverted.drd");
+      BitmapSerdeFactory bitmapSerdeFactory = indexSpec.getBitmapSerdeFactory();
+
       while (invertedBuffer.hasRemaining()) {
         final String dimName = serializerUtils.readString(invertedBuffer);
         bitmapIndexes.put(
@@ -395,7 +593,7 @@ public class IndexIO
           outParts.add(ByteBuffer.wrap(nameBAOS.toByteArray()));
 
           GenericIndexed<String> dictionary = GenericIndexed.read(
-              dimBuffer, GenericIndexed.stringStrategy
+              dimBuffer, GenericIndexed.STRING_STRATEGY
           );
 
           if (dictionary.size() == 0) {
@@ -404,7 +602,7 @@ public class IndexIO
             continue;
           }
 
-          VSizeIndexedInts singleValCol = null;
+          List<Integer> singleValCol = null;
           VSizeIndexed multiValCol = VSizeIndexed.readFromByteBuffer(dimBuffer.asReadOnlyBuffer());
           GenericIndexed<ImmutableBitmap> bitmaps = bitmapIndexes.get(dimension);
           ImmutableRTree spatialIndex = spatialIndexes.get(dimension);
@@ -443,7 +641,7 @@ public class IndexIO
 
                 dictionary = GenericIndexed.fromIterable(
                     Iterables.concat(nullList, dictionary),
-                    GenericIndexed.stringStrategy
+                    GenericIndexed.STRING_STRATEGY
                 );
 
                 bitmaps = GenericIndexed.fromIterable(
@@ -468,41 +666,64 @@ public class IndexIO
             }
 
             final VSizeIndexed finalMultiValCol = multiValCol;
-            singleValCol = VSizeIndexedInts.fromList(
-                new AbstractList<Integer>()
-                {
-                  @Override
-                  public Integer get(int index)
-                  {
-                    final VSizeIndexedInts ints = finalMultiValCol.get(index);
-                    return ints.size() == 0 ? 0 : ints.get(0) + (bumpedDictionary ? 1 : 0);
-                  }
+            singleValCol = new AbstractList<Integer>()
+            {
+              @Override
+              public Integer get(int index)
+              {
+                final VSizeIndexedInts ints = finalMultiValCol.get(index);
+                return ints.size() == 0 ? 0 : ints.get(0) + (bumpedDictionary ? 1 : 0);
+              }
 
-                  @Override
-                  public int size()
-                  {
-                    return finalMultiValCol.size();
-                  }
-                },
-                dictionary.size()
-            );
+              @Override
+              public int size()
+              {
+                return finalMultiValCol.size();
+              }
+            };
+
             multiValCol = null;
           } else {
             builder.setHasMultipleValues(true);
           }
 
-          builder.addSerde(
-              new DictionaryEncodedColumnPartSerde(
-                  dictionary,
-                  singleValCol,
-                  multiValCol,
-                  bitmapSerdeFactory,
-                  bitmaps,
-                  spatialIndex
-              )
-          );
+          final CompressedObjectStrategy.CompressionStrategy compressionStrategy = indexSpec.getDimensionCompressionStrategy();
 
-          final ColumnDescriptor serdeficator = builder.build();
+          final DictionaryEncodedColumnPartSerde.Builder columnPartBuilder = DictionaryEncodedColumnPartSerde
+              .builder()
+              .withDictionary(dictionary)
+              .withBitmapSerdeFactory(bitmapSerdeFactory)
+              .withBitmaps(bitmaps)
+              .withSpatialIndex(spatialIndex)
+              .withByteOrder(BYTE_ORDER);
+
+          if (singleValCol != null) {
+            if (compressionStrategy != null) {
+              columnPartBuilder.withSingleValuedColumn(
+                  CompressedVSizeIntsIndexedSupplier.fromList(
+                      singleValCol,
+                      dictionary.size(),
+                      CompressedVSizeIntsIndexedSupplier.maxIntsInBufferForValue(dictionary.size()),
+                      BYTE_ORDER,
+                      compressionStrategy
+                  )
+              );
+            } else {
+              columnPartBuilder.withSingleValuedColumn(VSizeIndexedInts.fromList(singleValCol, dictionary.size()));
+            }
+          } else {
+            if (compressionStrategy != null) {
+              log.info(
+                  "Compression not supported for multi-value dimensions, defaulting to `uncompressed` for dimension[%s]",
+                  dimension
+              );
+            }
+            columnPartBuilder.withMultiValuedColumn(multiValCol);
+          }
+
+          final ColumnDescriptor serdeficator = builder
+              .addSerde(columnPartBuilder.build())
+              .build();
 
           ByteArrayOutputStream baos = new ByteArrayOutputStream();
           serializerUtils.writeString(baos, mapper.writeValueAsString(serdeficator));
@@ -590,7 +811,7 @@ public class IndexIO
 
       indexBuffer.get(); // Skip the version byte
       final GenericIndexed<String> dims8 = GenericIndexed.read(
-          indexBuffer, GenericIndexed.stringStrategy
+          indexBuffer, GenericIndexed.STRING_STRATEGY
       );
       final GenericIndexed<String> dims9 = GenericIndexed.fromIterable(
           Iterables.filter(
@@ -603,10 +824,10 @@ public class IndexIO
                 }
               }
           ),
-          GenericIndexed.stringStrategy
+          GenericIndexed.STRING_STRATEGY
       );
       final GenericIndexed<String> availableMetrics = GenericIndexed.read(
-          indexBuffer, GenericIndexed.stringStrategy
+          indexBuffer, GenericIndexed.STRING_STRATEGY
       );
       final Interval dataInterval = new Interval(serializerUtils.readString(indexBuffer));
       final BitmapSerdeFactory segmentBitmapSerdeFactory = mapper.readValue(
@@ -618,7 +839,7 @@ public class IndexIO
       columns.addAll(Lists.newArrayList(dims9));
       columns.addAll(Lists.newArrayList(availableMetrics));
 
-      GenericIndexed<String> cols = GenericIndexed.fromIterable(columns, GenericIndexed.stringStrategy);
+      GenericIndexed<String> cols = GenericIndexed.fromIterable(columns, GenericIndexed.STRING_STRATEGY);
 
       final String segmentBitmapSerdeFactoryString = mapper.writeValueAsString(segmentBitmapSerdeFactory);
 
@@ -663,7 +884,9 @@ public class IndexIO
                 new DictionaryEncodedColumnSupplier(
                     index.getDimValueLookup(dimension),
                     null,
-                    index.getDimColumn(dimension),
+                    Suppliers.<IndexedMultivalue<IndexedInts>>ofInstance(
+                        index.getDimColumn(dimension)
+                    ),
                     columnConfig.columnCacheSizeBytes()
                 )
             )
@@ -758,8 +981,8 @@ public class IndexIO
        * Index.drd should consist of the segment version, the columns and dimensions of the segment as generic
        * indexes, the interval start and end millis as longs (in 16 bytes), and a bitmap index type.
        */
-      final GenericIndexed<String> cols = GenericIndexed.read(indexBuffer, GenericIndexed.stringStrategy);
-      final GenericIndexed<String> dims = GenericIndexed.read(indexBuffer, GenericIndexed.stringStrategy);
+      final GenericIndexed<String> cols = GenericIndexed.read(indexBuffer, GenericIndexed.STRING_STRATEGY);
+      final GenericIndexed<String> dims = GenericIndexed.read(indexBuffer, GenericIndexed.STRING_STRATEGY);
       final Interval dataInterval = new Interval(indexBuffer.getLong(), indexBuffer.getLong());
       final BitmapSerdeFactory segmentBitmapSerdeFactory;
       /**
