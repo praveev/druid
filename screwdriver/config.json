@@ -3,6 +3,7 @@
   "shared": {
     "notification_email": "greyhawk@yahoo-inc.com"
   },
+  "build_timeout": 60,
   "jobs": {
     "component": {
       "build": {
