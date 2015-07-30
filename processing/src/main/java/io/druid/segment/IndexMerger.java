@@ -336,6 +336,38 @@ public class IndexMerger
     return makeIndexFiles(indexes, outDir, progress, mergedDimensions, mergedMetrics, rowMergerFn, indexSpec);
   }
 
+  // Faster than IndexMaker
+  public static File convert(final File inDir, final File outDir, final IndexSpec indexSpec) throws IOException
+  {
+    return convert(inDir, outDir, indexSpec, new BaseProgressIndicator());
+  }
+
+  public static File convert(
+      final File inDir, final File outDir, final IndexSpec indexSpec, final ProgressIndicator progress
+  ) throws IOException
+  {
+    try (QueryableIndex index = IndexIO.loadIndex(inDir)) {
+      final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(index);
+      return makeIndexFiles(
+          ImmutableList.of(adapter),
+          outDir,
+          progress,
+          Lists.newArrayList(adapter.getDimensionNames()),
+          Lists.newArrayList(adapter.getMetricNames()),
+          new Function<ArrayList<Iterable<Rowboat>>, Iterable<Rowboat>>()
+          {
+            @Nullable
+            @Override
+            public Iterable<Rowboat> apply(ArrayList<Iterable<Rowboat>> input)
+            {
+              return input.get(0);
+            }
+          },
+          indexSpec
+      );
+    }
+  }
+
   public static File append(
       List<IndexableAdapter> indexes, File outDir, IndexSpec indexSpec
   ) throws IOException
@@ -517,7 +549,7 @@ public class IndexMerger
       DimValueConverter[] converters = new DimValueConverter[indexes.size()];
       for (int i = 0; i < indexes.size(); i++) {
         Indexed<String> dimValues = indexes.get(i).getDimValueLookup(dimension);
-        if (dimValues != null) {
+        if (!isNullColumn(dimValues)) {
           dimValueLookups.add(dimValues);
           converters[i] = new DimValueConverter(dimValues);
         }
@@ -1227,5 +1259,18 @@ public class IndexMerger
 
       return retVal;
     }
+  }
+
+  static boolean isNullColumn(Iterable<String> dimValues)
+  {
+    if (dimValues == null) {
+      return true;
+    }
+    for (String val : dimValues) {
+      if (val != null) {
+        return false;
+      }
+    }
+    return true;
   }
 }

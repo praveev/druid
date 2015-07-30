@@ -20,14 +20,16 @@ package io.druid.query.groupby;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.metamx.common.ISE;
 import com.metamx.common.Pair;
@@ -45,18 +47,20 @@ import io.druid.granularity.QueryGranularity;
 import io.druid.guice.annotations.Global;
 import io.druid.query.CacheStrategy;
 import io.druid.query.DataSource;
+import io.druid.query.DruidMetrics;
 import io.druid.query.IntervalChunkingQueryRunnerDecorator;
 import io.druid.query.Query;
 import io.druid.query.QueryCacheHelper;
 import io.druid.query.QueryDataSource;
-import io.druid.query.QueryMetricUtil;
 import io.druid.query.QueryRunner;
 import io.druid.query.QueryToolChest;
 import io.druid.query.SubqueryQueryRunner;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.MetricManipulationFn;
 import io.druid.query.aggregation.PostAggregator;
+import io.druid.query.dimension.DefaultDimensionSpec;
 import io.druid.query.dimension.DimensionSpec;
+import io.druid.query.extraction.ExtractionFn;
 import io.druid.query.filter.DimFilter;
 import io.druid.segment.incremental.IncrementalIndex;
 import io.druid.segment.incremental.IncrementalIndexStorageAdapter;
@@ -64,6 +68,9 @@ import org.joda.time.DateTime;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +130,8 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
           return mergeGroupByResults(
               (GroupByQuery) input,
               runner,
-              responseContext);
+              responseContext
+          );
         }
         return runner.run(input, responseContext);
       }
@@ -258,9 +266,13 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
   @Override
   public ServiceMetricEvent.Builder makeMetricBuilder(GroupByQuery query)
   {
-    return QueryMetricUtil.makeQueryTimeMetric(query)
-                          .setUser3(String.format("%,d dims", query.getDimensions().size()))
-                          .setUser7(String.format("%,d aggs", query.getAggregatorSpecs().size()));
+    return DruidMetrics.makePartialQueryTimeMetric(query)
+                       .setDimension("numDimensions", String.valueOf(query.getDimensions().size()))
+                       .setDimension("numMetrics", String.valueOf(query.getAggregatorSpecs().size()))
+                       .setDimension(
+                           "numComplexMetrics",
+                           String.valueOf(DruidMetrics.findNumComplexAggs(query.getAggregatorSpecs()))
+                       );
   }
 
   @Override
@@ -288,16 +300,111 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
   }
 
   @Override
+  public Function<Row, Row> makePostComputeManipulatorFn(
+      final GroupByQuery query,
+      final MetricManipulationFn fn
+  )
+  {
+    final Set<String> optimizedDims = ImmutableSet.copyOf(
+        Iterables.transform(
+            extractionsToRewrite(query),
+            new Function<DimensionSpec, String>()
+            {
+              @Override
+              public String apply(DimensionSpec input)
+              {
+                return input.getOutputName();
+              }
+            }
+        )
+    );
+    final Function<Row, Row> preCompute = makePreComputeManipulatorFn(query, fn);
+    if (optimizedDims.isEmpty()) {
+      return preCompute;
+    }
+
+    // If we have optimizations that can be done at this level, we apply them here
+
+    final Map<String, ExtractionFn> extractionFnMap = new HashMap<>();
+    for (DimensionSpec dimensionSpec : query.getDimensions()) {
+      final String dimension = dimensionSpec.getOutputName();
+      if (optimizedDims.contains(dimension)) {
+        extractionFnMap.put(dimension, dimensionSpec.getExtractionFn());
+      }
+    }
+
+    return new Function<Row, Row>()
+    {
+      @Nullable
+      @Override
+      public Row apply(Row input)
+      {
+        Row preRow = preCompute.apply(input);
+        if (preRow instanceof MapBasedRow) {
+          MapBasedRow preMapRow = (MapBasedRow) preRow;
+          Map<String, Object> event = Maps.newHashMap(preMapRow.getEvent());
+          for (String dim : optimizedDims) {
+            final Object eventVal = event.get(dim);
+            event.put(dim, extractionFnMap.get(dim).apply(eventVal));
+          }
+          return new MapBasedRow(preMapRow.getTimestamp(), event);
+        } else {
+          return preRow;
+        }
+      }
+    };
+  }
+
+  @Override
   public TypeReference<Row> getResultTypeReference()
   {
     return TYPE_REFERENCE;
   }
 
   @Override
-  public QueryRunner<Row> preMergeQueryDecoration(QueryRunner<Row> runner)
+  public QueryRunner<Row> preMergeQueryDecoration(final QueryRunner<Row> runner)
   {
     return new SubqueryQueryRunner<>(
-        intervalChunkingQueryRunnerDecorator.decorate(runner, this)
+        intervalChunkingQueryRunnerDecorator.decorate(
+            new QueryRunner<Row>()
+            {
+              @Override
+              public Sequence<Row> run(Query<Row> query, Map<String, Object> responseContext)
+              {
+                if (!(query instanceof GroupByQuery)) {
+                  return runner.run(query, responseContext);
+                }
+                GroupByQuery groupByQuery = (GroupByQuery) query;
+                ArrayList<DimensionSpec> dimensionSpecs = new ArrayList<>();
+                Set<String> optimizedDimensions = ImmutableSet.copyOf(
+                    Iterables.transform(
+                        extractionsToRewrite(groupByQuery),
+                        new Function<DimensionSpec, String>()
+                        {
+                          @Override
+                          public String apply(DimensionSpec input)
+                          {
+                            return input.getDimension();
+                          }
+                        }
+                    )
+                );
+                for (DimensionSpec dimensionSpec : groupByQuery.getDimensions()) {
+                  if (optimizedDimensions.contains(dimensionSpec.getDimension())) {
+                    dimensionSpecs.add(
+                        new DefaultDimensionSpec(dimensionSpec.getDimension(), dimensionSpec.getOutputName())
+                    );
+                  } else {
+                    dimensionSpecs.add(dimensionSpec);
+                  }
+                }
+                return runner.run(
+                    groupByQuery.withDimensionSpecs(dimensionSpecs),
+                    responseContext
+                );
+              }
+            }, this
+        )
     );
   }
 
@@ -306,7 +413,10 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
   {
     return new CacheStrategy<Row, Object, GroupByQuery>()
     {
+      private static final byte CACHE_STRATEGY_VERSION = 0x1;
       private final List<AggregatorFactory> aggs = query.getAggregatorSpecs();
+      private final List<DimensionSpec> dims = query.getDimensions();
+
 
       @Override
       public byte[] computeCacheKey(GroupByQuery query)
@@ -328,7 +438,7 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
 
         ByteBuffer buffer = ByteBuffer
             .allocate(
-                1
+                2
                 + granularityBytes.length
                 + filterBytes.length
                 + aggregatorBytes.length
@@ -337,6 +447,7 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
                 + limitBytes.length
             )
             .put(GROUPBY_QUERY)
+            .put(CACHE_STRATEGY_VERSION)
             .put(granularityBytes)
             .put(filterBytes)
             .put(aggregatorBytes);
@@ -367,10 +478,15 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
           {
             if (input instanceof MapBasedRow) {
               final MapBasedRow row = (MapBasedRow) input;
-              final List<Object> retVal = Lists.newArrayListWithCapacity(2);
+              final List<Object> retVal = Lists.newArrayListWithCapacity(1 + dims.size() + aggs.size());
               retVal.add(row.getTimestamp().getMillis());
-              retVal.add(row.getEvent());
-
+              Map<String, Object> event = row.getEvent();
+              for (DimensionSpec dim : dims) {
+                retVal.add(event.get(dim.getOutputName()));
+              }
+              for (AggregatorFactory agg : aggs) {
+                retVal.add(event.get(agg.getName()));
+              }
               return retVal;
             }
 
@@ -393,21 +509,26 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
 
             DateTime timestamp = granularity.toDateTime(((Number) results.next()).longValue());
 
+            Map<String, Object> event = Maps.newLinkedHashMap();
+            Iterator<DimensionSpec> dimsIter = dims.iterator();
+            while (dimsIter.hasNext() && results.hasNext()) {
+              final DimensionSpec factory = dimsIter.next();
+              event.put(factory.getOutputName(), results.next());
+            }
+
             Iterator<AggregatorFactory> aggsIter = aggs.iterator();
-
-            Map<String, Object> event = jsonMapper.convertValue(
-                results.next(),
-                new TypeReference<Map<String, Object>>()
-                {
-                }
-            );
-
-            while (aggsIter.hasNext()) {
+            while (aggsIter.hasNext() && results.hasNext()) {
               final AggregatorFactory factory = aggsIter.next();
-              Object agg = event.get(factory.getName());
-              if (agg != null) {
-                event.put(factory.getName(), factory.deserialize(agg));
-              }
+              event.put(factory.getName(), factory.deserialize(results.next()));
+            }
+
+            if (dimsIter.hasNext() || aggsIter.hasNext() || results.hasNext()) {
+              throw new ISE(
+                  "Found left over objects while reading from cache!! dimsIter[%s] aggsIter[%s] results[%s]",
+                  dimsIter.hasNext(),
+                  aggsIter.hasNext(),
+                  results.hasNext()
+              );
             }
 
             return new MapBasedRow(
@@ -424,5 +545,31 @@ public class GroupByQueryQueryToolChest extends QueryToolChest<Row, GroupByQuery
         return new MergeSequence<>(getOrdering(), seqOfSequences);
       }
     };
+  }
+
+
+  /**
+   * This function checks the query for dimensions which can be optimized by applying the dimension extraction
+   * as the final step of the query instead of on every event.
+   *
+   * @param query The query to check for optimizations
+   *
+   * @return A collection of DimensionsSpec which can be extracted at the last second upon query completion.
+   */
+  public static Collection<DimensionSpec> extractionsToRewrite(GroupByQuery query)
+  {
+    return Collections2.filter(
+        query.getDimensions(), new Predicate<DimensionSpec>()
+        {
+          @Override
+          public boolean apply(DimensionSpec input)
+          {
+            return input.getExtractionFn() != null
+                   && ExtractionFn.ExtractionType.ONE_TO_ONE.equals(
+                input.getExtractionFn().getExtractionType()
+            );
+          }
+        }
+    );
   }
 }

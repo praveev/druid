@@ -38,7 +38,7 @@ import io.druid.query.CacheStrategy;
 import io.druid.query.IntervalChunkingQueryRunnerDecorator;
 import io.druid.query.Query;
 import io.druid.query.QueryCacheHelper;
-import io.druid.query.QueryMetricUtil;
+import io.druid.query.DruidMetrics;
 import io.druid.query.QueryRunner;
 import io.druid.query.QueryToolChest;
 import io.druid.query.Result;
@@ -48,6 +48,9 @@ import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.AggregatorUtil;
 import io.druid.query.aggregation.MetricManipulationFn;
 import io.druid.query.aggregation.PostAggregator;
+import io.druid.query.dimension.DefaultDimensionSpec;
+import io.druid.query.dimension.DimensionSpec;
+import io.druid.query.extraction.ExtractionFn;
 import io.druid.query.filter.DimFilter;
 import org.joda.time.DateTime;
 
@@ -82,7 +85,8 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
     this.intervalChunkingQueryRunnerDecorator = intervalChunkingQueryRunnerDecorator;
   }
 
-  protected static String[] extractFactoryName(final List<AggregatorFactory> aggregatorFactories){
+  protected static String[] extractFactoryName(final List<AggregatorFactory> aggregatorFactories)
+  {
     return Lists.transform(
         aggregatorFactories, new Function<AggregatorFactory, String>()
         {
@@ -153,15 +157,20 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
   @Override
   public ServiceMetricEvent.Builder makeMetricBuilder(TopNQuery query)
   {
-    return QueryMetricUtil.makeQueryTimeMetric(query)
-                          .setUser4(
-                              String.format(
-                                  "topN/%s/%s",
-                                  query.getThreshold(),
-                                  query.getDimensionSpec().getDimension()
-                              )
-                          )
-                          .setUser7(String.format("%,d aggs", query.getAggregatorSpecs().size()));
+    return DruidMetrics.makePartialQueryTimeMetric(query)
+                       .setDimension(
+                           "threshold",
+                           String.valueOf(query.getThreshold())
+                       )
+                       .setDimension("dimension", query.getDimensionSpec().getDimension())
+                       .setDimension(
+                           "numMetrics",
+                           String.valueOf(query.getAggregatorSpecs().size())
+                       )
+                       .setDimension(
+                           "numComplexMetrics",
+                           String.valueOf(DruidMetrics.findNumComplexAggs(query.getAggregatorSpecs()))
+                       );
   }
 
   @Override
@@ -229,6 +238,9 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
       final TopNQuery query, final MetricManipulationFn fn
   )
   {
+    final ExtractionFn extractionFn = TopNQueryEngine.canApplyExtractionInPost(query)
+                                      ? query.getDimensionSpec().getExtractionFn()
+                                      : null;
     return new Function<Result<TopNResultValue>, Result<TopNResultValue>>()
     {
       private String dimension = query.getDimensionSpec().getOutputName();
@@ -254,7 +266,7 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
                         + 1
                     );
 
-                    for( int i = 0; i < aggFactoryNames.length; ++i){
+                    for (int i = 0; i < aggFactoryNames.length; ++i) {
                       final String name = aggFactoryNames[i];
                       values.put(name, input.getMetric(name));
                     }
@@ -267,12 +279,13 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
                         values.put(postAgg.getName(), postAgg.compute(values));
                       }
                     }
-                    for( int i = 0; i < aggFactoryNames.length; ++i){
+                    for (int i = 0; i < aggFactoryNames.length; ++i) {
                       final String name = aggFactoryNames[i];
                       values.put(name, fn.manipulate(aggregatorFactories[i], input.getMetric(name)));
                     }
 
-                    values.put(dimension, input.getDimensionValue(dimension));
+                    final Object dimValue = input.getDimensionValue(dimension);
+                    values.put(dimension, extractionFn == null ? dimValue : extractionFn.apply(dimValue));
 
                     return values;
                   }
@@ -417,15 +430,100 @@ public class TopNQueryQueryToolChest extends QueryToolChest<Result<TopNResultVal
   }
 
   @Override
-  public QueryRunner<Result<TopNResultValue>> preMergeQueryDecoration(QueryRunner<Result<TopNResultValue>> runner)
+  public QueryRunner<Result<TopNResultValue>> preMergeQueryDecoration(final QueryRunner<Result<TopNResultValue>> runner)
   {
-    return intervalChunkingQueryRunnerDecorator.decorate(runner, this);
+    return intervalChunkingQueryRunnerDecorator.decorate(
+        new QueryRunner<Result<TopNResultValue>>()
+        {
+          @Override
+          public Sequence<Result<TopNResultValue>> run(
+              Query<Result<TopNResultValue>> query, Map<String, Object> responseContext
+          )
+          {
+            if (!(query instanceof TopNQuery)) {
+              return runner.run(query, responseContext);
+            } else {
+              final TopNQuery topNQuery = (TopNQuery) query;
+              if (TopNQueryEngine.canApplyExtractionInPost(topNQuery)) {
+                final DimensionSpec dimensionSpec = topNQuery.getDimensionSpec();
+                return runner.run(
+                    topNQuery.withDimensionSpec(
+                        new DefaultDimensionSpec(
+                            dimensionSpec.getDimension(),
+                            dimensionSpec.getOutputName()
+                        )
+                    ), responseContext
+                );
+              } else {
+                return runner.run(query, responseContext);
+              }
+            }
+          }
+        }
+        , this
+    );
   }
 
   @Override
   public QueryRunner<Result<TopNResultValue>> postMergeQueryDecoration(final QueryRunner<Result<TopNResultValue>> runner)
   {
-    return new ThresholdAdjustingQueryRunner(runner, config.getMinTopNThreshold());
+    final ThresholdAdjustingQueryRunner thresholdRunner = new ThresholdAdjustingQueryRunner(
+        runner,
+        config.getMinTopNThreshold()
+    );
+    return new QueryRunner<Result<TopNResultValue>>()
+    {
+
+      @Override
+      public Sequence<Result<TopNResultValue>> run(
+          final Query<Result<TopNResultValue>> query, final Map<String, Object> responseContext
+      )
+      {
+        // thresholdRunner.run throws ISE if query is not TopNQuery
+        final Sequence<Result<TopNResultValue>> resultSequence = thresholdRunner.run(query, responseContext);
+        final TopNQuery topNQuery = (TopNQuery) query;
+        if (!TopNQueryEngine.canApplyExtractionInPost(topNQuery)) {
+          return resultSequence;
+        } else {
+          return Sequences.map(
+              resultSequence, new Function<Result<TopNResultValue>, Result<TopNResultValue>>()
+              {
+                @Override
+                public Result<TopNResultValue> apply(Result<TopNResultValue> input)
+                {
+                  TopNResultValue resultValue = input.getValue();
+
+                  return new Result<TopNResultValue>(
+                      input.getTimestamp(),
+                      new TopNResultValue(
+                          Lists.transform(
+                              resultValue.getValue(),
+                              new Function<DimensionAndMetricValueExtractor, DimensionAndMetricValueExtractor>()
+                              {
+                                @Override
+                                public DimensionAndMetricValueExtractor apply(
+                                   DimensionAndMetricValueExtractor input
+                                )
+                                {
+                                  String dimOutputName = topNQuery.getDimensionSpec().getOutputName();
+                                  String dimValue = input.getStringDimensionValue(dimOutputName);
+                                  Map<String, Object> map = input.getBaseObject();
+                                  map.put(
+                                      dimOutputName,
+                                      topNQuery.getDimensionSpec().getExtractionFn().apply(dimValue)
+                                  );
+                                  return input;
+                                }
+                              }
+                          )
+                      )
+                  );
+                }
+              }
+          );
+        }
+      }
+    };
   }
 
   public Ordering<Result<TopNResultValue>> getOrdering()

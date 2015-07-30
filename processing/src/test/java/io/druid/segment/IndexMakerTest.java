@@ -40,6 +40,7 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -58,6 +59,8 @@ import java.util.Map;
 @RunWith(Parameterized.class)
 public class IndexMakerTest
 {
+  @Rule
+  public final CloserRule closer = new CloserRule(false);
   private static final long TIMESTAMP = DateTime.parse("2014-01-01").getMillis();
   private static final AggregatorFactory[] DEFAULT_AGG_FACTORIES = new AggregatorFactory[]{
       new CountAggregatorFactory(
@@ -66,6 +69,7 @@ public class IndexMakerTest
   };
   private static final IndexSpec INDEX_SPEC = IndexMergerTest.makeIndexSpec(
       new ConciseBitmapSerdeFactory(),
+      CompressedObjectStrategy.CompressionStrategy.LZ4,
       CompressedObjectStrategy.CompressionStrategy.LZ4
   );
   private static final List<String> DIMS = ImmutableList.of("dim0", "dim1");
@@ -178,7 +182,7 @@ public class IndexMakerTest
   @Test
   public void testSimpleReprocess() throws IOException
   {
-    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(persistTmpDir));
+    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(persistTmpDir)));
     Assert.assertEquals(events.size(), adapter.getNumRows());
     reprocessAndValidate(persistTmpDir, new File(tmpDir, "reprocessed"));
   }
@@ -197,7 +201,7 @@ public class IndexMakerTest
   private File appendAndValidate(File inDir, File tmpDir) throws IOException
   {
     final File outDir = IndexMerger.append(
-        ImmutableList.<IndexableAdapter>of(new QueryableIndexIndexableAdapter(IndexIO.loadIndex(inDir))),
+        ImmutableList.<IndexableAdapter>of(new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(inDir)))),
         tmpDir,
         INDEX_SPEC
     );
@@ -208,18 +212,18 @@ public class IndexMakerTest
   @Test
   public void testIdempotentReprocess() throws IOException
   {
-    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(persistTmpDir));
+    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(persistTmpDir)));
     Assert.assertEquals(events.size(), adapter.getNumRows());
     final File tmpDir1 = new File(tmpDir, "reprocessed1");
     reprocessAndValidate(persistTmpDir, tmpDir1);
 
     final File tmpDir2 = new File(tmpDir, "reprocessed2");
-    final IndexableAdapter adapter2 = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(tmpDir1));
+    final IndexableAdapter adapter2 = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(tmpDir1)));
     Assert.assertEquals(events.size(), adapter2.getNumRows());
     reprocessAndValidate(tmpDir1, tmpDir2);
 
     final File tmpDir3 = new File(tmpDir, "reprocessed3");
-    final IndexableAdapter adapter3 = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(tmpDir2));
+    final IndexableAdapter adapter3 = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(tmpDir2)));
     Assert.assertEquals(events.size(), adapter3.getNumRows());
     reprocessAndValidate(tmpDir2, tmpDir3);
   }
@@ -227,7 +231,7 @@ public class IndexMakerTest
   @Test
   public void testSimpleAppend() throws IOException
   {
-    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(persistTmpDir));
+    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(persistTmpDir)));
     Assert.assertEquals(events.size(), adapter.getNumRows());
     appendAndValidate(persistTmpDir, new File(tmpDir, "reprocessed"));
   }
@@ -235,18 +239,18 @@ public class IndexMakerTest
   @Test
   public void testIdempotentAppend() throws IOException
   {
-    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(persistTmpDir));
+    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(persistTmpDir)));
     Assert.assertEquals(events.size(), adapter.getNumRows());
     final File tmpDir1 = new File(tmpDir, "reprocessed1");
     appendAndValidate(persistTmpDir, tmpDir1);
 
     final File tmpDir2 = new File(tmpDir, "reprocessed2");
-    final IndexableAdapter adapter2 = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(tmpDir1));
+    final IndexableAdapter adapter2 = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(tmpDir1)));
     Assert.assertEquals(events.size(), adapter2.getNumRows());
     appendAndValidate(tmpDir1, tmpDir2);
 
     final File tmpDir3 = new File(tmpDir, "reprocessed3");
-    final IndexableAdapter adapter3 = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(tmpDir2));
+    final IndexableAdapter adapter3 = new QueryableIndexIndexableAdapter(closer.closeLater(IndexIO.loadIndex(tmpDir2)));
     Assert.assertEquals(events.size(), adapter3.getNumRows());
     appendAndValidate(tmpDir2, tmpDir3);
   }

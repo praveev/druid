@@ -333,24 +333,26 @@ public class IndexMaker
       final File inDir, final File outDir, final IndexSpec indexSpec, final ProgressIndicator progress
   ) throws IOException
   {
-    final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(IndexIO.loadIndex(inDir));
-    return makeIndexFiles(
-        ImmutableList.of(adapter),
-        outDir,
-        progress,
-        Lists.newArrayList(adapter.getDimensionNames()),
-        Lists.newArrayList(adapter.getMetricNames()),
-        new Function<ArrayList<Iterable<Rowboat>>, Iterable<Rowboat>>()
-        {
-          @Nullable
-          @Override
-          public Iterable<Rowboat> apply(ArrayList<Iterable<Rowboat>> input)
+    try (QueryableIndex index = IndexIO.loadIndex(inDir)) {
+      final IndexableAdapter adapter = new QueryableIndexIndexableAdapter(index);
+      return makeIndexFiles(
+          ImmutableList.of(adapter),
+          outDir,
+          progress,
+          Lists.newArrayList(adapter.getDimensionNames()),
+          Lists.newArrayList(adapter.getMetricNames()),
+          new Function<ArrayList<Iterable<Rowboat>>, Iterable<Rowboat>>()
           {
-            return input.get(0);
-          }
-        },
-        indexSpec
-    );
+            @Nullable
+            @Override
+            public Iterable<Rowboat> apply(ArrayList<Iterable<Rowboat>> input)
+            {
+              return input.get(0);
+            }
+          },
+          indexSpec
+      );
+    }
   }
 
 
@@ -584,7 +586,7 @@ public class IndexMaker
 
       for (int i = 0; i < adapters.size(); i++) {
         Indexed<String> dimValues = adapters.get(i).getDimValueLookup(dimension);
-        if (dimValues != null) {
+        if (!IndexMerger.isNullColumn(dimValues)) {
           dimValueLookups.add(dimValues);
           converters[i] = new DimValueConverter(dimValues);
         }
@@ -842,6 +844,7 @@ public class IndexMaker
   {
     private final List<Integer> delegate;
     private final boolean delegateHasNullAtZero;
+
     NullsAtZeroConvertingIntList(List<Integer> delegate, final boolean delegateHasNullAtZero)
     {
       this.delegate = delegate;
@@ -961,7 +964,10 @@ public class IndexMaker
                       if (input == null) {
                         return VSizeIndexedInts.fromList(ImmutableList.<Integer>of(0), dictionarySize);
                       } else {
-                        return VSizeIndexedInts.fromList(new NullsAtZeroConvertingIntList(input, false), dictionarySize);
+                        return VSizeIndexedInts.fromList(
+                            new NullsAtZeroConvertingIntList(input, false),
+                            dictionarySize
+                        );
                       }
                     }
                   }
@@ -1188,15 +1194,19 @@ public class IndexMaker
       } else {
         dimPartBuilder.withSingleValuedColumn(VSizeIndexedInts.fromList(singleValCol, dictionary.size()));
       }
+    } else if (compressionStrategy != null) {
+      dimPartBuilder.withMultiValuedColumn(
+          CompressedVSizeIndexedSupplier.fromIterable(
+              multiValCol,
+              dictionary.size(),
+              IndexIO.BYTE_ORDER,
+              compressionStrategy
+          )
+      );
     } else {
-      if (compressionStrategy != null) {
-        log.info(
-            "Compression not supported for multi-value dimensions, defaulting to `uncompressed` for dimension[%s]",
-            dimension
-        );
-      }
       dimPartBuilder.withMultiValuedColumn(multiValCol);
     }
+
 
     writeColumn(
         v9Smoosher,

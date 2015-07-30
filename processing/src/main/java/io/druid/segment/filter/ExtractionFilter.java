@@ -19,7 +19,7 @@ package io.druid.segment.filter;
 
 import com.google.common.collect.Lists;
 import com.metamx.collections.bitmap.ImmutableBitmap;
-import com.metamx.collections.bitmap.WrappedConciseBitmap;
+import com.metamx.collections.bitmap.WrappedImmutableConciseBitmap;
 import io.druid.query.extraction.ExtractionFn;
 import io.druid.query.filter.BitmapIndexSelector;
 import io.druid.query.filter.Filter;
@@ -27,6 +27,7 @@ import io.druid.query.filter.ValueMatcher;
 import io.druid.query.filter.ValueMatcherFactory;
 import io.druid.segment.ColumnSelectorFactory;
 import io.druid.segment.data.Indexed;
+import it.uniroma3.mat.extendedset.intset.ImmutableConciseSet;
 
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class ExtractionFilter implements Filter
   {
     final List<Filter> filters = makeFilters(selector);
     if (filters.isEmpty()) {
-      return new WrappedConciseBitmap();
+      return selector.getBitmapFactory().makeEmptyImmutableBitmap();
     }
     return new OrFilter(makeFilters(selector)).getBitmapIndex(selector);
   }

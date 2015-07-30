@@ -198,14 +198,13 @@ public class IndexIO
 
   public static boolean convertSegment(File toConvert, File converted, IndexSpec indexSpec) throws IOException
   {
-    return convertSegment(toConvert, converted, indexSpec, false);
+    return convertSegment(toConvert, converted, indexSpec, false, true);
   }
 
-  public static boolean convertSegment(File toConvert, File converted, IndexSpec indexSpec, boolean forceIfCurrent)
+  public static boolean convertSegment(File toConvert, File converted, IndexSpec indexSpec, boolean forceIfCurrent, boolean validate)
       throws IOException
   {
     final int version = SegmentUtils.getVersionFromDir(toConvert);
-
     switch (version) {
       case 1:
       case 2:
@@ -230,8 +229,10 @@ public class IndexIO
         return true;
       default:
         if (forceIfCurrent) {
-          IndexMaker.convert(toConvert, converted, indexSpec);
-          DefaultIndexIOHandler.validateTwoSegments(toConvert, converted);
+          IndexMerger.convert(toConvert, converted, indexSpec);
+          if(validate){
+            DefaultIndexIOHandler.validateTwoSegments(toConvert, converted);
+          }
           return true;
         } else {
           log.info("Version[%s], skipping.", version);
@@ -252,6 +253,12 @@ public class IndexIO
       IndexableAdapter adapter2
   )
   {
+    if(rb1.getTimestamp() != rb2.getTimestamp()){
+      throw new SegmentValidationException(
+          "Timestamp mismatch. Expected %d found %d",
+          rb1.getTimestamp(), rb2.getTimestamp()
+      );
+    }
     final int[][] dims1 = rb1.getDims();
     final int[][] dims2 = rb2.getDims();
     if (dims1.length != dims2.length) {
@@ -459,10 +466,14 @@ public class IndexIO
 
     public static void validateTwoSegments(File dir1, File dir2) throws IOException
     {
-      validateTwoSegments(
-          new QueryableIndexIndexableAdapter(loadIndex(dir1)),
-          new QueryableIndexIndexableAdapter(loadIndex(dir2))
-      );
+      try(QueryableIndex queryableIndex1 = loadIndex(dir1)) {
+        try(QueryableIndex queryableIndex2 = loadIndex(dir2)) {
+          validateTwoSegments(
+              new QueryableIndexIndexableAdapter(queryableIndex1),
+              new QueryableIndexIndexableAdapter(queryableIndex2)
+          );
+        }
+      }
     }
 
     public static void validateTwoSegments(final IndexableAdapter adapter1, final IndexableAdapter adapter2)
@@ -711,13 +722,16 @@ public class IndexIO
             } else {
               columnPartBuilder.withSingleValuedColumn(VSizeIndexedInts.fromList(singleValCol, dictionary.size()));
             }
+          } else if (compressionStrategy != null) {
+            columnPartBuilder.withMultiValuedColumn(
+                CompressedVSizeIndexedSupplier.fromIterable(
+                    multiValCol,
+                    dictionary.size(),
+                    BYTE_ORDER,
+                    compressionStrategy
+                )
+            );
           } else {
-            if (compressionStrategy != null) {
-              log.info(
-                  "Compression not supported for multi-value dimensions, defaulting to `uncompressed` for dimension[%s]",
-                  dimension
-              );
-            }
             columnPartBuilder.withMultiValuedColumn(multiValCol);
           }
 

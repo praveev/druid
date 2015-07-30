@@ -43,6 +43,7 @@ import com.metamx.common.guava.LazySequence;
 import com.metamx.common.guava.Sequence;
 import com.metamx.common.guava.Sequences;
 import com.metamx.emitter.EmittingLogger;
+import com.metamx.emitter.service.ServiceEmitter;
 import io.druid.client.cache.Cache;
 import io.druid.client.cache.CacheConfig;
 import io.druid.client.selector.QueryableDruidServer;
@@ -326,6 +327,7 @@ public class CachingClusteredClient<T> implements QueryRunner<T>
               final List<SegmentDescriptor> descriptors = entry.getValue();
 
               final QueryRunner clientQueryable = serverView.getQueryRunner(server);
+
               if (clientQueryable == null) {
                 log.error("WTF!? server[%s] doesn't have a client Queryable?", server);
                 continue;

@@ -32,8 +32,8 @@ import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.query.aggregation.FilteredAggregatorFactory;
 import io.druid.query.aggregation.LongSumAggregatorFactory;
-import io.druid.query.aggregation.MaxAggregatorFactory;
-import io.druid.query.aggregation.MinAggregatorFactory;
+import io.druid.query.aggregation.DoubleMaxAggregatorFactory;
+import io.druid.query.aggregation.DoubleMinAggregatorFactory;
 import io.druid.query.aggregation.PostAggregator;
 import io.druid.query.filter.AndDimFilter;
 import io.druid.query.filter.DimFilter;
@@ -67,14 +67,17 @@ public class TimeseriesQueryRunnerTest
   public static final Map<String, Object> CONTEXT = ImmutableMap.of();
 
   @Parameterized.Parameters
-  public static Collection<?> constructorFeeder() throws IOException
+  public static Iterable<Object[]> constructorFeeder() throws IOException
   {
-    return QueryRunnerTestHelper.makeQueryRunners(
-        new TimeseriesQueryRunnerFactory(
-            new TimeseriesQueryQueryToolChest(
-                QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()),
-            new TimeseriesQueryEngine(),
-            QueryRunnerTestHelper.NOOP_QUERYWATCHER
+    return QueryRunnerTestHelper.transformToConstructionFeeder(
+        QueryRunnerTestHelper.makeQueryRunners(
+            new TimeseriesQueryRunnerFactory(
+                new TimeseriesQueryQueryToolChest(
+                    QueryRunnerTestHelper.NoopIntervalChunkingQueryRunnerDecorator()
+                ),
+                new TimeseriesQueryEngine(),
+                QueryRunnerTestHelper.NOOP_QUERYWATCHER
+            )
         )
     );
   }
@@ -165,8 +168,8 @@ public class TimeseriesQueryRunnerTest
                                   .intervals(QueryRunnerTestHelper.fullOnInterval)
                                   .aggregators(
                                       Arrays.asList(
-                                          new MaxAggregatorFactory("maxIndex", "index"),
-                                          new MinAggregatorFactory("minIndex", "index")
+                                          new DoubleMaxAggregatorFactory("maxIndex", "index"),
+                                          new DoubleMinAggregatorFactory("minIndex", "index")
                                       )
                                   )
                                   .build();
