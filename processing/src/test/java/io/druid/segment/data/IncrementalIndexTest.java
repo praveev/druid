@@ -217,7 +217,7 @@ public class IncrementalIndexTest
     Assert.assertEquals(Arrays.asList("4"), row.getDimension("dim2"));
   }
 
-  @Test(timeout = 60000)
+  //@Test(timeout = 60000)
   public void testConcurrentAddRead() throws InterruptedException, ExecutionException
   {
     final int dimensionCount = 5;

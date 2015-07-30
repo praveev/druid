@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metamx.common.Pair;
+import com.metamx.common.logger.Logger;
 import com.metamx.emitter.service.ServiceEmitter;
 import com.metamx.http.client.HttpClient;
 import io.druid.client.selector.HighestPriorityTierSelectorStrategy;
@@ -65,6 +66,8 @@ import java.util.concurrent.Executor;
 
 public class BrokerServerViewTest extends CuratorTestBase
 {
+  private final static Logger logger = new Logger(BrokerServerViewTest.class);
+
   private final ObjectMapper jsonMapper;
   private final ZkPathsConfig zkPathsConfig;
   private final String announcementsPath;
@@ -327,12 +330,14 @@ public class BrokerServerViewTest extends CuratorTestBase
       @Override
       public void registerSegmentCallback(Executor exec, final SegmentCallback callback)
       {
+        logger.info("Instrumenting the segment callback");
         super.registerSegmentCallback(
             exec, new SegmentCallback()
             {
               @Override
               public CallbackAction segmentAdded(DruidServerMetadata server, DataSegment segment)
               {
+                logger.info("Instrumented segmentAdded called");
                 CallbackAction res = callback.segmentAdded(server, segment);
                 segmentAddedLatch.countDown();
                 return res;
@@ -341,6 +346,7 @@ public class BrokerServerViewTest extends CuratorTestBase
               @Override
               public CallbackAction segmentRemoved(DruidServerMetadata server, DataSegment segment)
               {
+                logger.info("Instrumented segmentRemoved called");
                 CallbackAction res = callback.segmentRemoved(server, segment);
                 segmentRemovedLatch.countDown();
                 return res;
@@ -349,6 +355,7 @@ public class BrokerServerViewTest extends CuratorTestBase
               @Override
               public CallbackAction segmentViewInitialized()
               {
+                logger.info("Instrumented segmentViewInitialized called");
                 CallbackAction res = callback.segmentViewInitialized();
                 segmentViewInitLatch.countDown();
                 return res;
