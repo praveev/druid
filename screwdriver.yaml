@@ -42,7 +42,7 @@ shared:
         if [ ! -s druid.version ]; then echo 'Error: druid.version is empty!' && exit 1; else echo "druid.version is `cat druid.version`"; fi || exit $?
     set_druid_version:
       description: set druid jars version
-      command: mvn org.codehaus.mojo:versions-maven-plugin:2.1:set -DnewVersion="`cat druid.version`"
+      command: mvn -B org.codehaus.mojo:versions-maven-plugin:2.1:set -DnewVersion="`cat druid.version`"
     clone_druid_pkg:
       description: clone druid package
       command: git clone git@git.corp.yahoo.com:greyhawk/druid_package.git
@@ -174,7 +174,7 @@ jobs:
     steps:
       druid_code_build:
         description: create druid code jars
-        command: mvn clover2:instrument install clover2:aggregate clover2:clover
+        command: mvn -B clover2:instrument install clover2:aggregate clover2:clover
       clean_yinst_pkg_smoke:
         description: clean up yinst packages stored on smoke test machine
         command: ssh ${SD_SETTING_SSH_OPTIONS} ${SD_SETTING_SMOKE_HOST} "rm -f *.tgz"
