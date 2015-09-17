@@ -42,7 +42,7 @@ shared:
         if [ ! -s druid.version ]; then echo 'Error: druid.version is empty!' && exit 1; else echo "druid.version is `cat druid.version`"; fi || exit $?
     set_druid_version:
       description: set druid jars version
-      command: mvn org.codehaus.mojo:versions-maven-plugin:2.1:set -DnewVersion="`cat druid.version`"
+      command: mvn -B org.codehaus.mojo:versions-maven-plugin:2.1:set -DnewVersion="`cat druid.version`"
     clone_druid_pkg:
       description: clone druid package
       command: git clone git@git.corp.yahoo.com:greyhawk/druid_package.git
@@ -55,7 +55,7 @@ shared:
         git commit -a -m "commit to make yinst_create happy" || exit $?
     druid_pkg_code_build:
       description: copy dependencies for druid_package
-      command: mvn -f druid_package/pom.xml -Ddruid.version="`cat druid.version`" install dependency:copy-dependencies
+      command: mvn -B -f druid_package/pom.xml -Ddruid.version="`cat druid.version`" install dependency:copy-dependencies
     show_tree:
       description: tree under root
       command: tree .
@@ -67,7 +67,7 @@ shared:
       command: git clone git@git.corp.yahoo.com:greyhawk/ci_tests.git
     ci_tests_code_build:
       description: build ci tests and copy its dependencies
-      command: mvn -f ci_tests/pom.xml package dependency:copy-dependencies
+      command: mvn -B -f ci_tests/pom.xml package dependency:copy-dependencies
     create_druid_yinst_pkg:
       description: create the yinst package from druid_packcage
       command: >
@@ -118,7 +118,7 @@ jobs:
     steps:
       druid_code_build_pr:
         description: create druid code jars for pull request
-        command: mvn install
+        command: mvn -B install
       find_host:
         description: find the host to run tests for the PR
         command: sh druid_package/screwdriver/find_host.sh ${SD_SETTING_HOST_LIST}
@@ -174,7 +174,7 @@ jobs:
     steps:
       druid_code_build:
         description: create druid code jars
-        command: mvn clover2:instrument install clover2:aggregate clover2:clover
+        command: mvn -B clover2:instrument install clover2:aggregate clover2:clover
       clean_yinst_pkg_smoke:
         description: clean up yinst packages stored on smoke test machine
         command: ssh ${SD_SETTING_SSH_OPTIONS} ${SD_SETTING_SMOKE_HOST} "rm -f *.tgz"
