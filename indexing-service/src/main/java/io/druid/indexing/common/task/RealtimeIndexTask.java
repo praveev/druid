@@ -58,7 +58,6 @@ import org.joda.time.Period;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class RealtimeIndexTask extends AbstractTask
@@ -339,6 +338,7 @@ public class RealtimeIndexTask extends AbstractTask
         }
         catch (Exception e) {
           log.makeAlert(e, "Failed to finish realtime task").emit();
+          throw e;
         }
         finally {
           // firehose will be non-null since normalExit is true
