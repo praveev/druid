@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
-public class DockerConfigProvider  implements IntegrationTestingConfigProvider
+public class DockerConfigProvider implements IntegrationTestingConfigProvider
 {
 
   @JsonProperty
@@ -59,9 +59,33 @@ public class DockerConfigProvider  implements IntegrationTestingConfigProvider
       }
 
       @Override
+      public String getHistoricalHost()
+      {
+        return dockerIp + ":8083";
+      }
+
+      @Override
       public String getMiddleManagerHost()
       {
         return dockerIp;
+      }
+
+      @Override
+      public String getZookeeperHosts()
+      {
+        return dockerIp + ":2181";
+      }
+
+      @Override
+      public String getKafkaHost()
+      {
+        return dockerIp + ":9092";
+      }
+
+      @Override
+      public String getProperty(String prop)
+      {
+        throw new UnsupportedOperationException("DockerConfigProvider does not support getProperty()");
       }
     };
   }

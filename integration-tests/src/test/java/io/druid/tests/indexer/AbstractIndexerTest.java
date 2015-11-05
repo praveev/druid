@@ -19,16 +19,17 @@ package io.druid.tests.indexer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import io.druid.guice.annotations.Json;
+import io.druid.guice.annotations.Smile;
 import io.druid.testing.clients.CoordinatorResourceTestClient;
 import io.druid.testing.clients.OverlordResourceTestClient;
-import io.druid.testing.utils.FromFileTestQueryHelper;
+import io.druid.testing.utils.TestQueryHelper;
 import io.druid.testing.utils.RetryUtil;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Interval;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.concurrent.Callable;
 
 public abstract class AbstractIndexerTest
@@ -39,14 +40,22 @@ public abstract class AbstractIndexerTest
   @Inject
   protected OverlordResourceTestClient indexer;
   @Inject
+  @Json
   protected ObjectMapper jsonMapper;
-
   @Inject
-  protected FromFileTestQueryHelper queryHelper;
+  @Smile
+  protected ObjectMapper smileMapper;
+  @Inject
+  protected TestQueryHelper queryHelper;
 
   protected void unloadAndKillData(final String dataSource) throws Exception
   {
-    Interval interval = new Interval("2013-01-01T00:00:00.000Z/2013-12-01T00:00:00.000Z");
+      unloadAndKillData (dataSource, "2013-01-01T00:00:00.000Z", "2013-12-01T00:00:00.000Z");
+  }
+
+  protected void unloadAndKillData(final String dataSource, String start, String end) throws Exception
+  {
+    Interval interval = new Interval(start + "/" + end);
     coordinator.unloadSegmentsForDataSource(dataSource, interval);
     RetryUtil.retryUntilFalse(
         new Callable<Boolean>()
@@ -74,10 +83,13 @@ public abstract class AbstractIndexerTest
 
   protected String getTaskAsString(String file) throws IOException
   {
-    InputStream inputStream = ITRealtimeIndexTaskTest.class.getResourceAsStream(file);
-    StringWriter writer = new StringWriter();
-    IOUtils.copy(inputStream, writer, "UTF-8");
-    return writer.toString();
+    final InputStream inputStream = ITRealtimeIndexTaskTest.class.getResourceAsStream(file);
+    try {
+      return IOUtils.toString(inputStream, "UTF-8");
+    }
+    finally {
+      IOUtils.closeQuietly(inputStream);
+    }
   }
 
 }

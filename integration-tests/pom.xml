@@ -29,6 +29,11 @@
         <version>0.8.0</version>
     </parent>
 
+    <properties>
+        <apache.kafka.version>0.8.2.1</apache.kafka.version>
+        <zkclient.version>0.4</zkclient.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.druid</groupId>
@@ -38,6 +43,11 @@
         <dependency>
             <groupId>io.druid.extensions</groupId>
             <artifactId>druid-s3-extensions</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.druid.extensions</groupId>
+            <artifactId>druid-kafka-eight</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -71,6 +81,29 @@
             <artifactId>easymock</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.101tec</groupId>
+            <artifactId>zkclient</artifactId>
+            <version>${zkclient.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.zookeeper</groupId>
+                    <artifactId>zookeeper</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.10</artifactId>
+            <version>${apache.kafka.version}</version>
+	    <!-- without this exclusion, there's interference that affects the log level -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
@@ -84,6 +117,26 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+		<archive>
+                  <manifest>
+                    <mainClass>org.testng.TestNG</mainClass>
+                  </manifest>
+		</archive>
+              </configuration>
+              <executions> 
+		<execution> 
+                  <id>test-jar</id>
+                  <phase>package</phase> 
+                  <goals> 
+                    <goal>test-jar</goal> 
+                  </goals>
+		</execution> 
+              </executions>
+	    </plugin>
         </plugins>
     </build>
 
@@ -138,6 +191,39 @@
                                 -Dtestrunfactory=org.testng.DruidTestRunnerFactory
                                 -Ddruid.test.config.dockerIp=${env.DOCKER_IP}
                                 -Ddruid.zk.service.host=${env.DOCKER_IP}
+                            </argLine>
+                            <suiteXmlFiles>
+                                <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                            </suiteXmlFiles>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>int-tests-config-file</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>integration-tests</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <argLine>
+                                -Duser.timezone=UTC
+                                -Dfile.encoding=UTF-8
+                                -Dtestrunfactory=org.testng.DruidTestRunnerFactory
+                                -Ddruid.test.config.type=configFile
+                                -Ddruid.test.config.configFile=${env.CONFIG_FILE}
                             </argLine>
                             <suiteXmlFiles>
                                 <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
