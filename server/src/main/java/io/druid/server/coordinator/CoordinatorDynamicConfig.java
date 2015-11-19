@@ -19,6 +19,8 @@ package io.druid.server.coordinator;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Set;
+
 public class CoordinatorDynamicConfig
 {
   public static final String CONFIG_KEY = "coordinator.config";
@@ -31,6 +33,7 @@ public class CoordinatorDynamicConfig
   private final int replicationThrottleLimit;
   private final int balancerComputeThreads;
   private final boolean emitBalancingStats;
+  private final Set<String> killDataSourceWhitelist;
 
   @JsonCreator
   public CoordinatorDynamicConfig(
@@ -41,7 +44,8 @@ public class CoordinatorDynamicConfig
       @JsonProperty("replicantLifetime") int replicantLifetime,
       @JsonProperty("replicationThrottleLimit") int replicationThrottleLimit,
       @JsonProperty("balancerComputeThreads") int balancerComputeThreads,
-      @JsonProperty("emitBalancingStats") boolean emitBalancingStats
+      @JsonProperty("emitBalancingStats") boolean emitBalancingStats,
+      @JsonProperty("killDataSourceWhitelist") Set<String> killDataSourceWhitelist
   )
   {
     this.maxSegmentsToMove = maxSegmentsToMove;
@@ -55,6 +59,7 @@ public class CoordinatorDynamicConfig
         Math.max(balancerComputeThreads, 1),
         Math.max(Runtime.getRuntime().availableProcessors() - 1, 1)
     );
+    this.killDataSourceWhitelist = killDataSourceWhitelist;
   }
 
   @JsonProperty
@@ -105,6 +110,85 @@ public class CoordinatorDynamicConfig
     return balancerComputeThreads;
   }
 
+  @JsonProperty
+  public Set<String> getKillDataSourceWhitelist()
+  {
+    return killDataSourceWhitelist;
+  }
+
+  @Override
+  public String toString()
+  {
+    return "CoordinatorDynamicConfig{" +
+           "millisToWaitBeforeDeleting=" + millisToWaitBeforeDeleting +
+           ", mergeBytesLimit=" + mergeBytesLimit +
+           ", mergeSegmentsLimit=" + mergeSegmentsLimit +
+           ", maxSegmentsToMove=" + maxSegmentsToMove +
+           ", replicantLifetime=" + replicantLifetime +
+           ", replicationThrottleLimit=" + replicationThrottleLimit +
+           ", balancerComputeThreads=" + balancerComputeThreads +
+           ", emitBalancingStats=" + emitBalancingStats +
+           ", killDataSourceWhitelist=" + killDataSourceWhitelist +
+           '}';
+  }
+
+  @Override
+  public boolean equals(Object o)
+  {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    CoordinatorDynamicConfig that = (CoordinatorDynamicConfig) o;
+
+    if (millisToWaitBeforeDeleting != that.millisToWaitBeforeDeleting) {
+      return false;
+    }
+    if (mergeBytesLimit != that.mergeBytesLimit) {
+      return false;
+    }
+    if (mergeSegmentsLimit != that.mergeSegmentsLimit) {
+      return false;
+    }
+    if (maxSegmentsToMove != that.maxSegmentsToMove) {
+      return false;
+    }
+    if (replicantLifetime != that.replicantLifetime) {
+      return false;
+    }
+    if (replicationThrottleLimit != that.replicationThrottleLimit) {
+      return false;
+    }
+    if (balancerComputeThreads != that.balancerComputeThreads) {
+      return false;
+    }
+    if (emitBalancingStats != that.emitBalancingStats) {
+      return false;
+    }
+    return !(killDataSourceWhitelist != null
+             ? !killDataSourceWhitelist.equals(that.killDataSourceWhitelist)
+             : that.killDataSourceWhitelist != null);
+
+  }
+
+  @Override
+  public int hashCode()
+  {
+    int result = (int) (millisToWaitBeforeDeleting ^ (millisToWaitBeforeDeleting >>> 32));
+    result = 31 * result + (int) (mergeBytesLimit ^ (mergeBytesLimit >>> 32));
+    result = 31 * result + mergeSegmentsLimit;
+    result = 31 * result + maxSegmentsToMove;
+    result = 31 * result + replicantLifetime;
+    result = 31 * result + replicationThrottleLimit;
+    result = 31 * result + balancerComputeThreads;
+    result = 31 * result + (emitBalancingStats ? 1 : 0);
+    result = 31 * result + (killDataSourceWhitelist != null ? killDataSourceWhitelist.hashCode() : 0);
+    return result;
+  }
+
   public static class Builder
   {
     private long millisToWaitBeforeDeleting;
@@ -115,10 +199,11 @@ public class CoordinatorDynamicConfig
     private int replicationThrottleLimit;
     private boolean emitBalancingStats;
     private int balancerComputeThreads;
+    private Set<String> killDataSourceWhitelist;
 
     public Builder()
     {
-      this(15 * 60 * 1000L, 524288000L, 100, 5, 15, 10, 1, false);
+      this(15 * 60 * 1000L, 524288000L, 100, 5, 15, 10, 1, false, null);
     }
 
     private Builder(
@@ -129,7 +214,8 @@ public class CoordinatorDynamicConfig
         int replicantLifetime,
         int replicationThrottleLimit,
         int balancerComputeThreads,
-        boolean emitBalancingStats
+        boolean emitBalancingStats,
+        Set<String> killDataSourceWhitelist
     )
     {
       this.millisToWaitBeforeDeleting = millisToWaitBeforeDeleting;
@@ -140,6 +226,7 @@ public class CoordinatorDynamicConfig
       this.replicationThrottleLimit = replicationThrottleLimit;
       this.emitBalancingStats = emitBalancingStats;
       this.balancerComputeThreads = balancerComputeThreads;
+      this.killDataSourceWhitelist = killDataSourceWhitelist;
     }
 
     public Builder withMillisToWaitBeforeDeleting(long millisToWaitBeforeDeleting)
@@ -184,6 +271,12 @@ public class CoordinatorDynamicConfig
       return this;
     }
 
+    public Builder withKillDataSourceWhitelist(Set<String> killDataSourceWhitelist)
+    {
+      this.killDataSourceWhitelist = killDataSourceWhitelist;
+      return this;
+    }
+
     public CoordinatorDynamicConfig build()
     {
       return new CoordinatorDynamicConfig(
@@ -194,7 +287,8 @@ public class CoordinatorDynamicConfig
           replicantLifetime,
           replicationThrottleLimit,
           balancerComputeThreads,
-          emitBalancingStats
+          emitBalancingStats,
+          killDataSourceWhitelist
       );
     }
   }
