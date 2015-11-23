@@ -25,7 +25,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(value = {
     @JsonSubTypes.Type(name = "insensitive_contains", value = InsensitiveContainsSearchQuerySpec.class),
-    @JsonSubTypes.Type(name = "fragment", value = FragmentSearchQuerySpec.class)
+    @JsonSubTypes.Type(name = "fragment", value = FragmentSearchQuerySpec.class),
+    @JsonSubTypes.Type(name = "regex", value = RegexSearchQuerySpec.class)
 })
 public interface SearchQuerySpec
 {
