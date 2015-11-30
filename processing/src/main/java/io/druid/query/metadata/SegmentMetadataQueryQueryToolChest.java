@@ -114,10 +114,6 @@ public class SegmentMetadataQueryQueryToolChest extends QueryToolChest<SegmentAn
               return arg1;
             }
 
-            if (!query.isMerge()) {
-              throw new ISE("Merging when a merge isn't supposed to happen[%s], [%s]", arg1, arg2);
-            }
-
             List<Interval> newIntervals = JodaUtils.condenseIntervals(
                 Iterables.concat(arg1.getIntervals(), arg2.getIntervals())
             );
@@ -185,9 +181,11 @@ public class SegmentMetadataQueryQueryToolChest extends QueryToolChest<SegmentAn
       public byte[] computeCacheKey(SegmentMetadataQuery query)
       {
         byte[] includerBytes = query.getToInclude().getCacheKey();
-        return ByteBuffer.allocate(1 + includerBytes.length)
+        byte[] analysisTypesBytes = query.getAnalysisTypesCacheKey();
+        return ByteBuffer.allocate(1 + includerBytes.length + analysisTypesBytes.length)
                          .put(SEGMENT_METADATA_CACHE_PREFIX)
                          .put(includerBytes)
+                         .put(analysisTypesBytes)
                          .array();
       }
 

@@ -19,7 +19,9 @@ package io.druid.query.metadata.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import io.druid.common.utils.JodaUtils;
 import io.druid.query.BaseQuery;
 import io.druid.query.DataSource;
@@ -29,18 +31,57 @@ import io.druid.query.spec.MultipleIntervalSegmentSpec;
 import io.druid.query.spec.QuerySegmentSpec;
 import org.joda.time.Interval;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
 {
+  /* The SegmentMetadataQuery cache key may contain UTF-8 column name strings.
+   * Prepend 0xFF before the analysisTypes as a separator to avoid
+   * any potential confusion with string values.
+   */
+  public static final byte[] ANALYSIS_TYPES_CACHE_PREFIX = new byte[]{(byte) 0xFF};
+
+  public enum AnalysisType
+  {
+    CARDINALITY,
+    SIZE;
+
+    @JsonValue
+    @Override
+    public String toString()
+    {
+      return this.name().toLowerCase();
+    }
+
+    @JsonCreator
+    public static AnalysisType fromString(String name)
+    {
+      return valueOf(name.toUpperCase());
+    }
+
+    public byte[] getCacheKey()
+    {
+      return new byte[]{(byte) this.ordinal()};
+    }
+  }
+
   public static final Interval DEFAULT_INTERVAL = new Interval(
       JodaUtils.MIN_INSTANT, JodaUtils.MAX_INSTANT
+  );
+
+  public static final EnumSet<AnalysisType> DEFAULT_ANALYSIS_TYPES = EnumSet.of(
+      AnalysisType.CARDINALITY,
+      AnalysisType.SIZE
   );
 
   private final ColumnIncluderator toInclude;
   private final boolean merge;
   private final boolean usingDefaultInterval;
+  private final EnumSet<AnalysisType> analysisTypes;
 
   @JsonCreator
   public SegmentMetadataQuery(
@@ -49,6 +90,7 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
       @JsonProperty("toInclude") ColumnIncluderator toInclude,
       @JsonProperty("merge") Boolean merge,
       @JsonProperty("context") Map<String, Object> context,
+      @JsonProperty("analysisTypes") EnumSet<AnalysisType> analysisTypes,
       @JsonProperty("usingDefaultInterval") Boolean useDefaultInterval
   )
   {
@@ -64,9 +106,9 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
     } else {
       this.usingDefaultInterval = useDefaultInterval == null ? false : useDefaultInterval;
     }
-
     this.toInclude = toInclude == null ? new AllColumnIncluderator() : toInclude;
     this.merge = merge == null ? false : merge;
+    this.analysisTypes = (analysisTypes == null) ? DEFAULT_ANALYSIS_TYPES : analysisTypes;
     Preconditions.checkArgument(
         dataSource instanceof TableDataSource,
         "SegmentMetadataQuery only supports table datasource"
@@ -103,6 +145,42 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
     return Query.SEGMENT_METADATA;
   }
 
+  @JsonProperty
+  public EnumSet getAnalysisTypes()
+  {
+    return analysisTypes;
+  }
+
+  public boolean hasCardinality()
+  {
+    return analysisTypes.contains(AnalysisType.CARDINALITY);
+  }
+
+  public boolean hasSize()
+  {
+    return analysisTypes.contains(AnalysisType.SIZE);
+  }
+
+  public byte[] getAnalysisTypesCacheKey()
+  {
+    int size = 1;
+    List<byte[]> typeBytesList = Lists.newArrayListWithExpectedSize(analysisTypes.size());
+    for (AnalysisType analysisType : analysisTypes) {
+      final byte[] bytes = analysisType.getCacheKey();
+      typeBytesList.add(bytes);
+      size += bytes.length;
+    }
+
+    final ByteBuffer bytes = ByteBuffer.allocate(size);
+    bytes.put(ANALYSIS_TYPES_CACHE_PREFIX);
+    for (byte[] typeBytes : typeBytesList) {
+      bytes.put(typeBytes);
+    }
+
+    return bytes.array();
+  }
+
+
   @Override
   public Query<SegmentAnalysis> withOverriddenContext(Map<String, Object> contextOverride)
   {
@@ -112,6 +190,7 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
         toInclude,
         merge,
         computeOverridenContext(contextOverride),
+        analysisTypes,
         usingDefaultInterval
     );
   }
@@ -125,6 +204,7 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
         toInclude,
         merge,
         getContext(),
+        analysisTypes,
         usingDefaultInterval
     );
   }
@@ -138,6 +218,7 @@ public class SegmentMetadataQuery extends BaseQuery<SegmentAnalysis>
         toInclude,
         merge,
         getContext(),
+        analysisTypes,
         usingDefaultInterval
     );
   }

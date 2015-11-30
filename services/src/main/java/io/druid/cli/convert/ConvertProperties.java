@@ -20,16 +20,15 @@ package io.druid.cli.convert;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.util.Sets;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.metamx.common.guava.CloseQuietly;
 import com.metamx.common.logger.Logger;
-import io.airlift.command.Command;
-import io.airlift.command.Option;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 import io.druid.jackson.DefaultObjectMapper;
 
 import java.io.BufferedWriter;
@@ -41,7 +40,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -72,9 +70,9 @@ public class ConvertProperties implements Runnable
       new Remove("druid.db.connector.useValidationQuery"),
       new Rename("druid.db.connector.createTables", "druid.metadata.storage.connector.createTables"),
       new Rename("druid.db.tables.base", "druid.metadata.storage.tables.base"),
-      new Rename("druid.db.tables.configTable", "druid.metadata.storage.tables.configTable"),
-      new Rename("druid.db.tables.segmentTable", "druid.metadata.storage.tables.segmentTable"),
-      new Rename("druid.db.tables.ruleTable", "druid.metadata.storage.tables.ruleTable"),
+      new Rename("druid.db.tables.configTable", "druid.metadata.storage.tables.config"),
+      new Rename("druid.db.tables.segmentTable", "druid.metadata.storage.tables.segments"),
+      new Rename("druid.db.tables.ruleTable", "druid.metadata.storage.tables.rules"),
       new Rename("druid.db.tables.taskLock", "druid.metadata.storage.tables.taskLock"),
       new Rename("druid.db.tables.tasks", "druid.metadata.storage.tables.tasks"),
       new Rename("druid.db.tables.taskLog", "druid.metadata.storage.tables.taskLog"),

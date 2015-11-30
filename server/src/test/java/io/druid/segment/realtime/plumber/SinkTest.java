@@ -23,16 +23,17 @@ import com.metamx.common.Granularity;
 import io.druid.data.input.InputRow;
 import io.druid.data.input.Row;
 import io.druid.granularity.QueryGranularity;
+import io.druid.jackson.DefaultObjectMapper;
 import io.druid.query.aggregation.AggregatorFactory;
 import io.druid.query.aggregation.CountAggregatorFactory;
 import io.druid.segment.indexing.DataSchema;
 import io.druid.segment.indexing.RealtimeTuningConfig;
 import io.druid.segment.indexing.granularity.UniformGranularitySpec;
 import io.druid.segment.realtime.FireHydrant;
-import junit.framework.Assert;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Period;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
@@ -48,7 +49,8 @@ public class SinkTest
         "test",
         null,
         new AggregatorFactory[]{new CountAggregatorFactory("rows")},
-        new UniformGranularitySpec(Granularity.HOUR, QueryGranularity.MINUTE, null)
+        new UniformGranularitySpec(Granularity.HOUR, QueryGranularity.MINUTE, null),
+        new DefaultObjectMapper()
     );
 
     final Interval interval = new Interval("2013-01-01/2013-01-02");
@@ -65,6 +67,7 @@ public class SinkTest
         null,
         false,
         false,
+        null,
         null
     );
     final Sink sink = new Sink(interval, schema, tuningConfig, version);

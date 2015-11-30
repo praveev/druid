@@ -17,6 +17,8 @@
 
 package io.druid.segment.realtime.plumber;
 
+import com.google.common.base.Supplier;
+import io.druid.data.input.Committer;
 import io.druid.data.input.InputRow;
 import io.druid.query.Query;
 import io.druid.query.QueryRunner;
@@ -27,30 +29,33 @@ public interface Plumber
   /**
    * Perform any initial setup. Should be called before using any other methods, and should be paired
    * with a corresponding call to {@link #finishJob}.
+   *
+   * @return the metadata of the "newest" segment that might have previously been persisted
    */
-  public void startJob();
+  Object startJob();
 
   /**
-   * @param row - the row to insert
+   * @param row               the row to insert
+   * @param committerSupplier supplier of a committer associated with all data that has been added, including this row
+   *
    * @return - positive numbers indicate how many summarized rows exist in the index for that timestamp,
    * -1 means a row was thrown away because it was too late
    */
-  public int add(InputRow row) throws IndexSizeExceededException;
-  public <T> QueryRunner<T> getQueryRunner(Query<T> query);
+  int add(InputRow row, Supplier<Committer> committerSupplier) throws IndexSizeExceededException;
+
+  <T> QueryRunner<T> getQueryRunner(Query<T> query);
 
   /**
    * Persist any in-memory indexed data to durable storage. This may be only somewhat durable, e.g. the
    * machine's local disk.
    *
-   * @param commitRunnable code to run after persisting data
+   * @param committer committer to use after persisting data
    */
-  void persist(Runnable commitRunnable);
+  void persist(Committer committer);
 
   /**
    * Perform any final processing and clean up after ourselves. Should be called after all data has been
    * fed into sinks and persisted.
    */
-  public void finishJob();
-
-  public Sink getSink(long timestamp);
+  void finishJob();
 }

@@ -20,6 +20,7 @@ package io.druid.client.cache;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Ints;
+import com.metamx.emitter.service.ServiceEmitter;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -102,7 +103,10 @@ public class MapCache implements Cache
   {
     Map<NamedKey, byte[]> retVal = Maps.newHashMap();
     for (NamedKey key : keys) {
-      retVal.put(key, get(key));
+      final byte[] value = get(key);
+      if (value != null) {
+        retVal.put(key, value);
+      }
     }
     return retVal;
   }
@@ -132,7 +136,7 @@ public class MapCache implements Cache
           toRemove.add(next);
         }
       }
-      for(ByteBuffer key : toRemove) {
+      for (ByteBuffer key : toRemove) {
         baseMap.remove(key);
       }
     }
@@ -162,5 +166,11 @@ public class MapCache implements Cache
   public boolean isLocal()
   {
     return true;
+  }
+
+  @Override
+  public void doMonitor(ServiceEmitter emitter)
+  {
+    // No special monitoring
   }
 }

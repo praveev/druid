@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -50,11 +51,13 @@ public class MergeTask extends MergeTaskBase
       @JsonProperty("dataSource") String dataSource,
       @JsonProperty("segments") List<DataSegment> segments,
       @JsonProperty("aggregations") List<AggregatorFactory> aggregators,
-      @JsonProperty("indexSpec") IndexSpec indexSpec
+      @JsonProperty("indexSpec") IndexSpec indexSpec,
+      @JsonProperty("context") Map<String, Object> context
+
   )
   {
-    super(id, dataSource, segments);
-    this.aggregators = aggregators;
+    super(id, dataSource, segments, context);
+    this.aggregators = Preconditions.checkNotNull(aggregators, "null aggregations");
     this.indexSpec = indexSpec == null ? new IndexSpec() : indexSpec;
   }
 

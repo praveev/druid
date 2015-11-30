@@ -146,23 +146,23 @@ SELECT COUNT(*) FROM ( SELECT DIM1, DIM2, DIM3 FROM <datasource> GROUP BY DIM1, 
 
 **Example**
 
-Determine the number of distinct categories items are assigned to.
+Determine the number of distinct countries people are living in or have come from.
 
 ```json
 {
   "type": "cardinality",
-  "name": "distinct_values",
-  "fieldNames": [ "main_category", "secondary_category" ]
+  "name": "distinct_countries",
+  "fieldNames": [ "coutry_of_origin", "country_of_residence" ]
 }
 ```
 
-Determine the number of distinct   are assigned to.
+Determine the number of distinct people (i.e. combinations of first and last name).
 
 ```json
 {
   "type": "cardinality",
-  "name": "distinct_values",
-  "fieldNames": [ "", "secondary_category" ],
+  "name": "distinct_people",
+  "fieldNames": [ "first_name", "last_name" ],
   "byRow" : true
 }
 ```
@@ -185,7 +185,7 @@ A filtered aggregator wraps any given aggregator, but only aggregates the values
 
 This makes it possible to compute the results of a filtered and an unfiltered aggregation simultaneously, without having to issue multiple queries, and use both results as part of post-aggregations.
 
-*Limitations:* The filtered aggregator currently only supports 'or', 'and', 'selector' and 'not' filters, i.e. matching one or multiple dimensions against a single value.
+*Limitations:* The filtered aggregator currently only supports 'or', 'and', 'selector', 'not' and 'Extraction' filters, i.e. matching one or multiple dimensions against a single value.
 
 *Note:* If only the filtered results are required, consider putting the filter on the query itself, which will be much faster since it does not require scanning all the data.
 

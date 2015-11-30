@@ -20,7 +20,6 @@
 package io.druid.metadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -28,9 +27,9 @@ import io.druid.jackson.DefaultObjectMapper;
 import io.druid.timeline.DataSegment;
 import io.druid.timeline.partition.LinearShardSpec;
 import org.joda.time.Interval;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.tweak.HandleCallback;
@@ -40,12 +39,8 @@ import java.util.Set;
 
 public class IndexerSQLMetadataStorageCoordinatorTest
 {
-
-  private final MetadataStorageTablesConfig tablesConfig = MetadataStorageTablesConfig.fromBase("test");
-  private final TestDerbyConnector derbyConnector = new TestDerbyConnector(
-      Suppliers.ofInstance(new MetadataStorageConnectorConfig()),
-      Suppliers.ofInstance(tablesConfig)
-  );
+  @Rule
+  public final TestDerbyConnector.DerbyConnectorRule derbyConnectorRule = new TestDerbyConnector.DerbyConnectorRule();
   private final ObjectMapper mapper = new DefaultObjectMapper();
   private final DataSegment defaultSegment = new DataSegment(
       "dataSource",
@@ -58,46 +53,57 @@ public class IndexerSQLMetadataStorageCoordinatorTest
       9,
       100
   );
-  private final Set<DataSegment> segments = ImmutableSet.of(defaultSegment);
+
+  private final DataSegment defaultSegment2 = new DataSegment(
+      "dataSource",
+      Interval.parse("2015-01-01T00Z/2015-01-02T00Z"),
+      "version",
+      ImmutableMap.<String, Object>of(),
+      ImmutableList.of("dim1"),
+      ImmutableList.of("m1"),
+      new LinearShardSpec(1),
+      9,
+      100
+  );
+  private final Set<DataSegment> segments = ImmutableSet.of(defaultSegment, defaultSegment2);
   IndexerSQLMetadataStorageCoordinator coordinator;
+  private TestDerbyConnector derbyConnector;
 
   @Before
   public void setUp()
   {
+    derbyConnector = derbyConnectorRule.getConnector();
     mapper.registerSubtypes(LinearShardSpec.class);
     derbyConnector.createTaskTables();
     derbyConnector.createSegmentTable();
     coordinator = new IndexerSQLMetadataStorageCoordinator(
         mapper,
-        tablesConfig,
+        derbyConnectorRule.metadataTablesConfigSupplier().get(),
         derbyConnector
     );
   }
 
-  @After
-  public void tearDown()
-  {
-    derbyConnector.tearDown();
-  }
-
   private void unUseSegment()
   {
-    Assert.assertEquals(
-        1, (int) derbyConnector.getDBI().<Integer>withHandle(
-            new HandleCallback<Integer>()
-            {
-              @Override
-              public Integer withHandle(Handle handle) throws Exception
+    for (final DataSegment segment : segments) {
+      Assert.assertEquals(
+          1, (int) derbyConnector.getDBI().<Integer>withHandle(
+              new HandleCallback<Integer>()
               {
-                return handle.createStatement(
-                    String.format("UPDATE %s SET used = false WHERE id = :id", tablesConfig.getSegmentsTable())
-                )
-                             .bind("id", defaultSegment.getIdentifier())
-                             .execute();
+                @Override
+                public Integer withHandle(Handle handle) throws Exception
+                {
+                  return handle.createStatement(
+                      String.format(
+                          "UPDATE %s SET used = false WHERE id = :id",
+                          derbyConnectorRule.metadataTablesConfigSupplier().get().getSegmentsTable()
+                      )
+                  ).bind("id", segment.getIdentifier()).execute();
+                }
               }
-            }
-        )
-    );
+          )
+      );
+    }
   }
 
   @Test
@@ -107,7 +113,7 @@ public class IndexerSQLMetadataStorageCoordinatorTest
     Assert.assertArrayEquals(
         mapper.writeValueAsString(defaultSegment).getBytes("UTF-8"),
         derbyConnector.lookup(
-            tablesConfig.getSegmentsTable(),
+            derbyConnectorRule.metadataTablesConfigSupplier().get().getSegmentsTable(),
             "id",
             "payload",
             defaultSegment.getIdentifier()
@@ -243,7 +249,10 @@ public class IndexerSQLMetadataStorageCoordinatorTest
     Assert.assertTrue(
         coordinator.getUnusedSegmentsForInterval(
             defaultSegment.getDataSource(),
-            new Interval(defaultSegment.getInterval().getStart().minus(1), defaultSegment.getInterval().getStart().plus(1))
+            new Interval(
+                defaultSegment.getInterval().getStart().minus(1),
+                defaultSegment.getInterval().getStart().plus(1)
+            )
         ).isEmpty()
     );
   }

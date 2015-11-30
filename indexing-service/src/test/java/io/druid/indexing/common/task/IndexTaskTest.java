@@ -17,8 +17,8 @@
 
 package io.druid.indexing.common.task;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.metamx.common.Granularity;
 import io.druid.data.input.impl.CSVParseSpec;
 import io.druid.data.input.impl.DimensionsSpec;
@@ -48,26 +48,30 @@ import io.druid.timeline.partition.ShardSpec;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class IndexTaskTest
 {
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private final IndexSpec indexSpec = new IndexSpec();
+  private final ObjectMapper jsonMapper = new DefaultObjectMapper();
 
   @Test
   public void testDeterminePartitions() throws Exception
   {
-    File tmpDir = Files.createTempDir();
-    tmpDir.deleteOnExit();
+    File tmpDir = temporaryFolder.newFolder();
 
     File tmpFile = File.createTempFile("druid", "index", tmpDir);
-    tmpFile.deleteOnExit();
 
     PrintWriter writer = new PrintWriter(tmpFile);
     writer.println("2014-01-01T00:00:10Z,a,1");
@@ -77,24 +81,28 @@ public class IndexTaskTest
 
     IndexTask indexTask = new IndexTask(
         null,
+        null,
         new IndexTask.IndexIngestionSpec(
             new DataSchema(
                 "test",
-                new StringInputRowParser(
-                    new CSVParseSpec(
-                        new TimestampSpec(
-                            "ts",
-                            "auto",
-                            null
-                        ),
-                        new DimensionsSpec(
-                            Arrays.asList("ts"),
-                            Lists.<String>newArrayList(),
-                            Lists.<SpatialDimensionSchema>newArrayList()
-                        ),
-                        null,
-                        Arrays.asList("ts", "dim", "val")
-                    )
+                jsonMapper.convertValue(
+                    new StringInputRowParser(
+                        new CSVParseSpec(
+                            new TimestampSpec(
+                                "ts",
+                                "auto",
+                                null
+                            ),
+                            new DimensionsSpec(
+                                Arrays.asList("ts"),
+                                Lists.<String>newArrayList(),
+                                Lists.<SpatialDimensionSchema>newArrayList()
+                            ),
+                            null,
+                            Arrays.asList("ts", "dim", "val")
+                        )
+                    ),
+                    Map.class
                 ),
                 new AggregatorFactory[]{
                     new LongSumAggregatorFactory("val", "val")
@@ -103,7 +111,8 @@ public class IndexTaskTest
                     Granularity.DAY,
                     QueryGranularity.MINUTE,
                     Arrays.asList(new Interval("2014/2015"))
-                )
+                ),
+                jsonMapper
             ),
             new IndexTask.IndexIOConfig(
                 new LocalFirehoseFactory(
@@ -119,7 +128,8 @@ public class IndexTaskTest
                 indexSpec
             )
         ),
-        new DefaultObjectMapper()
+        new DefaultObjectMapper(),
+        null
     );
 
     final List<DataSegment> segments = runTask(indexTask);
@@ -130,11 +140,9 @@ public class IndexTaskTest
   @Test
   public void testWithArbitraryGranularity() throws Exception
   {
-    File tmpDir = Files.createTempDir();
-    tmpDir.deleteOnExit();
+    File tmpDir = temporaryFolder.newFolder();
 
     File tmpFile = File.createTempFile("druid", "index", tmpDir);
-    tmpFile.deleteOnExit();
 
     PrintWriter writer = new PrintWriter(tmpFile);
     writer.println("2014-01-01T00:00:10Z,a,1");
@@ -144,24 +152,28 @@ public class IndexTaskTest
 
     IndexTask indexTask = new IndexTask(
         null,
+        null,
         new IndexTask.IndexIngestionSpec(
             new DataSchema(
                 "test",
-                new StringInputRowParser(
-                    new CSVParseSpec(
-                        new TimestampSpec(
-                            "ts",
-                            "auto",
-                            null
-                        ),
-                        new DimensionsSpec(
-                            Arrays.asList("ts"),
-                            Lists.<String>newArrayList(),
-                            Lists.<SpatialDimensionSchema>newArrayList()
-                        ),
-                        null,
-                        Arrays.asList("ts", "dim", "val")
-                    )
+                jsonMapper.convertValue(
+                    new StringInputRowParser(
+                        new CSVParseSpec(
+                            new TimestampSpec(
+                                "ts",
+                                "auto",
+                                null
+                            ),
+                            new DimensionsSpec(
+                                Arrays.asList("ts"),
+                                Lists.<String>newArrayList(),
+                                Lists.<SpatialDimensionSchema>newArrayList()
+                            ),
+                            null,
+                            Arrays.asList("ts", "dim", "val")
+                        )
+                    ),
+                    Map.class
                 ),
                 new AggregatorFactory[]{
                     new LongSumAggregatorFactory("val", "val")
@@ -169,7 +181,8 @@ public class IndexTaskTest
                 new ArbitraryGranularitySpec(
                     QueryGranularity.MINUTE,
                     Arrays.asList(new Interval("2014/2015"))
-                )
+                ),
+                jsonMapper
             ),
             new IndexTask.IndexIOConfig(
                 new LocalFirehoseFactory(
@@ -180,7 +193,8 @@ public class IndexTaskTest
             ),
             null
         ),
-        new DefaultObjectMapper()
+        new DefaultObjectMapper(),
+        null
     );
 
     List<DataSegment> segments = runTask(indexTask);
@@ -229,7 +243,7 @@ public class IndexTaskTest
             segments.add(segment);
             return segment;
           }
-        }, null, null, null, null, null, null, null, null, null, null, null
+        }, null, null, null, null, null, null, null, null, null, null, temporaryFolder.newFolder()
         )
     );
 
@@ -239,11 +253,9 @@ public class IndexTaskTest
   @Test
   public void testIntervalBucketing() throws Exception
   {
-    File tmpDir = Files.createTempDir();
-    tmpDir.deleteOnExit();
+    File tmpDir = temporaryFolder.newFolder();
 
     File tmpFile = File.createTempFile("druid", "index", tmpDir);
-    tmpFile.deleteOnExit();
 
     PrintWriter writer = new PrintWriter(tmpFile);
     writer.println("2015-03-01T07:59:59.977Z,a,1");
@@ -252,24 +264,28 @@ public class IndexTaskTest
 
     IndexTask indexTask = new IndexTask(
         null,
+        null,
         new IndexTask.IndexIngestionSpec(
             new DataSchema(
                 "test",
-                new StringInputRowParser(
-                    new CSVParseSpec(
-                        new TimestampSpec(
-                            "ts",
-                            "auto",
-                            null
-                        ),
-                        new DimensionsSpec(
-                            Arrays.asList("dim"),
-                            Lists.<String>newArrayList(),
-                            Lists.<SpatialDimensionSchema>newArrayList()
-                        ),
-                        null,
-                        Arrays.asList("ts", "dim", "val")
-                    )
+                jsonMapper.convertValue(
+                    new StringInputRowParser(
+                        new CSVParseSpec(
+                            new TimestampSpec(
+                                "ts",
+                                "auto",
+                                null
+                            ),
+                            new DimensionsSpec(
+                                Arrays.asList("dim"),
+                                Lists.<String>newArrayList(),
+                                Lists.<SpatialDimensionSchema>newArrayList()
+                            ),
+                            null,
+                            Arrays.asList("ts", "dim", "val")
+                        )
+                    ),
+                    Map.class
                 ),
                 new AggregatorFactory[]{
                     new LongSumAggregatorFactory("val", "val")
@@ -278,7 +294,8 @@ public class IndexTaskTest
                     Granularity.HOUR,
                     QueryGranularity.HOUR,
                     Arrays.asList(new Interval("2015-03-01T08:00:00Z/2015-03-01T09:00:00Z"))
-                )
+                ),
+                jsonMapper
             ),
             new IndexTask.IndexIOConfig(
                 new LocalFirehoseFactory(
@@ -289,7 +306,8 @@ public class IndexTaskTest
             ),
             null
         ),
-        new DefaultObjectMapper()
+        new DefaultObjectMapper(),
+        null
     );
 
     final List<DataSegment> segments = runTask(indexTask);
@@ -307,7 +325,11 @@ public class IndexTaskTest
         null,
         new IndexSpec()
     );
-    RealtimeTuningConfig realtimeTuningConfig = IndexTask.convertTuningConfig(spec, config);
+    RealtimeTuningConfig realtimeTuningConfig = IndexTask.convertTuningConfig(
+        spec,
+        config.getRowFlushBoundary(),
+        config.getIndexSpec()
+    );
     Assert.assertEquals(realtimeTuningConfig.getMaxRowsInMemory(), config.getRowFlushBoundary());
     Assert.assertEquals(realtimeTuningConfig.getShardSpec(), spec);
     Assert.assertEquals(realtimeTuningConfig.getIndexSpec(), indexSpec);

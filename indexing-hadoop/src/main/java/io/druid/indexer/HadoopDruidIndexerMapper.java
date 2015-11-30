@@ -25,6 +25,7 @@ import io.druid.data.input.impl.StringInputRowParser;
 import io.druid.segment.indexing.granularity.GranularitySpec;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,11 +42,11 @@ import org.joda.time.DateTime;
 
 import com.metamx.common.RE;
 
-public abstract class HadoopDruidIndexerMapper<KEYOUT, VALUEOUT> extends Mapper<Writable, Writable, KEYOUT, VALUEOUT>
+public abstract class HadoopDruidIndexerMapper<KEYOUT, VALUEOUT> extends Mapper<Object, Object, KEYOUT, VALUEOUT>
 {
   private static final Logger log = new Logger(HadoopDruidIndexerMapper.class);
 
-  private HadoopDruidIndexerConfig config;
+  protected HadoopDruidIndexerConfig config;
   private InputRowParser parser;
   protected GranularitySpec granularitySpec;
 
@@ -70,7 +71,7 @@ public abstract class HadoopDruidIndexerMapper<KEYOUT, VALUEOUT> extends Mapper<
 
   @Override
   protected void map(
-      Writable key, Writable value, Context context
+      Object key, Object value, Context context
   ) throws IOException, InterruptedException
   {
     try {
@@ -99,17 +100,21 @@ public abstract class HadoopDruidIndexerMapper<KEYOUT, VALUEOUT> extends Mapper<
     }
   }
 
-  public final static InputRow parseInputRow(Writable value, InputRowParser parser)
+  public final static InputRow parseInputRow(Object value, InputRowParser parser)
   {
-    if(parser instanceof StringInputRowParser && value instanceof Text) {
+    if (parser instanceof StringInputRowParser && value instanceof Text) {
       //Note: This is to ensure backward compatibility with 0.7.0 and before
-      return ((StringInputRowParser)parser).parse(value.toString());
+      //HadoopyStringInputRowParser can handle this and this special case is not needed
+      //except for backward compatibility
+      return ((StringInputRowParser) parser).parse(value.toString());
+    } else if (value instanceof InputRow) {
+      return (InputRow) value;
     } else {
       return parser.parse(value);
     }
   }
 
-  abstract protected void innerMap(InputRow inputRow, Writable value, Context context)
+  abstract protected void innerMap(InputRow inputRow, Object value, Context context)
       throws IOException, InterruptedException;
 
 }

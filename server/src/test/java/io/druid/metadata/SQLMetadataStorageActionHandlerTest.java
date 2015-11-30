@@ -20,16 +20,15 @@ package io.druid.metadata;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.metamx.common.Pair;
 import io.druid.jackson.DefaultObjectMapper;
 import org.joda.time.DateTime;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -37,19 +36,16 @@ import java.util.Map;
 
 public class SQLMetadataStorageActionHandlerTest
 {
+  @Rule
+  public final TestDerbyConnector.DerbyConnectorRule derbyConnectorRule = new TestDerbyConnector.DerbyConnectorRule();
+
   private static final ObjectMapper jsonMapper = new DefaultObjectMapper();
-  private TestDerbyConnector connector;
-  private MetadataStorageTablesConfig tablesConfig = MetadataStorageTablesConfig.fromBase("test");
-  private SQLMetadataStorageActionHandler<Map<String, Integer>,Map<String, Integer>,Map<String, String>,Map<String, Integer>> handler;
+  private SQLMetadataStorageActionHandler<Map<String, Integer>, Map<String, Integer>, Map<String, String>, Map<String, Integer>> handler;
 
   @Before
-  public void setUp() throws Exception {
-    MetadataStorageConnectorConfig config =  new MetadataStorageConnectorConfig();
-
-    connector = new TestDerbyConnector(
-        Suppliers.ofInstance(config),
-        Suppliers.ofInstance(tablesConfig)
-    );
+  public void setUp() throws Exception
+  {
+    TestDerbyConnector connector = derbyConnectorRule.getConnector();
 
     final String entryType = "entry";
     final String entryTable = "entries";
@@ -57,9 +53,9 @@ public class SQLMetadataStorageActionHandlerTest
     final String lockTable = "locks";
 
 
-    connector.createEntryTable(connector.getDBI(), entryTable);
-    connector.createLockTable(connector.getDBI(), lockTable, entryType);
-    connector.createLogTable(connector.getDBI(), logTable, entryType);
+    connector.createEntryTable(entryTable);
+    connector.createLockTable(lockTable, entryType);
+    connector.createLogTable(logTable, entryType);
 
 
     handler = new SQLMetadataStorageActionHandler<>(
@@ -67,39 +63,43 @@ public class SQLMetadataStorageActionHandlerTest
         jsonMapper,
         new MetadataStorageActionHandlerTypes<Map<String, Integer>, Map<String, Integer>, Map<String, String>, Map<String, Integer>>()
         {
-      @Override
-      public TypeReference<Map<String, Integer>> getEntryType()
-      {
-        return new TypeReference<Map<String, Integer>>() {};
-      }
+          @Override
+          public TypeReference<Map<String, Integer>> getEntryType()
+          {
+            return new TypeReference<Map<String, Integer>>()
+            {
+            };
+          }
 
-      @Override
-      public TypeReference<Map<String, Integer>> getStatusType()
-      {
-        return new TypeReference<Map<String, Integer>>() {};
-      }
+          @Override
+          public TypeReference<Map<String, Integer>> getStatusType()
+          {
+            return new TypeReference<Map<String, Integer>>()
+            {
+            };
+          }
 
-      @Override
-      public TypeReference<Map<String, String>> getLogType()
-      {
-        return new TypeReference<Map<String, String>>() {};
-      }
+          @Override
+          public TypeReference<Map<String, String>> getLogType()
+          {
+            return new TypeReference<Map<String, String>>()
+            {
+            };
+          }
 
-      @Override
-      public TypeReference<Map<String, Integer>> getLockType()
-      {
-        return new TypeReference<Map<String, Integer>>() {};
-      }
-    },
+          @Override
+          public TypeReference<Map<String, Integer>> getLockType()
+          {
+            return new TypeReference<Map<String, Integer>>()
+            {
+            };
+          }
+        },
         entryType,
         entryTable,
         logTable,
-        lockTable);
-  }
-
-  @After
-  public void tearDown() {
-    connector.tearDown();
+        lockTable
+    );
   }
 
   @Test
@@ -240,7 +240,7 @@ public class SQLMetadataStorageActionHandlerTest
     );
 
     long lockId = locks.keySet().iterator().next();
-    Assert.assertTrue(handler.removeLock(lockId));
+    handler.removeLock(lockId);
     locks.remove(lockId);
 
     final Map<Long, Map<String, Integer>> updated = handler.getLocks(entryId);

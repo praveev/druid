@@ -20,6 +20,7 @@ package io.druid.client.cache;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import com.metamx.common.StringUtils;
+import com.metamx.emitter.service.ServiceEmitter;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -31,6 +32,13 @@ public interface Cache
 {
   public byte[] get(NamedKey key);
   public void put(NamedKey key, byte[] value);
+
+  /**
+   * Resulting map should not contain any null values (i.e. cache misses should not be included)
+   *
+   * @param keys
+   * @return
+   */
   public Map<NamedKey, byte[]> getBulk(Iterable<NamedKey> keys);
 
   public void close(String namespace);
@@ -38,6 +46,12 @@ public interface Cache
   public CacheStats getStats();
 
   public boolean isLocal();
+
+  /**
+   * Custom metrics not covered by CacheStats may be emitted by this method.
+   * @param emitter The service emitter to emit on.
+   */
+  public void doMonitor(ServiceEmitter emitter);
 
   public class NamedKey
   {

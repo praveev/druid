@@ -50,6 +50,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -164,12 +165,20 @@ public class SegmentMetadataQueryTest
     String queryStr = "{\n"
                       + "  \"queryType\":\"segmentMetadata\",\n"
                       + "  \"dataSource\":\"test_ds\",\n"
-                      + "  \"intervals\":[\"2013-12-04T00:00:00.000Z/2013-12-05T00:00:00.000Z\"]\n"
+                      + "  \"intervals\":[\"2013-12-04T00:00:00.000Z/2013-12-05T00:00:00.000Z\"],\n"
+                      + "  \"analysisTypes\":[\"cardinality\",\"size\"]\n"
                       + "}";
+
+    EnumSet<SegmentMetadataQuery.AnalysisType> expectedAnalysisTypes = EnumSet.of(
+        SegmentMetadataQuery.AnalysisType.CARDINALITY,
+        SegmentMetadataQuery.AnalysisType.SIZE
+    );
+
     Query query = mapper.readValue(queryStr, Query.class);
     Assert.assertTrue(query instanceof SegmentMetadataQuery);
     Assert.assertEquals("test_ds", Iterables.getOnlyElement(query.getDataSource().getNames()));
     Assert.assertEquals(new Interval("2013-12-04T00:00:00.000Z/2013-12-05T00:00:00.000Z"), query.getIntervals().get(0));
+    Assert.assertEquals(expectedAnalysisTypes, ((SegmentMetadataQuery) query).getAnalysisTypes());
 
     // test serialize and deserialize
     Assert.assertEquals(query, mapper.readValue(mapper.writeValueAsString(query), Query.class));
@@ -365,5 +374,27 @@ public class SegmentMetadataQueryTest
     for (int i = 0; i < filteredSegments2.size(); i++) {
       Assert.assertEquals(expectedSegments2.get(i).getInterval(), filteredSegments2.get(i).getInterval());
     }
+  }
+
+  @Test
+  public void testCacheKeyWithListColumnIncluderator()
+  {
+    SegmentMetadataQuery oneColumnQuery = Druids.newSegmentMetadataQueryBuilder()
+                                                .dataSource("testing")
+                                                .toInclude(new ListColumnIncluderator(Arrays.asList("foo")))
+                                                .build();
+
+    SegmentMetadataQuery twoColumnQuery = Druids.newSegmentMetadataQueryBuilder()
+                                                .dataSource("testing")
+                                                .toInclude(new ListColumnIncluderator(Arrays.asList("fo", "o")))
+                                                .build();
+
+    final byte[] oneColumnQueryCacheKey = new SegmentMetadataQueryQueryToolChest(null).getCacheStrategy(oneColumnQuery)
+                                                                                      .computeCacheKey(oneColumnQuery);
+
+    final byte[] twoColumnQueryCacheKey = new SegmentMetadataQueryQueryToolChest(null).getCacheStrategy(twoColumnQuery)
+                                                                                      .computeCacheKey(twoColumnQuery);
+
+    Assert.assertFalse(Arrays.equals(oneColumnQueryCacheKey, twoColumnQueryCacheKey));
   }
 }

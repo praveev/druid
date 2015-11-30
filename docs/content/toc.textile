@@ -13,6 +13,8 @@ h2. Data Ingestion
 * "Overview":../ingestion/overview.html
 * "Data Formats":../ingestion/data-formats.html
 * "Data Schema":../ingestion/index.html
+* "Schema Design":../ingestion/schema-design.html
+* "Schema Changes":../ingestion/schema-changes.html
 * "Realtime Ingestion":../ingestion/realtime-ingestion.html
 * "Batch Ingestion":../ingestion/batch-ingestion.html
 * "FAQ":../ingestion/faq.html
@@ -27,11 +29,15 @@ h2. Querying
 * "DataSource Metadata":../querying/datasourcemetadataquery.html
 * "Search":../querying/searchquery.html
 * Components
+** "Datasources":../querying/datasource.html
 ** "Filters":../querying/filters.html
 ** "Aggregations":../querying/aggregations.html
 ** "Post Aggregations":../querying/post-aggregations.html
 ** "Granularities":../querying/granularities.html
 ** "DimensionSpecs":../querying/dimensionspecs.html
+** "Context":../querying/query-context.html
+* "SQL":../querying/sql.html
+* "Joins":../querying/joins.html
 
 h2. Design
 * "Overview":../design/design.html
@@ -56,6 +62,7 @@ h2. Operations
 * "Alerts":../operations/alerts.html
 * "Updating the Cluster":../operations/rolling-updates.html
 * "Different Hadoop Versions":../operations/other-hadoop.html
+* "Multitenancy Considerations":../operations/multitenancy.html
 * "Performance FAQ":../operations/performance-faq.html
 
 h2. Configuration
@@ -69,6 +76,7 @@ h2. Configuration
 * "Simple Cluster Configuration":../configuration/simple-cluster.html
 * "Production Cluster Configuration":../configuration/production-cluster.html
 * "Production Hadoop Configuration":../configuration/hadoop.html
+* "Production Zookeeper Configuration":../configuration/zookeeper.html
 
 h2. Development
 * "Libraries":../development/libraries.html
@@ -82,6 +90,7 @@ h2. Development
 ** "Select Query":../development/select-query.html
 ** "Approximate Histograms and Quantiles":../development/approximate-histograms.html
 ** "Router node":../development/router.html
+** "New Kafka Firehose":../development/kafka-simple-consumer-firehose.html
 
 h2. Misc
 * "Papers & Talks":../misc/papers-and-talks.html

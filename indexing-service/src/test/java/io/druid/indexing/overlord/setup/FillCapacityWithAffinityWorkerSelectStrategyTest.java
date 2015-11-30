@@ -24,7 +24,7 @@ import io.druid.indexing.common.task.NoopTask;
 import io.druid.indexing.overlord.ImmutableZkWorker;
 import io.druid.indexing.overlord.config.RemoteTaskRunnerConfig;
 import io.druid.indexing.worker.Worker;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -52,7 +52,7 @@ public class FillCapacityWithAffinityWorkerSelectStrategyTest
                 Sets.<String>newHashSet()
             )
         ),
-        new NoopTask(null, 1, 0, null, null)
+        new NoopTask(null, 1, 0, null, null, null)
         {
           @Override
           public String getDataSource()
@@ -86,7 +86,7 @@ public class FillCapacityWithAffinityWorkerSelectStrategyTest
                 Sets.<String>newHashSet()
             )
         ),
-        new NoopTask(null, 1, 0, null, null)
+        new NoopTask(null, 1, 0, null, null, null)
     );
     ImmutableZkWorker worker = optional.get();
     Assert.assertEquals("lhost", worker.getWorker().getHost());
@@ -108,7 +108,7 @@ public class FillCapacityWithAffinityWorkerSelectStrategyTest
                 Sets.<String>newHashSet()
             )
         ),
-        new NoopTask(null, 1, 0, null, null)
+        new NoopTask(null, 1, 0, null, null, null)
     );
     Assert.assertFalse(optional.isPresent());
   }

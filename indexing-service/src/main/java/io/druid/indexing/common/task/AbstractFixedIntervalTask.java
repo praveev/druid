@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import io.druid.indexing.common.actions.LockTryAcquireAction;
 import io.druid.indexing.common.actions.TaskActionClient;
+import java.util.Map;
 import org.joda.time.Interval;
 
 public abstract class AbstractFixedIntervalTask extends AbstractTask
@@ -32,20 +33,40 @@ public abstract class AbstractFixedIntervalTask extends AbstractTask
   protected AbstractFixedIntervalTask(
       String id,
       String dataSource,
-      Interval interval
+      Interval interval,
+      Map<String, Object> context
   )
   {
-    this(id, id, new TaskResource(id, 1), dataSource, interval);
+    this(id, id, new TaskResource(id, 1), dataSource, interval, context);
+  }
+
+  protected AbstractFixedIntervalTask(
+      String id,
+      TaskResource taskResource,
+      String dataSource,
+      Interval interval,
+      Map<String, Object> context
+  )
+  {
+    this(
+        id,
+        id,
+        taskResource == null ? new TaskResource(id, 1) : taskResource,
+        dataSource,
+        interval,
+        context
+    );
   }
 
   protected AbstractFixedIntervalTask(
       String id,
       String groupId,
       String dataSource,
-      Interval interval
+      Interval interval,
+      Map<String, Object> context
   )
   {
-    this(id, groupId, new TaskResource(id, 1), dataSource, interval);
+    this(id, groupId, new TaskResource(id, 1), dataSource, interval, context);
   }
 
   protected AbstractFixedIntervalTask(
@@ -53,10 +74,11 @@ public abstract class AbstractFixedIntervalTask extends AbstractTask
       String groupId,
       TaskResource taskResource,
       String dataSource,
-      Interval interval
+      Interval interval,
+      Map<String, Object> context
   )
   {
-    super(id, groupId, taskResource, dataSource);
+    super(id, groupId, taskResource, dataSource, context);
     this.interval = Preconditions.checkNotNull(interval, "interval");
     Preconditions.checkArgument(interval.toDurationMillis() > 0, "interval empty");
   }

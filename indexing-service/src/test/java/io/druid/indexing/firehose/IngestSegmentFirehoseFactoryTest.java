@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
 import com.fasterxml.jackson.databind.introspect.GuiceAnnotationIntrospector;
 import com.fasterxml.jackson.databind.introspect.GuiceInjectableValues;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.api.client.repackaged.com.google.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -74,6 +74,7 @@ import io.druid.segment.loading.SegmentLoaderConfig;
 import io.druid.segment.loading.SegmentLoaderLocalCacheManager;
 import io.druid.segment.loading.SegmentLoadingException;
 import io.druid.segment.loading.StorageLocationConfig;
+import io.druid.segment.realtime.firehose.IngestSegmentFirehose;
 import io.druid.timeline.DataSegment;
 import io.druid.timeline.partition.NumberedShardSpec;
 import org.joda.time.Interval;
@@ -135,7 +136,7 @@ public class IngestSegmentFirehoseFactoryTest
     if (!persistDir.mkdirs() && !persistDir.exists()) {
       throw new IOException(String.format("Could not create directory at [%s]", persistDir.getAbsolutePath()));
     }
-    IndexMerger.persist(index, persistDir, indexSpec);
+    IndexMerger.persist(index, persistDir, null, indexSpec);
 
     final TaskLockbox tl = new TaskLockbox(ts);
     final IndexerSQLMetadataStorageCoordinator mdc = new IndexerSQLMetadataStorageCoordinator(null, null, null)
@@ -178,37 +179,7 @@ public class IngestSegmentFirehoseFactoryTest
         ts,
         new TaskActionToolbox(tl, mdc, newMockEmitter())
     );
-
-    final ObjectMapper objectMapper = new DefaultObjectMapper();
-    objectMapper.registerModule(
-        new SimpleModule("testModule").registerSubtypes(LocalLoadSpec.class)
-    );
-
-    final GuiceAnnotationIntrospector guiceIntrospector = new GuiceAnnotationIntrospector();
-    objectMapper.setAnnotationIntrospectors(
-        new AnnotationIntrospectorPair(
-            guiceIntrospector, objectMapper.getSerializationConfig().getAnnotationIntrospector()
-        ),
-        new AnnotationIntrospectorPair(
-            guiceIntrospector, objectMapper.getDeserializationConfig().getAnnotationIntrospector()
-        )
-    );
-    objectMapper.setInjectableValues(
-        new GuiceInjectableValues(
-            GuiceInjectors.makeStartupInjectorWithModules(
-                ImmutableList.of(
-                    new Module()
-                    {
-                      @Override
-                      public void configure(Binder binder)
-                      {
-                        binder.bind(LocalDataSegmentPuller.class);
-                      }
-                    }
-                )
-            )
-        )
-    );
+    final ObjectMapper objectMapper = newObjectMapper();
     final TaskToolboxFactory taskToolboxFactory = new TaskToolboxFactory(
         new TaskConfig(tmpDir.getAbsolutePath(), null, null, 50000, null),
         tac,
@@ -329,6 +300,41 @@ public class IngestSegmentFirehoseFactoryTest
       }
     }
     return values;
+  }
+
+  public static ObjectMapper newObjectMapper()
+  {
+    final ObjectMapper objectMapper = new DefaultObjectMapper();
+    objectMapper.registerModule(
+        new SimpleModule("testModule").registerSubtypes(LocalLoadSpec.class)
+    );
+
+    final GuiceAnnotationIntrospector guiceIntrospector = new GuiceAnnotationIntrospector();
+    objectMapper.setAnnotationIntrospectors(
+        new AnnotationIntrospectorPair(
+            guiceIntrospector, objectMapper.getSerializationConfig().getAnnotationIntrospector()
+        ),
+        new AnnotationIntrospectorPair(
+            guiceIntrospector, objectMapper.getDeserializationConfig().getAnnotationIntrospector()
+        )
+    );
+    objectMapper.setInjectableValues(
+        new GuiceInjectableValues(
+            GuiceInjectors.makeStartupInjectorWithModules(
+                ImmutableList.of(
+                    new Module()
+                    {
+                      @Override
+                      public void configure(Binder binder)
+                      {
+                        binder.bind(LocalDataSegmentPuller.class);
+                      }
+                    }
+                )
+            )
+        )
+    );
+    return objectMapper;
   }
 
   public IngestSegmentFirehoseFactoryTest(
@@ -461,8 +467,8 @@ public class IngestSegmentFirehoseFactoryTest
   {
     Assert.assertEquals(MAX_SHARD_NUMBER.longValue(), segmentSet.size());
     Integer rowcount = 0;
-    try (final IngestSegmentFirehoseFactory.IngestSegmentFirehose firehose =
-             (IngestSegmentFirehoseFactory.IngestSegmentFirehose)
+    try (final IngestSegmentFirehose firehose =
+             (IngestSegmentFirehose)
                  factory.connect(rowParser)) {
       while (firehose.hasMore()) {
         InputRow row = firehose.nextRow();

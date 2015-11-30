@@ -20,12 +20,14 @@ package io.druid.indexing.common.task;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
 import com.metamx.common.guava.CloseQuietly;
 import com.metamx.common.parsers.ParseException;
 import com.metamx.emitter.EmittingLogger;
+import io.druid.data.input.Committer;
 import io.druid.data.input.Firehose;
 import io.druid.data.input.InputRow;
 import io.druid.indexing.common.TaskLock;
@@ -46,18 +48,19 @@ import io.druid.segment.indexing.RealtimeTuningConfig;
 import io.druid.segment.realtime.FireDepartment;
 import io.druid.segment.realtime.RealtimeMetricsMonitor;
 import io.druid.segment.realtime.SegmentPublisher;
+import io.druid.segment.realtime.plumber.Committers;
 import io.druid.segment.realtime.plumber.Plumber;
+import io.druid.segment.realtime.plumber.PlumberSchool;
 import io.druid.segment.realtime.plumber.RealtimePlumberSchool;
-import io.druid.segment.realtime.plumber.Sink;
 import io.druid.segment.realtime.plumber.VersioningPolicy;
 import io.druid.server.coordination.DataSegmentAnnouncer;
 import io.druid.timeline.DataSegment;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.joda.time.Period;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Random;
 
 public class RealtimeIndexTask extends AbstractTask
@@ -78,8 +81,8 @@ public class RealtimeIndexTask extends AbstractTask
   static String makeTaskId(String dataSource, int partitionNumber, DateTime timestamp, int randomBits)
   {
     final StringBuilder suffix = new StringBuilder(8);
-    for(int i = 0; i < Ints.BYTES * 2; ++i) {
-      suffix.append((char)('a' + ((randomBits >>> (i * 4)) & 0x0F)));
+    for (int i = 0; i < Ints.BYTES * 2; ++i) {
+      suffix.append((char) ('a' + ((randomBits >>> (i * 4)) & 0x0F)));
     }
     return String.format(
         "index_realtime_%s_%d_%s_%s",
@@ -108,14 +111,16 @@ public class RealtimeIndexTask extends AbstractTask
   public RealtimeIndexTask(
       @JsonProperty("id") String id,
       @JsonProperty("resource") TaskResource taskResource,
-      @JsonProperty("spec") FireDepartment fireDepartment
+      @JsonProperty("spec") FireDepartment fireDepartment,
+      @JsonProperty("context") Map<String, Object> context
   )
   {
     super(
         id == null ? makeTaskId(fireDepartment) : id,
         String.format("index_realtime_%s", makeDatasource(fireDepartment)),
         taskResource == null ? new TaskResource(makeTaskId(fireDepartment), 1) : taskResource,
-        makeDatasource(fireDepartment)
+        makeDatasource(fireDepartment),
+        context
     );
     this.spec = fireDepartment;
   }
@@ -248,8 +253,8 @@ public class RealtimeIndexTask extends AbstractTask
     DataSchema dataSchema = spec.getDataSchema();
     RealtimeIOConfig realtimeIOConfig = spec.getIOConfig();
     RealtimeTuningConfig tuningConfig = spec.getTuningConfig()
-                                              .withBasePersistDirectory(new File(toolbox.getTaskWorkDir(), "persist"))
-                                              .withVersioningPolicy(versioningPolicy);
+                                            .withBasePersistDirectory(new File(toolbox.getTaskWorkDir(), "persist"))
+                                            .withVersioningPolicy(versioningPolicy);
 
     final FireDepartment fireDepartment = new FireDepartment(
         dataSchema,
@@ -263,7 +268,7 @@ public class RealtimeIndexTask extends AbstractTask
     // NOTE: that redundant realtime tasks will upload to the same location. This can cause index.zip and
     // NOTE: descriptor.json to mismatch, or it can cause historical nodes to load different instances of the
     // NOTE: "same" segment.
-    final RealtimePlumberSchool plumberSchool = new RealtimePlumberSchool(
+    final PlumberSchool plumberSchool = new RealtimePlumberSchool(
         toolbox.getEmitter(),
         toolbox.getQueryRunnerFactoryConglomerate(),
         toolbox.getSegmentPusher(),
@@ -277,6 +282,7 @@ public class RealtimeIndexTask extends AbstractTask
 
     // Delay firehose connection to avoid claiming input resources while the plumber is starting up.
     Firehose firehose = null;
+    Supplier<Committer> committerSupplier = null;
 
     try {
       plumber.startJob();
@@ -285,43 +291,36 @@ public class RealtimeIndexTask extends AbstractTask
       toolbox.getMonitorScheduler().addMonitor(metricsMonitor);
 
       // Set up firehose
-      final Period intermediatePersistPeriod = spec.getTuningConfig().getIntermediatePersistPeriod();
       firehose = spec.getIOConfig().getFirehoseFactory().connect(spec.getDataSchema().getParser());
+      committerSupplier = Committers.supplierFromFirehose(firehose);
 
       // Time to read data!
-      long nextFlush = new DateTime().plus(intermediatePersistPeriod).getMillis();
       while (firehose.hasMore()) {
         final InputRow inputRow;
+
         try {
           inputRow = firehose.nextRow();
+
           if (inputRow == null) {
+            log.debug("thrown away null input row, considering unparseable");
+            fireDepartment.getMetrics().incrementUnparseable();
             continue;
-          }
-
-          int currCount = plumber.add(inputRow);
-          if (currCount == -1) {
-            fireDepartment.getMetrics().incrementThrownAway();
-            log.debug("Throwing away event[%s]", inputRow);
-
-            if (System.currentTimeMillis() > nextFlush) {
-              plumber.persist(firehose.commit());
-              nextFlush = new DateTime().plus(intermediatePersistPeriod).getMillis();
-            }
-
-            continue;
-          }
-
-          fireDepartment.getMetrics().incrementProcessed();
-          final Sink sink = plumber.getSink(inputRow.getTimestampFromEpoch());
-          if ((sink != null && !sink.canAppendRow()) || System.currentTimeMillis() > nextFlush) {
-            plumber.persist(firehose.commit());
-            nextFlush = new DateTime().plus(intermediatePersistPeriod).getMillis();
           }
         }
         catch (ParseException e) {
-          log.warn(e, "unparseable line");
+          log.debug(e, "thrown away line due to exception, considering unparseable");
           fireDepartment.getMetrics().incrementUnparseable();
+          continue;
         }
+
+        int numRows = plumber.add(inputRow, committerSupplier);
+        if (numRows == -1) {
+          fireDepartment.getMetrics().incrementThrownAway();
+          log.debug("Throwing away event[%s]", inputRow);
+          continue;
+        }
+
+        fireDepartment.getMetrics().incrementProcessed();
       }
     }
     catch (Throwable e) {
@@ -333,7 +332,7 @@ public class RealtimeIndexTask extends AbstractTask
     finally {
       if (normalExit) {
         try {
-          plumber.persist(firehose.commit());
+          plumber.persist(committerSupplier.get());
           plumber.finishJob();
         }
         catch (Exception e) {

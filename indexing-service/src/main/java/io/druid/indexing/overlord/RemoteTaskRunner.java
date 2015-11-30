@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.metamx.common.ISE;
+import com.metamx.common.RE;
 import com.metamx.common.lifecycle.LifecycleStart;
 import com.metamx.common.lifecycle.LifecycleStop;
 import com.metamx.emitter.EmittingLogger;
@@ -66,12 +67,12 @@ import org.apache.zookeeper.KeeperException;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -110,6 +111,7 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
 
   private final ObjectMapper jsonMapper;
   private final RemoteTaskRunnerConfig config;
+  private final Duration shutdownTimeout;
   private final IndexerZkConfig indexerZkConfig;
   private final CuratorFramework cf;
   private final PathChildrenCacheFactory pathChildrenCacheFactory;
@@ -155,6 +157,7 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
   {
     this.jsonMapper = jsonMapper;
     this.config = config;
+    this.shutdownTimeout = config.getTaskShutdownLinkTimeout().toStandardDuration(); // Fail fast
     this.indexerZkConfig = indexerZkConfig;
     this.cf = cf;
     this.pathChildrenCacheFactory = pathChildrenCacheFactory;
@@ -249,7 +252,15 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         }
       }
       // Schedule cleanup for task status of the workers that might have disconnected while overlord was not running
-      for (String worker : cf.getChildren().forPath(indexerZkConfig.getStatusPath())) {
+      List<String> workers;
+      try {
+        workers = cf.getChildren().forPath(indexerZkConfig.getStatusPath());
+      }
+      catch (KeeperException.NoNodeException e) {
+        // statusPath doesn't exist yet; can occur if no middleManagers have started.
+        workers = ImmutableList.of();
+      }
+      for (String worker : workers) {
         if (!zkWorkers.containsKey(worker)
             && cf.checkExists().forPath(JOINER.join(indexerZkConfig.getAnnouncementsPath(), worker)) == null) {
           scheduleTasksCleanupForWorker(
@@ -379,12 +390,13 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         log.info("Can't shutdown! No worker running task %s", taskId);
         return;
       }
-
+      URL url = null;
       try {
-        final URL url = makeWorkerURL(zkWorker.getWorker(), String.format("/task/%s/shutdown", taskId));
+        url = makeWorkerURL(zkWorker.getWorker(), String.format("/task/%s/shutdown", taskId));
         final StatusResponseHolder response = httpClient.go(
             new Request(HttpMethod.POST, url),
-            RESPONSE_HANDLER
+            RESPONSE_HANDLER,
+            shutdownTimeout
         ).get();
 
         log.info(
@@ -398,8 +410,12 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
           log.error("Shutdown failed for %s! Are you sure the task was running?", taskId);
         }
       }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RE(e, "Interrupted posting shutdown to [%s] for task [%s]", url, taskId);
+      }
       catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RE(e, "Error in handling post to [%s] for task [%s]", zkWorker.getWorker().getHost(), taskId);
       }
     }
   }
@@ -878,17 +894,12 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
                   for (String assignedTask : tasksToFail) {
                     String taskPath = JOINER.join(indexerZkConfig.getTasksPath(), worker, assignedTask);
                     String statusPath = JOINER.join(indexerZkConfig.getStatusPath(), worker, assignedTask);
-                    try {
-                      if (cf.checkExists().forPath(taskPath) != null) {
-                        cf.delete().guaranteed().forPath(taskPath);
-                      }
-
-                      if (cf.checkExists().forPath(statusPath) != null) {
-                        cf.delete().guaranteed().forPath(statusPath);
-                      }
+                    if (cf.checkExists().forPath(taskPath) != null) {
+                      cf.delete().guaranteed().forPath(taskPath);
                     }
-                    catch (Exception e) {
-                      throw Throwables.propagate(e);
+
+                    if (cf.checkExists().forPath(statusPath) != null) {
+                      cf.delete().guaranteed().forPath(statusPath);
                     }
 
                     log.info("Failing task[%s]", assignedTask);
@@ -899,6 +910,16 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
                       log.warn("RemoteTaskRunner has no knowledge of task[%s]", assignedTask);
                     }
                   }
+
+                  // worker is gone, remove worker task status announcements path.
+                  String workerStatusPath = JOINER.join(indexerZkConfig.getStatusPath(), worker);
+                  if (cf.checkExists().forPath(workerStatusPath) != null) {
+                    cf.delete().guaranteed().forPath(JOINER.join(indexerZkConfig.getStatusPath(), worker));
+                  }
+                }
+                catch (Exception e) {
+                  log.makeAlert("Exception while cleaning up worker[%s]", worker).emit();
+                  throw Throwables.propagate(e);
                 }
                 finally {
                   removedWorkerCleanups.remove(worker);

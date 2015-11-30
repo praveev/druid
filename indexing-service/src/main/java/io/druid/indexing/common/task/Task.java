@@ -24,6 +24,7 @@ import io.druid.indexing.common.TaskToolbox;
 import io.druid.indexing.common.actions.TaskActionClient;
 import io.druid.query.Query;
 import io.druid.query.QueryRunner;
+import java.util.Map;
 
 /**
  * Represents a task that can run on a worker. The general contracts surrounding Tasks are:
@@ -51,8 +52,8 @@ import io.druid.query.QueryRunner;
     @JsonSubTypes.Type(name = "hadoop_convert_segment_sub", value = HadoopConverterTask.ConverterSubTask.class),
     @JsonSubTypes.Type(name = "index_realtime", value = RealtimeIndexTask.class),
     @JsonSubTypes.Type(name = "noop", value = NoopTask.class),
-    @JsonSubTypes.Type(name = "version_converter", value = ConvertSegmentTask.class), // Backwards compat - Deprecated
-    @JsonSubTypes.Type(name = "version_converter_sub", value = ConvertSegmentTask.SubTask.class), // backwards compat - Deprecated
+    @JsonSubTypes.Type(name = "version_converter", value = ConvertSegmentBackwardsCompatibleTask.class), // Backwards compat - Deprecated
+    @JsonSubTypes.Type(name = "version_converter_sub", value = ConvertSegmentBackwardsCompatibleTask.SubTask.class), // backwards compat - Deprecated
     @JsonSubTypes.Type(name = "convert_segment", value = ConvertSegmentTask.class),
     @JsonSubTypes.Type(name = "convert_segment_sub", value = ConvertSegmentTask.SubTask.class)
 })
@@ -138,4 +139,9 @@ public interface Task
    * @throws Exception if this task failed
    */
   public TaskStatus run(TaskToolbox toolbox) throws Exception;
+
+  public Map<String, Object> getContext();
+
+  public Object getContextValue(String key);
+
 }

@@ -80,3 +80,71 @@ The following matches any dimension values for the dimension `name` between `'ba
   "function" : "function(x) { return(x >= 'bar' && x <= 'foo') }"
 }
 ```
+
+### Extraction filter
+
+Extraction filter matches a dimension using some specific [Extraction function](./dimensionspecs.html#extraction-functions).
+The following filter matches the values for which the extraction function has transformation entry `input_key=output_value` where
+ `output_value` is equal to the filter `value` and `input_key` is present as dimension.
+
+**Example**
+The following matches dimension values in `[product_1, product_3, product_5]` for the column `product`
+
+```json
+{
+    "filter": {
+        "type": "extraction",
+        "dimension": "product",
+        "value": "bar_1",
+        "extractionFn": {
+            "type": "lookup",
+            "lookup": {
+                "type": "map",
+                "map": {
+                    "product_1": "bar_1",
+                    "product_5": "bar_1",
+                    "product_3": "bar_1"
+                }
+            }
+        }
+    }
+}
+```
+### Search filter
+
+Search filters can be used to filter on partial string matches. 
+
+```json
+{
+    "filter": {
+        "type": "search",
+        "dimension": "product",
+        "query": {
+          "type": "insensitive_contains",
+          "value": "foo" 
+        }        
+    }
+}
+```
+
+|property|description|required?|
+|--------|-----------|---------|
+|type|This String should always be "search".|yes|
+|dimension|The dimension to perform the search over.|yes|
+|query|A JSON object for the type of search. See below for more information.|yes|
+
+#### Search Query Spec
+
+##### Insensitive Contains
+
+|property|description|required?|
+|--------|-----------|---------|
+|type|This String should always be "insensitive_contains".|yes|
+|value|A String value to run the search over.|yes|
+
+##### Fragment
+
+|property|description|required?|
+|--------|-----------|---------|
+|type|This String should always be "fragment".|yes|
+|values|A JSON array of String values to run the search over. Case insensitive.|yes|

@@ -17,7 +17,7 @@
 
 package io.druid.server.http;
 
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.metamx.common.ISE;
 import io.druid.client.indexing.IndexingService;
@@ -50,7 +50,7 @@ public class OverlordProxyServlet extends ProxyServlet
     try {
       final Server indexer = selector.pick();
       if (indexer == null) {
-        throw new ISE("Cannot find instance of indexingService");
+        throw new ISE("Can't find indexingService, did you configure druid.selectors.indexing.serviceName same as druid.service at overlord?");
       }
       return new URI(
           request.getScheme(),

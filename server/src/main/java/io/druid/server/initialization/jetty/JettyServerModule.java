@@ -51,6 +51,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 
 import javax.servlet.ServletException;
 import java.util.Map;
@@ -157,8 +158,13 @@ public class JettyServerModule extends JerseyServletModule
     final QueuedThreadPool threadPool = new QueuedThreadPool();
     threadPool.setMinThreads(config.getNumThreads());
     threadPool.setMaxThreads(config.getNumThreads());
+    threadPool.setDaemon(true);
 
     final Server server = new Server(threadPool);
+
+    // Without this bean set, the default ScheduledExecutorScheduler runs as non-daemon, causing lifecycle hooks to fail
+    // to fire on main exit. Related bug: https://github.com/druid-io/druid/pull/1627
+    server.addBean(new ScheduledExecutorScheduler("JettyScheduler", true), true);
 
     ServerConnector connector = new ServerConnector(server);
     connector.setPort(node.getPort());

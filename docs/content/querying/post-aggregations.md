@@ -43,7 +43,7 @@ This returns the value produced by the specified [aggregator](../querying/aggreg
 `fieldName` refers to the output name of the aggregator given in the [aggregations](../querying/aggregations.html) portion of the query.
 
 ```json
-{ "type" : "fieldAccess", "fieldName" : <aggregator_name> }
+{ "type" : "fieldAccess", "name": <output_name>, "fieldName" : <aggregator_name> }
 ```
 
 ### Constant post-aggregator
@@ -92,7 +92,7 @@ It can be used in a sample calculation as so:
     {"type" : "count", "name" : "rows"},
     {"type" : "hyperUnique", "name" : "unique_users", "fieldName" : "uniques"}
   }],
-  "postAggregations" : {
+  "postAggregations" : [{
     "type"   : "arithmetic",
     "name"   : "average_users_per_row",
     "fn"     : "/",
@@ -100,7 +100,7 @@ It can be used in a sample calculation as so:
       { "type" : "hyperUniqueCardinality", "fieldName" : "unique_users" },
       { "type" : "fieldAccess", "name" : "rows", "fieldName" : "rows" }
     ]
-  }
+  }]
 ```
 
 #### Example Usage
@@ -116,7 +116,7 @@ The format of the query JSON is as follows:
     { "type" : "count", "name" : "rows" },
     { "type" : "doubleSum", "name" : "tot", "fieldName" : "total" }
   ],
-  "postAggregations" : {
+  "postAggregations" : [{
     "type"   : "arithmetic",
     "name"   : "average",
     "fn"     : "*",
@@ -131,7 +131,7 @@ The format of the query JSON is as follows:
        },
        { "type" : "constant", "name": "const", "value" : 100 }
     ]
-  }
+  }]
   ...
 }
 ```

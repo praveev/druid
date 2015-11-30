@@ -5,6 +5,8 @@ layout: doc_page
 # Tutorial: A First Look at Druid
 Greetings! This tutorial will help clarify some core Druid concepts. We will use a real-time dataset and issue some basic Druid queries. If you are ready to explore Druid, and learn a thing or two, read on!
 
+Note: If you are behind a corporate firewall, please see our additional [instructions](../tutorials/firewall.html) for running this tutorial. 
+
 About the data
 --------------
 
@@ -73,14 +75,21 @@ You should see a bunch of files:
 * run_example_client.sh
 * LICENSE, config, examples, lib directories
 
-
 ## External Dependencies
 
-Druid requires 3 external dependencies. A "deep storage" that acts as a backup data repository, a "metadata storage" such as MySQL to hold configuration and metadata information, and [Apache Zookeeper](http://zookeeper.apache.org/) for coordination among different pieces of the cluster. For this tutorial, we only need the zookeeper dependency.
+Druid requires 3 external dependencies.
+
+* A "deep storage" that acts as a data repository. This is generally distributed storage like HDFS or S3. For prototyping or experimentation on a single machine, Druid can use the local filesystem.
+
+* A "metadata storage" to hold configuration and metadata information. This is generally a small, shared database like MySQL or PostgreSQL. For prototyping or experimentation on a single machine, Druid can use a local instance of [Apache Derby](http://db.apache.org/derby/).
+
+* [Apache Zookeeper](http://zookeeper.apache.org/) for coordination among different pieces of the cluster.
+
+This tutorial only requires Zookeeper be set up.
 
 #### Set up Zookeeper
 
-* Download zookeeper from [http://www.apache.org/dyn/closer.cgi/zookeeper/](http://www.apache.org/dyn/closer.cgi/zookeeper/)
+* Download zookeeper from [http://www.apache.org/dyn/closer.cgi/zookeeper/](http://www.apache.org/dyn/closer.cgi/zookeeper/). 
 * Install zookeeper.
 
 ```bash
@@ -95,7 +104,7 @@ cd ..
 Running Example Scripts
 -----------------------
 
-Let's start doing stuff. You can start an example Druid [Realtime](../design/realtime.html) node by issuing:
+Let's start by spinning up a server. You can start an example Druid [Realtime](../design/realtime.html) node by issuing:
 
 ```
 ./run_example_server.sh
@@ -116,7 +125,7 @@ Note that the first time you start the example, it may take some extra time due 
 2015-02-17T21:46:37,009 INFO [ServerInventoryView-0] io.druid.client.BatchServerInventoryView - Inventory Initialized
 ```
 
-The Druid real time-node ingests events in an in-memory buffer. Periodically, these events will be persisted to disk. If you are interested in the details of our real-time architecture and why we persist indexes to disk, we suggest you read our [White Paper](http://static.druid.io/docs/druid.pdf).
+The Druid real-time node ingests events in an in-memory buffer. Periodically, these events will be persisted to disk. If you are interested in the details of our real-time architecture and why we persist indexes to disk, we suggest you read our [White Paper](http://static.druid.io/docs/druid.pdf).
 
 To query the real-time node you've spun up, you can issue:
 

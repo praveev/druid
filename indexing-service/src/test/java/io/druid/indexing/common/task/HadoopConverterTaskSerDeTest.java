@@ -30,7 +30,6 @@ import io.druid.timeline.partition.NoneShardSpec;
 import io.druid.timeline.partition.ShardSpec;
 import org.joda.time.Interval;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -40,7 +39,7 @@ import java.util.Map;
 
 public class HadoopConverterTaskSerDeTest
 {
-  private static ObjectMapper objectMapper;
+  private static ObjectMapper objectMapper = new DefaultObjectMapper();
   private static final String TASK_ID = "task id";
   private static final String DATA_SOURCE = "datasource";
   private static final Interval INTERVAL = Interval.parse("2010/2011");
@@ -69,17 +68,6 @@ public class HadoopConverterTaskSerDeTest
   private static final String OUTPUT_PATH = "/dev/null";
   private static final String CLASSPATH_PREFIX = "something:where:I:need:stuff";
 
-  @BeforeClass
-  public static void setUpStatic()
-  {
-    objectMapper = new DefaultObjectMapper();
-    objectMapper.registerSubtypes(
-        HadoopConverterTask.class,
-        HadoopConverterTask.ConverterSubTask.class,
-        ShardSpec.class
-    );
-  }
-
   @Test
   public void testSimpleConverterTaskSerDe() throws IOException
   {
@@ -94,7 +82,8 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         PRIORITY,
         OUTPUT_PATH,
-        CLASSPATH_PREFIX
+        CLASSPATH_PREFIX,
+        null
     );
     final String strOrig = objectMapper.writeValueAsString(orig);
     HadoopConverterTask other = objectMapper.readValue(strOrig, HadoopConverterTask.class);
@@ -118,12 +107,15 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         PRIORITY,
         OUTPUT_PATH,
-        CLASSPATH_PREFIX
+        CLASSPATH_PREFIX,
+        null
     );
     HadoopConverterTask.ConverterSubTask subTask = new HadoopConverterTask.ConverterSubTask(
         ImmutableList.of(
             DATA_SEGMENT
-        ), parent
+        ),
+        parent,
+        null
     );
     final String origString = objectMapper.writeValueAsString(subTask);
     final HadoopConverterTask.ConverterSubTask otherSub = objectMapper.readValue(
@@ -168,12 +160,15 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         PRIORITY,
         OUTPUT_PATH,
-        CLASSPATH_PREFIX
+        CLASSPATH_PREFIX,
+        null
     );
     HadoopConverterTask.ConverterSubTask subTask = new HadoopConverterTask.ConverterSubTask(
         ImmutableList.of(
             DATA_SEGMENT
-        ), parent
+        ),
+        parent,
+        null
     );
     Assert.assertEquals(parent.getType(), "hadoop_convert_segment");
     Assert.assertEquals(parent.getType() + "_sub", subTask.getType());
@@ -193,7 +188,8 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         PRIORITY,
         OUTPUT_PATH,
-        CLASSPATH_PREFIX
+        CLASSPATH_PREFIX,
+        null
     );
     Assert.assertTrue(orig.isValidate());
   }
@@ -212,6 +208,7 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         null,
         OUTPUT_PATH,
+        null,
         null
     );
     Assert.assertEquals(DATA_SOURCE, parent.getDataSource());
@@ -236,7 +233,8 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         PRIORITY,
         OUTPUT_PATH,
-        CLASSPATH_PREFIX
+        CLASSPATH_PREFIX,
+        null
     );
     orig.getSegment();
   }
@@ -255,6 +253,7 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         null,
         OUTPUT_PATH,
+        null,
         null
     );
   }
@@ -273,6 +272,7 @@ public class HadoopConverterTaskSerDeTest
         DISTRIBUTED_CACHE,
         null,
         OUTPUT_PATH,
+        null,
         null
     );
   }
@@ -291,6 +291,7 @@ public class HadoopConverterTaskSerDeTest
         null,
         null,
         OUTPUT_PATH,
+        null,
         null
     );
   }
@@ -307,6 +308,7 @@ public class HadoopConverterTaskSerDeTest
         null,
         null,
         DISTRIBUTED_CACHE,
+        null,
         null,
         null,
         null

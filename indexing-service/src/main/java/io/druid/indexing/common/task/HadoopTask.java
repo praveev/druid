@@ -19,8 +19,8 @@
 
 package io.druid.indexing.common.task;
 
-import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
@@ -38,6 +38,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 public abstract class HadoopTask extends AbstractTask
@@ -53,9 +54,14 @@ public abstract class HadoopTask extends AbstractTask
 
   private final List<String> hadoopDependencyCoordinates;
 
-  protected HadoopTask(String id, String dataSource, List<String> hadoopDependencyCoordinates)
+  protected HadoopTask(
+      String id,
+      String dataSource,
+      List<String> hadoopDependencyCoordinates,
+      Map<String, Object> context
+  )
   {
-    super(id, dataSource);
+    super(id, dataSource, context);
     this.hadoopDependencyCoordinates = hadoopDependencyCoordinates;
   }
 

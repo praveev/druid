@@ -27,7 +27,7 @@
     <parent>
         <groupId>io.druid</groupId>
         <artifactId>druid</artifactId>
-        <version>0.8.0</version>
+        <version>0.8.2</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -71,6 +71,12 @@
         </dependency>
 
         <!-- Tests -->
+        <dependency>
+            <groupId>io.druid</groupId>
+            <artifactId>druid-server</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
