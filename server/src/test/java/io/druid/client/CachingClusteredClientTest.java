@@ -1550,7 +1550,7 @@ public class CachingClusteredClientTest
             expectation.getSegment(),
             new HighestPriorityTierSelectorStrategy(new RandomServerSelectorStrategy())
         );
-        selector.addServer(new QueryableDruidServer(lastServer, null));
+        selector.addServerAndUpdateSegment(new QueryableDruidServer(lastServer, null), selector.getSegment());
 
         final PartitionChunk<ServerSelector> chunk;
         if (numChunks == 1) {
