@@ -114,7 +114,7 @@ jobs:
       - scp_druid_yinst_pkg_pr
       - scp_druid_inabox_pkg_pr
       - scp_ci_tests_pkg_pr
-      - test_pr_host_smoke
+      #- test_pr_host_smoke
       - test_pr_host_promote
       - remove_marker_on_pr_host
     steps:
