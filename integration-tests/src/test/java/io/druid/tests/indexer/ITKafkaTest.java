@@ -200,7 +200,7 @@ public class ITKafkaTest extends AbstractIndexerTest
         producer.send(message);
       }
       catch (Exception ioe) {
-        Throwables.propagate(ioe);
+        throw Throwables.propagate(ioe);
       }
 
       try {
@@ -242,7 +242,7 @@ public class ITKafkaTest extends AbstractIndexerTest
     try {
       this.queryHelper.testQueriesFromString(queryStr, 2);
     } catch (Exception e) {
-	Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
 
     // wait for segments to be handed off
@@ -263,7 +263,7 @@ public class ITKafkaTest extends AbstractIndexerTest
       );
     }
     catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
     LOG.info("segments are present");
     segmentsExist = true;
@@ -273,7 +273,7 @@ public class ITKafkaTest extends AbstractIndexerTest
       this.queryHelper.testQueriesFromString(queryStr, 2);
     }
     catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -291,9 +291,7 @@ public class ITKafkaTest extends AbstractIndexerTest
     // remove segments
     if (segmentsExist) {
       try {
-        String first = DateTimeFormat.forPattern("yyyy-MM-dd'T00:00:00.000Z'").print(dtFirst);
-        String last = DateTimeFormat.forPattern("yyyy-MM-dd'T00:00:00.000Z'").print(dtFirst.plusDays(1));
-        unloadAndKillData(DATASOURCE, first, last);
+        unloadAndKillData(DATASOURCE);
       }
       catch (Exception e) {
         LOG.warn("exception while removing segments: [%s]", e.getMessage());
