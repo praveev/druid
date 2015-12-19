@@ -20,6 +20,7 @@ package io.druid.query.dimension;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.druid.query.extraction.ExtractionFn;
+import io.druid.segment.DimensionSelector;
 
 /**
  */
@@ -30,13 +31,17 @@ import io.druid.query.extraction.ExtractionFn;
 })
 public interface DimensionSpec
 {
-  public String getDimension();
+  String getDimension();
 
-  public String getOutputName();
+  String getOutputName();
 
-  public ExtractionFn getExtractionFn();
+  //ExtractionFn can be implemented with decorate(..) fn
+  @Deprecated
+  ExtractionFn getExtractionFn();
 
-  public byte[] getCacheKey();
+  DimensionSelector decorate(DimensionSelector selector);
 
-  public boolean preservesOrdering();
+  byte[] getCacheKey();
+
+  boolean preservesOrdering();
 }
