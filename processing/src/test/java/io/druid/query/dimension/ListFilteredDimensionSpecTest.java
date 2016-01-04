@@ -21,7 +21,7 @@ package io.druid.query.dimension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import io.druid.segment.TestHelper;
+import io.druid.jackson.DefaultObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class ListFilteredDimensionSpecTest
   @Test
   public void testSerde() throws Exception
   {
-    ObjectMapper mapper = TestHelper.getObjectMapper();
+    ObjectMapper mapper = new DefaultObjectMapper();
 
     //isWhitelist = true
     String jsonStr = "{\n"

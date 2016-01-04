@@ -43,6 +43,8 @@ import io.druid.query.groupby.GroupByQuery;
 import io.druid.query.groupby.GroupByQueryRunnerTestHelper;
 import io.druid.query.spec.LegacySegmentSpec;
 import io.druid.segment.IncrementalIndexSegment;
+import io.druid.segment.IndexIO;
+import io.druid.segment.IndexMerger;
 import io.druid.segment.IndexSpec;
 import io.druid.segment.QueryableIndex;
 import io.druid.segment.QueryableIndexSegment;
@@ -111,10 +113,9 @@ public class MultiValuedDimensionTest
     }
 
     persistedSegmentDir = Files.createTempDir();
-    TestHelper.getTestIndexMerger()
-              .persist(incrementalIndex, persistedSegmentDir, ImmutableMap.<String, Object>of(), new IndexSpec());
+    IndexMerger.persist(incrementalIndex, persistedSegmentDir, ImmutableMap.<String, Object>of(), new IndexSpec());
 
-    queryableIndex = TestHelper.getTestIndexIO().loadIndex(persistedSegmentDir);
+    queryableIndex = IndexIO.loadIndex(persistedSegmentDir);
   }
 
   @Test

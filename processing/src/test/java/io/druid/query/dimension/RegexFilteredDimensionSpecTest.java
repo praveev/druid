@@ -20,7 +20,7 @@
 package io.druid.query.dimension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.druid.segment.TestHelper;
+import io.druid.jackson.DefaultObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class RegexFilteredDimensionSpecTest
   @Test
   public void testSerde() throws Exception
   {
-    ObjectMapper mapper = TestHelper.getObjectMapper();
+    ObjectMapper mapper = new DefaultObjectMapper();
 
     String jsonStr = "{\n"
                      + "  \"type\": \"regexFiltered\",\n"
