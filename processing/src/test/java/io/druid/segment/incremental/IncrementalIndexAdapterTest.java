@@ -17,6 +17,7 @@
 
 package io.druid.segment.incremental;
 
+import com.metamx.common.ISE;
 import io.druid.segment.IndexSpec;
 import io.druid.segment.IndexableAdapter;
 import io.druid.segment.column.BitmapIndexSeeker;
@@ -24,12 +25,8 @@ import io.druid.segment.data.CompressedObjectStrategy;
 import io.druid.segment.data.ConciseBitmapSerdeFactory;
 import io.druid.segment.data.IncrementalIndexTest;
 import io.druid.segment.data.IndexedInts;
-
-import org.joda.time.Interval;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.metamx.common.ISE;
 
 public class IncrementalIndexAdapterTest {
   private static final IndexSpec INDEX_SPEC = new IndexSpec(
@@ -42,7 +39,7 @@ public class IncrementalIndexAdapterTest {
   public void testGetBitmapIndexSeeker() throws Exception
   {
     final long timestamp = System.currentTimeMillis();
-    IncrementalIndex incrementalIndex = IncrementalIndexTest.createIndex(null);
+    IncrementalIndex incrementalIndex = IncrementalIndexTest.createIndex(false, null);
     IncrementalIndexTest.populateIndex(timestamp, incrementalIndex);
     IndexableAdapter adapter = new IncrementalIndexAdapter(
     	incrementalIndex.getInterval(),

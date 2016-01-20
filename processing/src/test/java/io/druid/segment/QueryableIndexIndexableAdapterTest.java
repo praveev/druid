@@ -19,8 +19,7 @@
 
 package io.druid.segment;
 
-import java.io.File;
-
+import com.metamx.common.ISE;
 import io.druid.segment.column.BitmapIndexSeeker;
 import io.druid.segment.data.CompressedObjectStrategy;
 import io.druid.segment.data.ConciseBitmapSerdeFactory;
@@ -28,17 +27,14 @@ import io.druid.segment.data.IncrementalIndexTest;
 import io.druid.segment.data.IndexedInts;
 import io.druid.segment.incremental.IncrementalIndex;
 import io.druid.segment.incremental.IncrementalIndexAdapter;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.metamx.common.ISE;
+import java.io.File;
 
 public class QueryableIndexIndexableAdapterTest {
-  private final static IndexMerger INDEX_MERGER = TestHelper.getTestIndexMerger();
-  private final static IndexIO INDEX_IO = TestHelper.getTestIndexIO();
   private static final IndexSpec INDEX_SPEC = IndexMergerTest.makeIndexSpec(
       new ConciseBitmapSerdeFactory(),
       CompressedObjectStrategy.CompressionStrategy.LZ4,
@@ -54,7 +50,7 @@ public class QueryableIndexIndexableAdapterTest {
   public void testGetBitmapIndexSeeker() throws Exception
   {
     final long timestamp = System.currentTimeMillis();
-    IncrementalIndex toPersist = IncrementalIndexTest.createIndex(null);
+    IncrementalIndex toPersist = IncrementalIndexTest.createIndex(false, null);
     IncrementalIndexTest.populateIndex(timestamp, toPersist);
 
     final File tempDir = temporaryFolder.newFolder();
@@ -65,8 +61,8 @@ public class QueryableIndexIndexableAdapterTest {
     );
 
     QueryableIndex index = closer.closeLater(
-        INDEX_IO.loadIndex(
-            INDEX_MERGER.persist(
+        IndexIO.loadIndex(
+            IndexMerger.persist(
                 toPersist,
                 tempDir,
                 null,
