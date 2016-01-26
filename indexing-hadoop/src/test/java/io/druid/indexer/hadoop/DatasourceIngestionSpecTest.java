@@ -35,18 +35,63 @@ public class DatasourceIngestionSpecTest
   @Test
   public void testSerde() throws Exception
   {
+    ObjectMapper mapper = new DefaultObjectMapper();
+
+    //defaults
+    String jsonStr = "{\n"
+                     + "  \"dataSource\": \"test\",\n"
+                     + "  \"interval\": \"2014/2015\"\n"
+                     + "}\n";
+
+    DatasourceIngestionSpec actual = mapper.readValue(
+        mapper.writeValueAsString(
+            mapper.readValue(jsonStr, DatasourceIngestionSpec.class)
+        ),
+        DatasourceIngestionSpec.class
+    );
+
+    Interval interval = Interval.parse("2014/2015");
+
     DatasourceIngestionSpec expected = new DatasourceIngestionSpec(
         "test",
-        Interval.parse("2014/2015"),
+        interval,
+        null,
+        null,
+        null,
+        null,
+        false
+    );
+
+    Assert.assertEquals(expected, actual);
+
+    //non-defaults
+    jsonStr = "{\n"
+              + "  \"dataSource\": \"test\",\n"
+              + "  \"interval\": \"2014/2015\",\n"
+              + "  \"filter\": { \"type\": \"selector\", \"dimension\": \"dim\", \"value\": \"value\"},\n"
+              + "  \"granularity\": \"day\",\n"
+              + "  \"dimensions\": [\"d1\", \"d2\"],\n"
+              + "  \"metrics\": [\"m1\", \"m2\", \"m3\"],\n"
+              + "  \"ignoreWhenNoSegments\": true\n"
+              + "}\n";
+
+    expected = new DatasourceIngestionSpec(
+        "test",
+        interval,
         new SelectorDimFilter("dim", "value"),
         QueryGranularity.DAY,
         Lists.newArrayList("d1", "d2"),
-        Lists.newArrayList("m1", "m2", "m3")
+        Lists.newArrayList("m1", "m2", "m3"),
+        true
     );
 
-    ObjectMapper jsonMapper = new DefaultObjectMapper();
+    actual = mapper.readValue(
+        mapper.writeValueAsString(
+            mapper.readValue(jsonStr, DatasourceIngestionSpec.class)
+        ),
+        DatasourceIngestionSpec.class
+    );
 
-    DatasourceIngestionSpec actual = jsonMapper.readValue(jsonMapper.writeValueAsString(expected), DatasourceIngestionSpec.class);
     Assert.assertEquals(expected, actual);
   }
 }
