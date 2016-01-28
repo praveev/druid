@@ -55,7 +55,7 @@ public class OldApiSketchAggregationTest
     OldApiSketchModule sm = new OldApiSketchModule();
     sm.configure(null);
 
-    helper = AggregationTestHelper.createGroupByQueryAggregationTestHelper(
+    helper = new AggregationTestHelper(
         sm.getJacksonModules(),
         tempFolder
     );

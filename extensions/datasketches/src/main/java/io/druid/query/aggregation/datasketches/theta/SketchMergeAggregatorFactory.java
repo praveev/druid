@@ -66,7 +66,7 @@ public class SketchMergeAggregatorFactory extends SketchAggregatorFactory
   @Override
   public AggregatorFactory getCombiningFactory()
   {
-    return new SketchMergeAggregatorFactory(name, name, size, shouldFinalize, isInputThetaSketch);
+    return new SketchMergeAggregatorFactory(name, name, size, shouldFinalize, false);
   }
 
   @JsonProperty
