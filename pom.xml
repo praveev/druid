@@ -734,10 +734,11 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>yahoo-local-snapshot</id>
-            <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-snapshot/</url>
-        </snapshotRepository>
+        <repository>
+            <id>artifactory.ops.yahoo.com-releases</id>
+            <name>artifactory.ops.yahoo.com-releases</name>
+            <url>scpexe://artifactory-ssh-proxy.corp.yahoo.com:4443/maven-local-release/</url>
+        </repository>
     </distributionManagement>
 
     <profiles>
