@@ -186,7 +186,7 @@ jobs:
     steps:
       druid_code_build:
         description: create druid code jars
-        command: mvn -B clover2:instrument install clover2:aggregate clover2:clover
+        command: mvn -B clover2:instrument deploy clover2:aggregate clover2:clover
       clean_yinst_pkg_smoke:
         description: clean up yinst packages stored on smoke test machine
         command: ssh ${SD_SETTING_SSH_OPTIONS} ${SD_SETTING_SMOKE_HOST} "rm -f *.tgz"
