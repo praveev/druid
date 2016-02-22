@@ -46,6 +46,7 @@ import com.metamx.http.client.Request;
 import com.metamx.http.client.response.InputStreamResponseHandler;
 import com.metamx.http.client.response.StatusResponseHandler;
 import com.metamx.http.client.response.StatusResponseHolder;
+import io.druid.concurrent.Execs;
 import io.druid.curator.cache.PathChildrenCacheFactory;
 import io.druid.indexing.common.TaskStatus;
 import io.druid.indexing.common.task.Task;
@@ -82,7 +83,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -130,11 +130,17 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
   // tasks that are complete but not cleaned up yet
   private final RemoteTaskRunnerWorkQueue completeTasks = new RemoteTaskRunnerWorkQueue();
 
-  private final ExecutorService runPendingTasksExec = Executors.newSingleThreadExecutor();
+  private final ExecutorService runPendingTasksExec;
 
   // Workers that have been marked as lazy. these workers are not running any tasks and can be terminated safely by the scaling policy.
   private final ConcurrentMap<String, ZkWorker> lazyWorkers = new ConcurrentHashMap<>();
 
+
+  // workers which were assigned a task and are yet to acknowledge same.
+  // Map: workerId -> taskId
+  private final ConcurrentMap<String, String> workersWithUnacknowledgedTask = new ConcurrentHashMap<>();
+  // Map: taskId -> taskId .tasks which are being tried to be assigned to a worker
+  private final ConcurrentMap<String, String> tryAssignTasks = new ConcurrentHashMap<>();
 
   private final Object statusLock = new Object();
 
@@ -165,6 +171,10 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
     this.httpClient = httpClient;
     this.workerConfigRef = workerConfigRef;
     this.cleanupExec = cleanupExec;
+    this.runPendingTasksExec = Execs.multiThreaded(
+        config.getPendingTasksRunnerNumThreads(),
+        "rtr-pending-tasks-runner-%d"
+    );
   }
 
   @LifecycleStart
@@ -290,6 +300,10 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         zkWorker.close();
       }
       workerPathCache.close();
+
+      if (runPendingTasksExec != null) {
+        runPendingTasksExec.shutdown();
+      }
     }
     catch (Exception e) {
       throw Throwables.propagate(e);
@@ -483,7 +497,7 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
   }
 
   /**
-   * This method uses a single threaded executor to extract all pending tasks and attempt to run them. Any tasks that
+   * This method uses a multi-threaded executor to extract all pending tasks and attempt to run them. Any tasks that
    * are successfully assigned to a worker will be moved from pendingTasks to runningTasks. This method is thread-safe.
    * This method should be run each time there is new worker capacity or if new tasks are assigned.
    */
@@ -501,17 +515,22 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
               List<RemoteTaskRunnerWorkItem> copy = Lists.newArrayList(pendingTasks.values());
               for (RemoteTaskRunnerWorkItem taskRunnerWorkItem : copy) {
                 String taskId = taskRunnerWorkItem.getTaskId();
-                try {
-                  if (tryAssignTask(pendingTaskPayloads.get(taskId), taskRunnerWorkItem)) {
-                    pendingTaskPayloads.remove(taskId);
+                if (tryAssignTasks.putIfAbsent(taskId, taskId) == null) {
+                  try {
+                    if (tryAssignTask(pendingTaskPayloads.get(taskId), taskRunnerWorkItem)) {
+                      pendingTaskPayloads.remove(taskId);
+                    }
                   }
-                }
-                catch (Exception e) {
-                  log.makeAlert(e, "Exception while trying to assign task")
-                     .addData("taskId", taskRunnerWorkItem.getTaskId())
-                     .emit();
-                  RemoteTaskRunnerWorkItem workItem = pendingTasks.remove(taskId);
-                  taskComplete(workItem, null, TaskStatus.failure(taskId));
+                  catch (Exception e) {
+                    log.makeAlert(e, "Exception while trying to assign task")
+                       .addData("taskId", taskRunnerWorkItem.getTaskId())
+                       .emit();
+                    RemoteTaskRunnerWorkItem workItem = pendingTasks.remove(taskId);
+                    taskComplete(workItem, null, TaskStatus.failure(taskId));
+                  }
+                  finally {
+                    tryAssignTasks.remove(taskId);
+                  }
                 }
               }
             }
@@ -585,40 +604,56 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
       } else {
         strategy = workerConfig.getSelectStrategy();
       }
-      final Optional<ImmutableZkWorker> immutableZkWorker = strategy.findWorkerForTask(
-          config,
-          ImmutableMap.copyOf(
-              Maps.transformEntries(
-                  Maps.filterEntries(
-                      zkWorkers, new Predicate<Map.Entry<String, ZkWorker>>()
-                      {
-                        @Override
-                        public boolean apply(Map.Entry<String, ZkWorker> input)
+
+      ZkWorker assignedWorker = null;
+      try {
+        final Optional<ImmutableZkWorker> immutableZkWorker = strategy.findWorkerForTask(
+            config,
+            ImmutableMap.copyOf(
+                Maps.transformEntries(
+                    Maps.filterEntries(
+                        zkWorkers, new Predicate<Map.Entry<String, ZkWorker>>()
                         {
-                          return !lazyWorkers.containsKey(input.getKey());
+                          @Override
+                          public boolean apply(Map.Entry<String, ZkWorker> input)
+                          {
+                            return !lazyWorkers.containsKey(input.getKey()) &&
+                                   !workersWithUnacknowledgedTask.containsKey(input.getKey());
+                          }
                         }
-                      }
-                  ),
-                  new Maps.EntryTransformer<String, ZkWorker, ImmutableZkWorker>()
-                  {
-                    @Override
-                    public ImmutableZkWorker transformEntry(
-                        String key, ZkWorker value
-                    )
+                    ),
+                    new Maps.EntryTransformer<String, ZkWorker, ImmutableZkWorker>()
                     {
-                      return value.toImmutable();
+                      @Override
+                      public ImmutableZkWorker transformEntry(
+                          String key, ZkWorker value
+                      )
+                      {
+                        return value.toImmutable();
+                      }
                     }
-                  }
-              )
-          ),
-          task
-      );
-      if (immutableZkWorker.isPresent()) {
-        final ZkWorker zkWorker = zkWorkers.get(immutableZkWorker.get().getWorker().getHost());
-        return announceTask(task, zkWorker, taskRunnerWorkItem);
-      } else {
+                )
+            ),
+            task
+        );
+
+        if (immutableZkWorker.isPresent()
+            &&
+            workersWithUnacknowledgedTask.putIfAbsent(immutableZkWorker.get().getWorker().getHost(), task.getId())
+            == null) {
+          assignedWorker = zkWorkers.get(immutableZkWorker.get().getWorker().getHost());
+          return announceTask(task, assignedWorker, taskRunnerWorkItem);
+        }
+
         log.debug("Worker nodes %s do not have capacity to run any more tasks!", zkWorkers.values());
         return false;
+      } finally {
+        if (assignedWorker != null) {
+          workersWithUnacknowledgedTask.remove(assignedWorker.getWorker().getHost());
+          // note that this is essential as a task might not get a worker because a worker was assigned another task.
+          // so this will ensure that other pending tasks are tried for assignment again.
+          runPendingTasks();
+        }
       }
     }
   }
@@ -683,8 +718,8 @@ public class RemoteTaskRunner implements TaskRunner, TaskLogStreamer
         statusLock.wait(waitMs);
         long elapsed = timeoutStopwatch.elapsed(TimeUnit.MILLISECONDS);
         if (elapsed >= waitMs) {
-          log.error(
-              "Something went wrong! [%s] never ran task [%s]! Timeout: (%s >= %s)!",
+          log.makeAlert(
+              "Task assignment timed out on worker [%s], never ran task [%s]! Timeout: (%s >= %s)!",
               worker,
               task.getId(),
               elapsed,
