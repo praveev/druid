@@ -78,7 +78,6 @@ public class KafkaSupervisorTuningConfigTest
   {
     String jsonStr = "{\n"
                      + "  \"type\": \"kafka\",\n"
-                     + "  \"basePersistDirectory\": \"/tmp/xxx\",\n"
                      + "  \"maxRowsInMemory\": 100,\n"
                      + "  \"maxRowsPerSegment\": 100,\n"
                      + "  \"intermediatePersistPeriod\": \"PT1H\",\n"
@@ -103,7 +102,7 @@ public class KafkaSupervisorTuningConfigTest
         TuningConfig.class
     );
 
-    Assert.assertEquals(new File("/tmp/xxx"), config.getBasePersistDirectory());
+    Assert.assertNull(config.getBasePersistDirectory());
     Assert.assertEquals(100, config.getMaxRowsInMemory());
     Assert.assertEquals(100, config.getMaxRowsPerSegment());
     Assert.assertEquals(new Period("PT1H"), config.getIntermediatePersistPeriod());
